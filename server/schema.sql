@@ -67,3 +67,14 @@ CREATE TABLE IF NOT EXISTS pw_alert_state (
   offline_alerted_at DATETIME NULL,
   recovered_alerted_at DATETIME NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE IF NOT EXISTS pw_provision_tokens (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  token_hash CHAR(64) NOT NULL UNIQUE,
+  device_id VARCHAR(64) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_provision_expiry (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
