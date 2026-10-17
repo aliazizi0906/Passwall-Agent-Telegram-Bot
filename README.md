@@ -16,6 +16,7 @@ PW Agent is a self-hosted remote-management stack for OpenWrt routers running Pa
 |---|---|
 | [Install](docs/en/INSTALL.md) | Complete cPanel + OpenWrt installation |
 | [Features](docs/en/FEATURES.md) | Router, Passwall2, Failover, Monitoring and Terminal capabilities |
+| [Fleet & Automation](docs/en/FLEET.md) | Multi-device, RBAC, audit, Dashboard, alerts and schedules |
 | [Architecture](docs/en/ARCHITECTURE.md) | Agent, backend, queue and request flow |
 | [Security](docs/en/SECURITY.md) | HMAC, AES-GCM, Ed25519, allowlists and provisioning |
 | [Updates](docs/en/UPDATES.md) | Agent update and GitHub Release workflow |
@@ -56,6 +57,7 @@ PW Agent یک سامانه‌ی Self-hosted برای مدیریت از راه د
 |---|---|
 | [نصب](docs/fa/INSTALL.md) | آموزش کامل نصب روی cPanel و OpenWrt |
 | [قابلیت‌ها](docs/fa/FEATURES.md) | امکانات روتر، Passwall2، Failover، Monitoring و Terminal |
+| [Fleet و Automation](docs/fa/FLEET.md) | Multi-Device، RBAC، Audit، Dashboard، Alert و Scheduler |
 | [معماری](docs/fa/ARCHITECTURE.md) | ساختار Agent، Backend، Queue و جریان درخواست |
 | [امنیت](docs/fa/SECURITY.md) | HMAC، AES-GCM، Ed25519، Allowlist و Provisioning |
 | [به‌روزرسانی](docs/fa/UPDATES.md) | آپدیت Agent و GitHub Release |
@@ -89,5 +91,7 @@ Build رسمی برای معماری‌های `armv7`، `arm64`، `amd64`، `386
 ## Project status / وضعیت پروژه
 
 Current public release / نسخه عمومی فعلی: **v0.5.0**
+
+Development version / نسخه در حال توسعه: **v0.6.0**
 
 Repository / مخزن: https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot
