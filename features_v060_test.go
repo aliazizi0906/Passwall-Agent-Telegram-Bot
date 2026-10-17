@@ -1,7 +1,7 @@
 package main
 
 import (
-	"testing"
+	"testing"\n\t"path/filepath"
 )
 
 func TestConfigPackagesForActionV6(t *testing.T) {
@@ -26,6 +26,7 @@ func TestConfigPackagesForActionV6(t *testing.T) {
 }
 
 func TestConfigSnapshotSealRoundTripV6(t *testing.T) {
+	t.Setenv("PW_AGENT_HISTORY_KEY_PATH", filepath.Join(t.TempDir(), "history.key"))
 	a := &Agent{cfg: Config{DeviceSecret: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}}
 	in := configSnapshotV6{
 		Packages: []string{"wireless", "passwall2"},
@@ -47,15 +48,18 @@ func TestConfigSnapshotSealRoundTripV6(t *testing.T) {
 	}
 }
 
-func TestConfigSnapshotRejectsWrongDeviceSecretV6(t *testing.T) {
-	a := &Agent{cfg: Config{DeviceSecret: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}
-	b := &Agent{cfg: Config{DeviceSecret: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}}
+func TestConfigSnapshotRejectsWrongRouterHistoryKeyV6(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("PW_AGENT_HISTORY_KEY_PATH", filepath.Join(dir, "router-a.key"))
+	a := &Agent{}
 	sealed, err := a.sealConfigSnapshotV6(configSnapshotV6{Packages: []string{"wireless"}, Files: map[string]string{"wireless": "YWJj"}})
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Setenv("PW_AGENT_HISTORY_KEY_PATH", filepath.Join(dir, "router-b.key"))
+	b := &Agent{}
 	if _, err := b.openConfigSnapshotV6(sealed); err == nil {
-		t.Fatal("snapshot encrypted for another device secret was accepted")
+		t.Fatal("snapshot encrypted with another router history key was accepted")
 	}
 }
 
