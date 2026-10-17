@@ -35,6 +35,7 @@ try{
 
         if($data==='home'){edit_home($chatId,$messageId);}
         elseif($data==='status'){qcmd($device,'system.status',[],$chatId,$userId,$messageId,'status');}
+        elseif($data==='monitoring'){tg_edit($chatId,$messageId,v050_monitoring_summary($device),nav_row('home'));}
         elseif($data==='pw'){qcmd($device,'passwall2.status',[],$chatId,$userId,$messageId,'passwall');}
         elseif($data==='pwon'){qcmd($device,'passwall2.enable',[],$chatId,$userId,$messageId,'passwall');}
         elseif($data==='pwoff'){qcmd($device,'passwall2.disable',[],$chatId,$userId,$messageId,'passwall');}
