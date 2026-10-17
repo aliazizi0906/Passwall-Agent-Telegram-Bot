@@ -36,8 +36,10 @@ try{
         $id,
     ]);
     $pdo->commit();
-    v060_audit_command_result($id,$success,$result,$error);
-    if($success&&is_array($change))v060_store_config_change($id,$device,isset($row['user_id'])?(int)$row['user_id']:null,(string)$row['action'],$change);
+    try{
+        v060_audit_command_result($id,$success,$result,$error);
+        if($success&&is_array($change))v060_store_config_change($id,$device,isset($row['user_id'])?(int)$row['user_id']:null,(string)$row['action'],$change);
+    }catch(Throwable $auditError){error_log('v0.6 audit/history persistence: '.$auditError->getMessage());}
 }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();response_json(['ok'=>false,'error'=>'result persistence failed'],$secret,500);}
 
 if(!empty($row['chat_id'])){
