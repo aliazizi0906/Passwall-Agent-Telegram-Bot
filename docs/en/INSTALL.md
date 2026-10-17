@@ -216,10 +216,11 @@ Example shape:
 ```sh
 PW_SERVER_BASE='https://example.com/your/chosen/path' \
 PW_PROVISION_TOKEN='ONE_TIME_TOKEN' \
+PW_AGENT_VERSION='v0.6.0' \
 sh -c "$(wget -qO- 'https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh')"
 ```
 
-The token expires after 30 minutes and can only be used once.
+The token expires after 30 minutes and can only be used once. The generated command is pinned to the backend's Agent version, so it will never silently install an older GitHub `latest` release.
 
 The installer:
 
