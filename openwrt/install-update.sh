@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 BASE="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-[ -x "$BASE/pw-agent-armv7" ] || { echo "missing pw-agent-armv7" >&2; exit 1; }
+[ -f "$BASE/pw-agent-armv7" ] || { echo "missing pw-agent-armv7" >&2; exit 1; }
 mkdir -p /etc/pw-agent /etc/pw-agent/backups /etc/pw-agent/safety
 chmod 700 /etc/pw-agent /etc/pw-agent/backups /etc/pw-agent/safety 2>/dev/null || true
 cp "$BASE/pw-agent-armv7" /usr/bin/pw-agent.new
