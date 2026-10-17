@@ -170,7 +170,7 @@ function pw_setup_write_config(string $path,array $config): void {
 function pw_setup_router_command(string $base,string $token): string {
     $raw='https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh';
     $quote=static fn(string $v): string => "'".str_replace("'","'\\''",$v)."'";
-    return 'PW_SERVER_BASE='.$quote($base).' PW_PROVISION_TOKEN='.$quote($token).' sh -c "$(wget -qO- '.$quote($raw).')"';
+    return 'PW_SERVER_BASE='.$quote($base).' PW_PROVISION_TOKEN='.$quote($token).' PW_AGENT_VERSION='.$quote('v'.pw_setup_version()).' sh -c "$(wget -qO- '.$quote($raw).')"';
 }
 
 function pw_setup_cron_command(string $root): string {
