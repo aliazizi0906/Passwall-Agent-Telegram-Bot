@@ -2,68 +2,110 @@
 
 [Documentation Home](README.md) · [فارسی](../fa/UPDATES.md)
 
-## User-side update model
+PW Agent v0.6 supports a browser-first cPanel workflow. SSH, Git and cPanel Terminal are optional.
 
-There are two parts to keep current:
+## What is updated
 
-1. PHP/MySQL backend files on the hosting server
-2. OpenWrt Agent/LuCI package on the router
+There are two independent update layers:
 
-## Update the backend source
+1. PHP/MySQL backend files on the hosting account
+2. Agent/LuCI packages on OpenWrt routers
 
-Refresh the Git checkout:
+## Update the backend without Terminal
 
-```bash
-cd ~/Passwall-Agent-Telegram-Bot
-git pull --ff-only
+Use **cPanel File Manager**:
+
+1. Download the newer repository ZIP from GitHub.
+2. Extract it into a temporary directory.
+3. Open the extracted `server/` directory.
+4. Copy its contents over the existing PW Agent backend directory.
+5. Do not delete the destination directory first.
+6. Keep the runtime `config.php`.
+7. Open `health.php` once after the copy.
+
+The backend may be installed in any document-root directory or subdirectory. There is no required `public_html/pwagent` path.
+
+Examples:
+
+```text
+https://example.com/pw
+https://example.com/tools/router
+https://router.example.com/
 ```
 
-Deploy while preserving local runtime files:
+The first request after an upgrade applies compatible lazy schema migrations.
 
-```bash
-rsync -a \
-  --exclude='config.php' \
-  --exclude='releases/*.tar.gz' \
-  --exclude='releases/*.sig' \
-  --exclude='releases/*.sha256' \
-  ~/Passwall-Agent-Telegram-Bot/server/ \
-  ~/public_html/pwagent/
+## Sync Agent packages without Terminal
+
+Open the Telegram Mini App:
+
+```text
+Dashboard → Release Cache
 ```
 
-Then run:
+Users with the **Agent Update** permission can:
 
-```bash
-cd ~/public_html/pwagent
-php bin/doctor.php
+- view cache state for each architecture;
+- sync one architecture;
+- sync all supported architectures.
+
+The backend downloads the official GitHub Release assets and verifies SHA256 before storing them in the protected release cache.
+
+Supported architectures:
+
+```text
+armv7
+arm64
+amd64
+386
+mips
+mipsle
 ```
 
-## Synchronize Agent release packages
+## Re-provision a router without Terminal
 
-For one architecture:
+If a provisioning token expires, do not reinstall the backend and do not use cPanel Terminal.
 
-```bash
-php bin/sync-release.php --arch=armv7
+Open:
+
+```text
+Dashboard → Devices
 ```
 
-For all supported architectures:
+select the router and use:
 
-```bash
-php bin/sync-release.php --all
+```text
+Provision / Reinstall
 ```
 
-The backend stores the bundle and matching signature under `server/releases/`.
+PW Agent revokes previous unused tokens for that device and generates a new single-use 30-minute installation command.
 
 ## Agent self-update
 
-The Agent can check the backend for a newer release.
+The router can check the backend for a newer architecture-specific Agent package.
 
-The backend returns architecture-specific package metadata. The Agent verifies the SHA256 digest and Ed25519 signature before installation.
+Before installation the Agent verifies:
 
-The trusted official public key is embedded in the Agent.
+1. SHA256 integrity
+2. Ed25519 signature authenticity
+
+The official update public key is embedded in the Agent.
+
+## Optional CLI workflow
+
+If the host provides SSH/Terminal, the CLI scripts remain available:
+
+```bash
+php bin/doctor.php
+php bin/sync-release.php --arch=armv7
+php bin/sync-release.php --all
+```
+
+They are not required for normal cPanel operation.
 
 ## Official release process for maintainers
 
-The official GitHub Actions Release workflow builds:
+The GitHub Actions Release workflow builds:
 
 - armv7
 - arm64
@@ -80,13 +122,13 @@ pw-agent-openwrt-ARCH.tar.gz.sha256
 pw-agent-openwrt-ARCH.tar.gz.sig
 ```
 
-The maintainer configures one repository secret:
+The maintainer configures:
 
 ```text
 UPDATE_SIGNING_PRIVATE_KEY_PEM_B64
 ```
 
-Then run:
+Then runs:
 
 ```text
 GitHub → Actions → Release → Run workflow
@@ -94,8 +136,8 @@ Branch: main
 version: vX.Y.Z
 ```
 
-The workflow checks that the version matches `app_version()`, verifies that the private key matches `UPDATE_PUBLIC_KEY.b64`, builds all architectures, signs the bundles and creates the GitHub Release.
+The workflow verifies that the requested version matches the source version, checks the private signing key against `UPDATE_PUBLIC_KEY.b64`, builds all architectures, signs the bundles and creates the GitHub Release.
 
 ## Forks
 
-A fork that wants independent signed releases should replace the official public key and use a new Ed25519 private key in its own GitHub Actions secret.
+A fork that wants independent signed releases should replace the official update public key and store its own matching private key only in its GitHub Actions secret.
