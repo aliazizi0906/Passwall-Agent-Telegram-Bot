@@ -31,6 +31,7 @@ canvas{width:100%;height:150px}
 <nav id="tabs">
 <button data-tab="devices" class="primary">Devices</button>
 <button data-tab="monitor">Monitoring</button>
+<button data-tab="operations">Operations</button>
 <button data-tab="audit">Audit & Rollback</button>
 <button data-tab="alerts">Alerts</button>
 <button data-tab="maintenance">Maintenance</button>
@@ -39,6 +40,7 @@ canvas{width:100%;height:150px}
 </nav>
 <section id="devices"></section>
 <section id="monitor" class="hidden"></section>
+<section id="operations" class="hidden"></section>
 <section id="audit" class="hidden"></section>
 <section id="alerts" class="hidden"></section>
 <section id="maintenance" class="hidden"></section>
@@ -52,6 +54,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 async function api(action,data={}){const r=await fetch('api.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({init_data:initData,action,...data})});const j=await r.json().catch(()=>({ok:false,error:'Invalid server response'}));if(!j.ok)throw new Error(j.error||'Request failed');return j}
 function err(e){const x=document.querySelector('#error');x.textContent=e.message||e;x.classList.remove('hidden')}
 function fmtTime(s){return s?new Date(s.replace(' ','T')+'Z').toLocaleString():'Never'}
+function bytes(n){n=Number(n||0);if(n>=1073741824)return (n/1073741824).toFixed(2)+' GiB';if(n>=1048576)return (n/1048576).toFixed(1)+' MiB';if(n>=1024)return (n/1024).toFixed(1)+' KiB';return n+' B'}
 function tab(name){document.querySelectorAll('main>section').forEach(x=>x.classList.add('hidden'));document.querySelector('#'+name).classList.remove('hidden');document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('primary',x.dataset.tab===name));loadTab(name).catch(err)}
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
 async function refresh(){
@@ -64,10 +67,12 @@ async function refresh(){
 }
 async function renderDevices(){
  const rows=state.summary?.devices||[];
- document.querySelector('#devices').innerHTML=`<div class="card"><div class="row"><b>Fleet</b><span class="grow"></span>${['owner','admin'].includes(state.role)?'<button id="addDev">+ Add device</button>':''}</div></div>`+
- rows.map(d=>`<div class="card device ${d.device_id===state.active?'active':''}" data-id="${esc(d.device_id)}"><div class="row"><b>${d.online?'🟢':'🔴'} ${esc(d.display_name)}</b><span class="grow"></span>${d.maintenance?'<span class="pill warn">Maintenance</span>':''}</div><div class="muted">${esc(d.hostname||d.device_id)} · Agent ${esc(d.agent_version||'-')} · ${fmtTime(d.last_seen)}</div><div>${(JSON.parse(d.tags_json||'[]')).map(t=>'<span class="pill">'+esc(t)+'</span>').join('')}</div></div>`).join('');
+ document.querySelector('#devices').innerHTML=`<div class="card"><div class="row"><b>Fleet</b><span class="grow"></span>${['owner','admin'].includes(state.role)?'<button id="groupsBtn">Groups</button><button id="editDev">Edit active</button><button id="addDev">+ Add device</button>':''}</div></div>`+
+ rows.map(d=>`<div class="card device ${d.device_id===state.active?'active':''}" data-id="${esc(d.device_id)}"><div class="row"><b>${d.online?'🟢':'🔴'} ${esc(d.display_name)}</b><span class="grow"></span>${d.group_name?'<span class="pill">'+esc(d.group_name)+'</span>':''}${d.maintenance?'<span class="pill warn">Maintenance</span>':''}</div><div class="muted">${esc(d.hostname||d.device_id)} · ${esc(d.location||'No location')} · Agent ${esc(d.agent_version||'-')} · ${fmtTime(d.last_seen)}</div><div>${(JSON.parse(d.tags_json||'[]')).map(t=>'<span class="pill">'+esc(t)+'</span>').join('')}</div></div>`).join('');
  document.querySelectorAll('.device').forEach(x=>x.onclick=async()=>{await api('select_device',{device_id:x.dataset.id});await refresh();});
  const add=document.querySelector('#addDev');if(add)add.onclick=async()=>{const name=prompt('Device name');if(!name)return;const j=await api('device_create',{name});prompt('Run this command on the new OpenWrt router within 30 minutes:',j.install_command);await refresh()};
+ const groups=document.querySelector('#groupsBtn');if(groups)groups.onclick=async()=>{const g=await api('groups');const list=(g.groups||[]).map(x=>x.id+': '+x.name+' ('+x.device_count+')').join('\n');const name=prompt('Groups:\n'+(list||'No groups')+'\n\nEnter a new group name to create, or leave blank to cancel');if(name){await api('group_create',{name});await refresh()}};
+ const edit=document.querySelector('#editDev');if(edit)edit.onclick=async()=>{if(!state.active)return;const d=(state.summary?.devices||[]).find(x=>x.device_id===state.active);if(!d)return;const groupsData=await api('groups');const groupList=(groupsData.groups||[]).map(x=>x.id+':'+x.name).join(', ');const display_name=prompt('Display name',d.display_name||state.active);if(display_name===null)return;const location=prompt('Location',d.location||'')??'';const tagsRaw=prompt('Tags (comma separated)',(JSON.parse(d.tags_json||'[]')).join(', '))??'';const gid=prompt('Group ID (blank = none). Available: '+groupList,String(d.group_id||''));await api('device_update',{device_id:state.active,display_name,location,tags:tagsRaw.split(',').map(x=>x.trim()).filter(Boolean),group_id:gid||null});await refresh()};
 }
 async function loadTab(name){
  if(name==='devices')return renderDevices();
@@ -75,8 +80,15 @@ async function loadTab(name){
  if(name==='monitor'){
   const j=await api('device_detail',{device_id:state.active}),d=j.device,m=j.metrics||[];
   const last=m[m.length-1]||{};
-  document.querySelector('#monitor').innerHTML=`<div class="grid"><div class="card"><div class="muted">CPU</div><div class="stat">${Number(last.cpu_percent||0).toFixed(1)}%</div></div><div class="card"><div class="muted">Memory</div><div class="stat">${Number(last.memory_used_percent||0).toFixed(1)}%</div></div><div class="card"><div class="muted">WAN</div><div class="stat ${Number(last.wan_up)?'good':'bad'}">${Number(last.wan_up)?'UP':'DOWN'}</div></div><div class="card"><div class="muted">Passwall2</div><div class="stat ${Number(last.passwall_running)?'good':'bad'}">${Number(last.passwall_running)?'UP':'DOWN'}</div></div></div><div class="card"><b>${esc(d.display_name)}</b><div class="muted">WAN IP: ${esc(last.wan_ip||'-')} · Last seen: ${fmtTime(d.last_seen)}</div><canvas id="chart" width="900" height="180"></canvas></div>`;
+  const o=j.overview||{},h=o['24h']||{},w=o['7d']||{},m30=o['30d']||{};
+  document.querySelector('#monitor').innerHTML=`<div class="grid"><div class="card"><div class="muted">CPU</div><div class="stat">${Number(last.cpu_percent||0).toFixed(1)}%</div></div><div class="card"><div class="muted">Memory</div><div class="stat">${Number(last.memory_used_percent||0).toFixed(1)}%</div></div><div class="card"><div class="muted">WAN</div><div class="stat ${Number(last.wan_up)?'good':'bad'}">${Number(last.wan_up)?'UP':'DOWN'}</div></div><div class="card"><div class="muted">Passwall2</div><div class="stat ${Number(last.passwall_running)?'good':'bad'}">${Number(last.passwall_running)?'UP':'DOWN'}</div></div></div><div class="grid"><div class="card"><div class="muted">Heartbeat 24h</div><div class="stat">${Number(h.heartbeat_coverage||0).toFixed(1)}%</div></div><div class="card"><div class="muted">Heartbeat 7d</div><div class="stat">${Number(w.heartbeat_coverage||0).toFixed(1)}%</div></div><div class="card"><div class="muted">Heartbeat 30d</div><div class="stat">${Number(m30.heartbeat_coverage||0).toFixed(1)}%</div></div><div class="card"><div class="muted">Failover 24h</div><div class="stat">${Number(h.failover_events||0)}</div></div></div><div class="card"><b>${esc(d.display_name)}</b><div class="muted">WAN IP: ${esc(last.wan_ip||'-')} · Last seen: ${fmtTime(d.last_seen)}</div><div class="muted">24h RX: ${bytes(h.rx_bytes||0)} · TX: ${bytes(h.tx_bytes||0)} · WAN IP changes: ${Number(h.wan_ip_changes||0)}</div><canvas id="chart" width="900" height="180"></canvas></div>`;
   draw(m);return;
+ }
+ if(name==='operations'){
+  document.querySelector('#operations').innerHTML=`<div class="card"><b>Router Operations</b><p class="muted">All actions use the same RBAC, queue idempotency and audit pipeline as Telegram.</p><div class="row"><button data-op="system.status">System status</button><button data-op="passwall2.status">Passwall2 status</button><button data-op="passwall2.nodes.list">Nodes</button><button data-op="passwall2.nodes.relay_ranking">Relay ranking</button><button data-op="passwall2.failover.list">Failover</button><button data-op="passwall2.restart">Restart Passwall</button><button data-op="system.backup.create">Send backup to Telegram</button><button data-op="agent.update.check">Check update</button><button data-op="agent.update.apply">Install update</button><button id="terminalBtn">SSH Console</button></div><pre id="opOut">Select an operation.</pre></div><div class="card"><div class="row"><b>Recent commands</b><span class="grow"></span><button id="refreshCmds">Refresh</button></div><div id="cmdList"></div></div>`;
+  async function commands(){const j=await api('commands',{device_id:state.active});document.querySelector('#cmdList').innerHTML='<table><tr><th>ID</th><th>Action</th><th>Status</th><th>Created</th></tr>'+j.commands.map(c=>`<tr><td>${c.id}</td><td>${esc(c.action)}</td><td>${esc(c.status)}</td><td>${esc(c.created_at)}</td></tr>`).join('')+'</table>'}
+  async function run(action){let params={};if(action==='passwall2.failover.run'){const shunt=prompt('Shunt ID');if(!shunt)return;params={shunt_id:shunt}}const j=await api('command',{device_id:state.active,command_action:action,params});const out=document.querySelector('#opOut');out.textContent='Queued command #'+j.command_id+'…';for(let i=0;i<45;i++){await new Promise(r=>setTimeout(r,500));const q=await api('command_status',{device_id:state.active,command_id:j.command_id});if(['done','failed'].includes(q.command.status)){out.textContent=JSON.stringify(q.command,null,2);await commands();return}}out.textContent='Command is still running. Check Recent commands.'}
+  document.querySelectorAll('#operations [data-op]').forEach(b=>b.onclick=()=>run(b.dataset.op).catch(err));document.querySelector('#terminalBtn').onclick=()=>location.href='../terminal/';document.querySelector('#refreshCmds').onclick=()=>commands().catch(err);await commands();return;
  }
  if(name==='audit'){
   const j=await api('audit',{device_id:state.active});
@@ -98,7 +110,9 @@ async function loadTab(name){
  }
  if(name==='access'){
   if(!['owner','admin'].includes(state.role)){document.querySelector('#access').innerHTML='<div class="card">RBAC management requires Admin or Owner.</div>';return}
-  const j=await api('users');document.querySelector('#access').innerHTML='<div class="card"><b>RBAC users</b>'+j.users.map(u=>`<div class="card"><b>${esc(u.telegram_user_id)}</b> · ${esc(u.role)} · ${Number(u.enabled)?'enabled':'disabled'}</div>`).join('')+'<button id="newUser">+ User</button></div>';document.querySelector('#newUser').onclick=async()=>{const id=Number(prompt('Telegram numeric user ID'));if(!id)return;const role=prompt('Role: admin, operator, viewer','viewer');await api('user_upsert',{telegram_user_id:id,role,enabled:true,device_scope:['*']});loadTab('access')};return;
+  const j=await api('users');document.querySelector('#access').innerHTML='<div class="card"><b>RBAC users</b>'+j.users.map(u=>{let scope=[];try{scope=JSON.parse(u.device_scope_json||'[]')}catch(e){}return `<div class="card"><div class="row"><b class="grow">${esc(u.telegram_user_id)}</b><span class="pill">${esc(u.role)}</span><span class="pill">${Number(u.enabled)?'enabled':'disabled'}</span><button class="editUser" data-id="${u.telegram_user_id}" data-role="${esc(u.role)}" data-on="${Number(u.enabled)?1:0}" data-scope="${esc(scope.join(','))}">Edit</button></div><div class="muted">Scope: ${esc(scope.join(', ')||'none')}</div></div>`}).join('')+'<button id="newUser">+ User</button></div>';
+  async function editUser(id,role='viewer',enabled=1,scope='*'){const r=prompt('Role: owner, admin, operator, viewer',role);if(!r)return;const sc=prompt('Device scope: * or comma-separated device IDs',scope);if(sc===null)return;const on=confirm('Enable this user? OK = enabled, Cancel = disabled');await api('user_upsert',{telegram_user_id:Number(id),role:r,enabled:on,device_scope:sc.split(',').map(x=>x.trim()).filter(Boolean)});loadTab('access')}
+  document.querySelectorAll('.editUser').forEach(b=>b.onclick=()=>editUser(b.dataset.id,b.dataset.role,Number(b.dataset.on),b.dataset.scope));document.querySelector('#newUser').onclick=async()=>{const id=Number(prompt('Telegram numeric user ID'));if(!id)return;await editUser(id,'viewer',1,'*')};return;
  }
 }
 function draw(rows){const c=document.querySelector('#chart');if(!c||!rows.length)return;const x=c.getContext('2d'),w=c.width,h=c.height;x.clearRect(0,0,w,h);x.strokeStyle='#283747';for(let i=0;i<5;i++){const y=10+i*(h-20)/4;x.beginPath();x.moveTo(0,y);x.lineTo(w,y);x.stroke()}function line(key,color,max=100){x.strokeStyle=color;x.lineWidth=2;x.beginPath();rows.forEach((r,i)=>{const px=i*(w/(Math.max(1,rows.length-1))),py=h-10-Math.min(max,Number(r[key]||0))/max*(h-20);i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke()}line('cpu_percent','#58a6ff');line('memory_used_percent','#3fb950')}
