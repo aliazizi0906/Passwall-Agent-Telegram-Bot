@@ -136,6 +136,17 @@ function ensure_v060_schema(): void {
       'wan_ip'=>"ADD COLUMN wan_ip VARCHAR(64) NULL AFTER wan_up",
       'rx_bytes'=>"ADD COLUMN rx_bytes BIGINT UNSIGNED NULL AFTER wan_ip",
       'tx_bytes'=>"ADD COLUMN tx_bytes BIGINT UNSIGNED NULL AFTER rx_bytes",
+      'packet_loss'=>"ADD COLUMN packet_loss DOUBLE NULL AFTER tx_bytes",
+      'dns_ok'=>"ADD COLUMN dns_ok TINYINT(1) NULL AFTER packet_loss",
+      'dns_ms'=>"ADD COLUMN dns_ms DOUBLE NULL AFTER dns_ok",
+      'internet_ok'=>"ADD COLUMN internet_ok TINYINT(1) NULL AFTER dns_ms",
+      'internet_tcp_ms'=>"ADD COLUMN internet_tcp_ms DOUBLE NULL AFTER internet_ok",
+      'active_node_id'=>"ADD COLUMN active_node_id VARCHAR(96) NULL AFTER internet_tcp_ms",
+      'active_node_name'=>"ADD COLUMN active_node_name VARCHAR(192) NULL AFTER active_node_id",
+      'node_relay_ok'=>"ADD COLUMN node_relay_ok TINYINT(1) NULL AFTER active_node_name",
+      'node_relay_ms'=>"ADD COLUMN node_relay_ms DOUBLE NULL AFTER node_relay_ok",
+      'wan_ip_changed'=>"ADD COLUMN wan_ip_changed TINYINT(1) NOT NULL DEFAULT 0 AFTER node_relay_ms",
+      'agent_reconnected'=>"ADD COLUMN agent_reconnected TINYINT(1) NOT NULL DEFAULT 0 AFTER wan_ip_changed",
     ];
     foreach($metricAdds as $c=>$sql)if(!isset($cols[$c]))$pdo->exec('ALTER TABLE pw_metrics '.$sql);
 
@@ -401,15 +412,69 @@ function v060_notification_chats(string $deviceId): array {
 
 function v060_record_metric(string $deviceId,array $body): void {
     ensure_v060_schema();$pdo=db();
-    $q=$pdo->prepare("SELECT id FROM pw_metrics WHERE device_id=? AND captured_at > (NOW()-INTERVAL 50 SECOND) LIMIT 1");$q->execute([$deviceId]);if($q->fetch())return;
+
+    $lastSt=$pdo->prepare('SELECT captured_at,wan_ip FROM pw_metrics WHERE device_id=? ORDER BY id DESC LIMIT 1');
+    $lastSt->execute([$deviceId]);$last=$lastSt->fetch()?:null;
+    if($last&&strtotime((string)$last['captured_at'])>time()-50)return;
+
     $mem=is_array($body['memory']??null)?$body['memory']:[];
     $total=(float)($mem['total_bytes']??0);$used=(float)($mem['used_bytes']??0);$memPct=$total>0?($used/$total)*100:null;
+
     $wan=is_array($body['wan']??null)?$body['wan']:null;
     $passwall=array_key_exists('passwall_running',$body)?(!empty($body['passwall_running'])?1:0):null;
     $wanUp=is_array($wan)&&array_key_exists('up',$wan)?(!empty($wan['up'])?1:0):null;
-    $st=$pdo->prepare('INSERT INTO pw_metrics(device_id,uptime_seconds,load1,cpu_percent,memory_json,memory_used_percent,passwall_running,wan_up,wan_ip,rx_bytes,tx_bytes) VALUES(?,?,?,?,?,?,?,?,?,?,?)');
-    $st->execute([$deviceId,(int)($body['uptime_seconds']??0),(float)($body['load1']??0),isset($body['cpu_percent'])?(float)$body['cpu_percent']:null,json_encode($mem,JSON_UNESCAPED_SLASHES),$memPct,$passwall,$wanUp,is_array($wan)?(string)($wan['ip']??''):null,is_array($wan)&&isset($wan['rx_bytes'])?(int)$wan['rx_bytes']:null,is_array($wan)&&isset($wan['tx_bytes'])?(int)$wan['tx_bytes']:null]);
+    $wanIp=is_array($wan)?trim((string)($wan['ip']??'')):'';
+
+    $health=is_array($body['health']??null)?$body['health']:[];
+    $boolMetric=static fn(array $src,string $key): ?int => array_key_exists($key,$src)?(!empty($src[$key])?1:0):null;
+    $floatMetric=static fn(array $src,string $key): ?float => isset($src[$key])&&is_numeric($src[$key])?(float)$src[$key]:null;
+
+    $oldWan=$last?trim((string)($last['wan_ip']??'')):'';
+    $wanChanged=$last&&$oldWan!==''&&$wanIp!==''&&!hash_equals($oldWan,$wanIp)?1:0;
+    $offlineThreshold=max(120,(int)(cfg()['monitoring']['offline_after_seconds']??300));
+    $gap=$last?time()-strtotime((string)$last['captured_at']):0;
+    $reconnected=$last&&$gap>$offlineThreshold?1:0;
+
+    $st=$pdo->prepare('INSERT INTO pw_metrics(
+      device_id,uptime_seconds,load1,cpu_percent,memory_json,memory_used_percent,
+      passwall_running,wan_up,wan_ip,rx_bytes,tx_bytes,
+      packet_loss,dns_ok,dns_ms,internet_ok,internet_tcp_ms,
+      active_node_id,active_node_name,node_relay_ok,node_relay_ms,
+      wan_ip_changed,agent_reconnected
+    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+    $st->execute([
+      $deviceId,
+      (int)($body['uptime_seconds']??0),
+      (float)($body['load1']??0),
+      isset($body['cpu_percent'])?(float)$body['cpu_percent']:null,
+      json_encode($mem,JSON_UNESCAPED_SLASHES),
+      $memPct,
+      $passwall,
+      $wanUp,
+      $wanIp!==''?$wanIp:null,
+      is_array($wan)&&isset($wan['rx_bytes'])?(int)$wan['rx_bytes']:null,
+      is_array($wan)&&isset($wan['tx_bytes'])?(int)$wan['tx_bytes']:null,
+      $floatMetric($health,'packet_loss'),
+      $boolMetric($health,'dns_ok'),
+      $floatMetric($health,'dns_ms'),
+      $boolMetric($health,'internet_ok'),
+      $floatMetric($health,'internet_tcp_ms'),
+      isset($health['active_node_id'])?substr((string)$health['active_node_id'],0,96):null,
+      isset($health['active_node_name'])?substr((string)$health['active_node_name'],0,192):null,
+      $boolMetric($health,'node_relay_ok'),
+      $floatMetric($health,'node_relay_ms'),
+      $wanChanged,
+      $reconnected
+    ]);
+
+    if($wanChanged){
+        v050_record_event($deviceId,'wan.ip_changed',['from'=>$oldWan,'to'=>$wanIp]);
+    }
+    if($reconnected){
+        v050_record_event($deviceId,'agent.reconnected',['gap_seconds'=>$gap]);
+    }
 }
+
 function v060_metric_value(array $row,string $metric): ?float {
     return match($metric){
       'cpu_percent'=>isset($row['cpu_percent'])?(float)$row['cpu_percent']:null,
