@@ -132,8 +132,42 @@ func diffOptionHashesV6(before, after map[string]map[string]string) []string {
 	return diff
 }
 
-func (a *Agent) configHistoryKeyV6() [32]byte {
-	return sha256.Sum256([]byte(a.cfg.DeviceSecret + "\nconfig-history-v1"))
+func configHistoryKeyPathV6() string {
+	if p := os.Getenv("PW_AGENT_HISTORY_KEY_PATH"); p != "" {
+		return p
+	}
+	return "/etc/pw-agent/history.key"
+}
+
+func configHistoryKeyV6() ([32]byte, error) {
+	var key [32]byte
+	path := configHistoryKeyPathV6()
+	raw, err := os.ReadFile(path)
+	if err == nil {
+		if len(raw) != len(key) {
+			return key, errors.New("invalid config-history key length")
+		}
+		copy(key[:], raw)
+		return key, nil
+	}
+	if !os.IsNotExist(err) {
+		return key, err
+	}
+	if _, err := io.ReadFull(rand.Reader, key[:]); err != nil {
+		return key, err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+		return key, err
+	}
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, key[:], 0600); err != nil {
+		return key, err
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		_ = os.Remove(tmp)
+		return key, err
+	}
+	return key, nil
 }
 
 func (a *Agent) sealConfigSnapshotV6(s configSnapshotV6) (string, error) {
@@ -141,7 +175,10 @@ func (a *Agent) sealConfigSnapshotV6(s configSnapshotV6) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	key := a.configHistoryKeyV6()
+	key, err := configHistoryKeyV6()
+	if err != nil {
+		return "", err
+	}
 	block, err := aes.NewCipher(key[:])
 	if err != nil {
 		return "", err
@@ -164,7 +201,10 @@ func (a *Agent) openConfigSnapshotV6(sealed string) (configSnapshotV6, error) {
 	if err != nil {
 		return snap, errors.New("invalid rollback snapshot encoding")
 	}
-	key := a.configHistoryKeyV6()
+	key, err := configHistoryKeyV6()
+	if err != nil {
+		return snap, err
+	}
 	block, err := aes.NewCipher(key[:])
 	if err != nil {
 		return snap, err
