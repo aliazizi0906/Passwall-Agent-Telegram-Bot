@@ -4,121 +4,160 @@
 
 ## ارتقا از v0.5.x به v0.6.x
 
-نسخه v0.6 پروتکل Outbound Agent در v0.5 را حفظ می‌کند و لایه Fleet را روی آن اضافه می‌کند. Device ID و Device Secret موجود در نصب v0.5 به‌صورت خودکار وارد Device Registry جدید می‌شوند.
+نسخه v0.6 پروتکل Outbound Agent نسخه v0.5 را حفظ می‌کند و Fleet Management، RBAC، Audit، Config History/Rollback، Monitoring پیشرفته، Maintenance و Scheduler را اضافه می‌کند.
 
-### ۱. حفظ Runtime Files
+Migration روی cPanel **بدون SSH و بدون Terminal** قابل انجام است.
 
-فایل config.php و پوشه Runtime مربوط به Releaseها را حفظ کنید.
+## ۱. Runtime Fileها را نگه دار
 
-config.php را با config.example.php جایگزین نکنید.
+این موارد را حفظ کن:
 
-### ۲. Deploy کردن Backend نسخه v0.6
+```text
+config.php
+releases/
+```
 
-Source را Pull کنید و فایل‌های جدید server را با حفظ Runtime Files Deploy کنید.
+`config.php` را با `config.example.php` جایگزین نکن.
 
-~~~bash
-cd ~/Passwall-Agent-Telegram-Bot
-git pull --ff-only
+محل فیزیکی نصب مهم نیست؛ v0.6 از همان فولدری که Backend فعلی Deploy شده اجرا می‌شود.
 
-rsync -a \
-  --exclude='config.php' \
-  --exclude='releases/*.tar.gz' \
-  --exclude='releases/*.sig' \
-  --exclude='releases/*.sha256' \
-  ~/Passwall-Agent-Telegram-Bot/server/ \
-  ~/public_html/pwagent/
-~~~
+## ۲. Deploy نسخه v0.6 با File Manager
 
-### ۳. اعمال Schema نسخه v0.6
+ZIP آخر Repository را از GitHub دانلود کن، داخل یک فولدر موقت Extract کن و محتویات `server/` را روی فولدر فعلی Backend کپی کن.
 
-اولین Request در v0.6 تابع ensure_v060_schema() را اجرا می‌کند.
+فولدر مقصد را قبل از Copy پاک نکن.
 
-MySQL User هنگام Migration باید مجوز CREATE و ALTER داشته باشد. در صورت نیاز می‌توان server/schema.sql را دستی Import کرد.
+نمونه مسیرهای معتبر:
 
-Tableهای جدید:
+```text
+public_html/pw
+public_html/tools/openwrt
+public_html/network/control
+Document Root یک Subdomain
+```
 
-- pw_device_registry
-- pw_device_groups
-- pw_users
-- pw_user_state
-- pw_audit_log
-- pw_config_changes
-- pw_alert_rules
-- pw_maintenance
-- pw_schedules
+هیچ مسیر اجباری مثل `/home/USER/public_html/pwagent` وجود ندارد.
 
-Telegram Userهای قبلی وارد RBAC می‌شوند. اولین User موجود در allowed_user_ids نقش Owner و سایر Userها نقش Admin می‌گیرند.
+## ۳. Migration دیتابیس
 
-Deviceهای قبلی نیز به Fleet Registry منتقل می‌شوند.
+در Browser باز کن:
 
-### ۴. Instance Key
+```text
+https://YOUR-BACKEND-URL/health.php
+```
 
-نصب جدید security.instance_key را خودکار تولید می‌کند.
+اولین Request نسخه v0.6 تابع `ensure_v060_schema()` را اجرا می‌کند.
 
-برای نصب‌های v0.5 که این مقدار را ندارند، v0.6 از Key Derivation سازگار با نسخه قبلی استفاده می‌کند و Migration بدون ویرایش فوری config.php انجام می‌شود.
+MySQL User هنگام Migration باید Permissionهای CREATE و ALTER داشته باشد.
 
-پس از ساخته‌شدن Device Secretهای Database-backed، Key را بدون Migration تغییر ندهید چون Secretهای رمزنگاری‌شده دیگر قابل باز شدن نخواهند بود.
+v0.6 مواردی مثل این‌ها را به Database اضافه می‌کند:
 
-### ۵. آپدیت Agent
+- Fleet Device Registry
+- Device Groupها
+- RBAC Userها و Active Device State
+- Audit Log
+- Metadata مربوط به Config History رمزنگاری‌شده
+- Alert Ruleها
+- Maintenance State
+- Scheduled Actionها
+- Metricهای Monitoring جدید
 
-Signed Package نسخه v0.6 را برای معماری روتر Sync کنید و سپس از مسیر Update عادی Agent یا Provisioning مجدد استفاده کنید.
+Deviceهای موجود در `config.php` وارد Fleet Registry می‌شوند.
 
-~~~bash
-php bin/sync-release.php --arch=armv7
-~~~
+Telegram Userهای قبلی نیز وارد RBAC می‌شوند؛ اولین Allowed User نقش Owner و بقیه نقش Admin می‌گیرند.
 
-Agent v0.6 Telemetry پیشرفته و Snapshot رمزنگاری‌شده Config History برای Rollback را اضافه می‌کند.
+## ۴. رفتار Instance Key
 
-### ۶. Cron الزامی است
+نصب تازه با Web Setup در v0.6 مقدار `security.instance_key` را خودکار می‌سازد.
 
-Cron یک‌دقیقه‌ای علاوه بر Monitoring، Alert Rule و Scheduled Action را هم اجرا می‌کند:
+اگر نصب v0.5 این فیلد را نداشته باشد، v0.6 برای Migration از Key Derivation پایدار و سازگار با نسخه قبل استفاده می‌کند و نیازی به ویرایش دستی فوری `config.php` نیست.
 
-~~~cron
-* * * * * /usr/bin/php /absolute/path/to/cron/monitor.php >/dev/null 2>&1
-~~~
+بعد از رمزنگاری Device Secretهای Database-backed، Effective Instance Key را خودسرانه تغییر نده.
 
-Maintenance Mode برای Device مربوطه Alertها را Mute و Scheduleهای Due را Pause می‌کند.
+## ۵. Sync کردن Agent v0.6 بدون Terminal
 
-### ۷. اعتبارسنجی
+بعد از Migration Backend وارد:
 
-Backend:
+```text
+Telegram → Dashboard → Release Cache
+```
 
-~~~bash
-php bin/doctor.php
-~~~
+شو و Architecture Router را Sync کن یا همه Architectureها را یکجا Sync کن.
 
-Router:
+Backend قبل از ذخیره Package، SHA256 را Verify می‌کند.
 
-~~~sh
-/usr/bin/pw-agent --version
-/usr/bin/pw-agent diagnose-json
-logread -e pw-agent
-~~~
+## ۶. Upgrade کردن Agent Router
+
+بعد از آماده‌شدن Release Cache، از Update Flow عادی Telegram/Dashboard استفاده کن.
+
+اگر Router نیاز به Reinstall داشت:
+
+```text
+Dashboard → Devices → Provision / Reinstall
+```
+
+را بزن تا Command جدید با Token یک‌بارمصرف ۳۰ دقیقه‌ای ساخته شود؛ بدون نیاز به cPanel Terminal.
+
+## ۷. Cron
+
+Cron یک‌دقیقه‌ای فعلی در v0.6 این موارد را اجرا می‌کند:
+
+- Offline/Recovery Monitoring
+- Alert Ruleها
+- Scheduled Actionها
+
+اگر قبلاً Backend را جابه‌جا کرده‌ای و Cron Path قدیمی شده، در **cPanel → Cron Jobs** مسیر فعلی را اصلاح کن.
+
+در نصب تازه، Web Setup مسیر Absolute واقعی را خودش تشخیص می‌دهد و Cron Command دقیق را چاپ می‌کند.
+
+## ۸. اعتبارسنجی
+
+Browser:
+
+```text
+https://YOUR-BACKEND-URL/health.php
+```
 
 Telegram:
 
-~~~text
+```text
 /start
-~~~
+```
 
-بررسی کنید Router قبلی در Fleet دیده شود و Dashboard Monitoring داده دریافت کند.
+در Dashboard این بخش‌ها را بررسی کن:
 
-## اضافه کردن Router جدید
+```text
+Devices
+Monitoring
+Audit & Rollback
+Release Cache
+```
 
-برای Routerهای جدید config.php را دستی ویرایش نکنید.
+روی Router:
 
-در Telegram:
+```sh
+/usr/bin/pw-agent --version
+/usr/bin/pw-agent diagnose-json
+logread -e pw-agent
+```
 
-~~~text
-/start → Fleet / Devices → Add Device
-~~~
+## سازگاری Config History
 
-یا از Mini App Dashboard استفاده کنید.
+Config History فقط از زمانی ثبت می‌شود که Agent v0.6 روی Router اجرا شود. Mutationهای قدیمی v0.5 Snapshot قابل Rollback ندارند.
 
-دستور تولیدشده فقط Provisioning Token یک‌بارمصرف دارد و Device Secret دائمی را نمایش نمی‌دهد.
+Rollback Snapshot با History Key مخصوص همان Router در مسیر:
 
-## نکته Rollback
+```text
+/etc/pw-agent/history.key
+```
 
-Config History فقط از زمانی ثبت می‌شود که Router Agent نسخه v0.6 را اجرا کند. Mutationهای v0.5 را نمی‌توان به‌صورت Retroactive بازسازی کرد.
+رمزنگاری می‌شود و Backend در عملیات عادی این Key را دریافت نمی‌کند.
 
-Rollback Snapshot روی Agent با History Key مخصوص Router در `/etc/pw-agent/history.key` رمزنگاری می‌شود و Backend در عملیات عادی Config History این Key را دریافت نمی‌کند.
+## روش CLI اختیاری
+
+اگر SSH/Terminal در دسترس بود، Scriptهای CLI همچنان قابل استفاده‌اند ولی اجباری نیستند:
+
+```bash
+php bin/doctor.php
+php bin/sync-release.php --all
+```
