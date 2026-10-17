@@ -59,7 +59,7 @@ Sensitive values such as passwords, node links, subscription URLs, backup payloa
 
 For supported UCI mutations, the Agent captures the affected /etc/config file before the operation.
 
-The pre-change snapshot is encrypted on the router with a key derived from the Device Secret. The backend stores ciphertext only. The visible diff contains changed UCI key names, not configuration values.
+The pre-change snapshot is encrypted on the router with a random router-only 32-byte key stored at `/etc/pw-agent/history.key`. The backend stores ciphertext only and does not receive this history key during normal operation. The visible diff contains changed UCI key names, not configuration values.
 
 Owners and Admins can queue a rollback from Telegram or Dashboard.
 
