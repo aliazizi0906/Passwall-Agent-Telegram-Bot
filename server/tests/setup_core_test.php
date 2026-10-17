@@ -37,6 +37,7 @@ foreach(['armv7','armv7l','aarch64','x86_64','i686','mips','mipsel'] as $a){
 
 $cmd=pw_setup_router_command('https://example.com/network/control','abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-');
 expect_true(str_contains($cmd,"PW_SERVER_BASE='https://example.com/network/control'"),'router command lost subdirectory base URL');
+expect_true(str_contains($cmd,"PW_AGENT_VERSION='v".pw_setup_version()."'"),'router command is not pinned to the backend Agent version');
 expect_true(!str_contains($cmd,'/home/'),'router command contains a hardcoded home path');
 
 $cron=pw_setup_cron_command('/home/demo/public_html/arbitrary/nested/path');
