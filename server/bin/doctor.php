@@ -29,7 +29,6 @@ try{
     $releaseDir=dirname(__DIR__).'/releases';
     $bundles=glob($releaseDir.'/pw-agent-openwrt-'.app_version().'-*.tar.gz')?:[];
     check_row('Signed update bundle available',count($bundles)>0,count($bundles).' architecture(s)');
-    check_row('Official update public key',is_file(dirname(__DIR__,2).'/UPDATE_PUBLIC_KEY.b64')||true,'embedded in Agent');
 }catch(Throwable $e){
     check_row('Runtime',false,$e->getMessage());
 }
