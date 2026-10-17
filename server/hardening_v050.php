@@ -61,6 +61,15 @@ function ensure_v050_schema(): void {
     $pdo->exec("CREATE TABLE IF NOT EXISTS pw_alert_state (
       device_id VARCHAR(64) PRIMARY KEY, offline_alerted_at DATETIME NULL, recovered_alerted_at DATETIME NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS pw_provision_tokens (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      token_hash CHAR(64) NOT NULL UNIQUE,
+      device_id VARCHAR(64) NOT NULL,
+      expires_at DATETIME NOT NULL,
+      used_at DATETIME NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_provision_expiry(expires_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 }
 
 function v050_record_metric(string $deviceId,array $body): void {
@@ -109,4 +118,24 @@ function v050_monitoring_summary(string $deviceId): string {
         $txt.="\n<code>".h((string)$lastEvent['created_at'])."</code>";
     }
     return $txt;
+}
+
+
+function v050_normalize_arch(string $arch): string {
+    $arch=strtolower(trim($arch));
+    $map=[
+        'armv7l'=>'armv7','armv7'=>'armv7','arm'=>'armv7',
+        'aarch64'=>'arm64','arm64'=>'arm64',
+        'x86_64'=>'amd64','amd64'=>'amd64',
+        'i386'=>'386','i486'=>'386','i586'=>'386','i686'=>'386','386'=>'386',
+        'mips'=>'mips','mipsel'=>'mipsle','mipsle'=>'mipsle',
+    ];
+    $out=$map[$arch]??'';
+    if($out==='') throw new RuntimeException('Unsupported router architecture: '.$arch);
+    return $out;
+}
+
+function v050_release_file(string $arch): string {
+    $arch=v050_normalize_arch($arch);
+    return __DIR__.'/releases/pw-agent-openwrt-'.app_version().'-'.$arch.'.tar.gz';
 }
