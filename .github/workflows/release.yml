@@ -29,6 +29,10 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            [ "$GITHUB_REF_NAME" = "main" ] || {
+              echo "Official manual releases must run from the main branch" >&2
+              exit 1
+            }
             RELEASE_TAG="${{ inputs.version }}"
           else
             RELEASE_TAG="$GITHUB_REF_NAME"
