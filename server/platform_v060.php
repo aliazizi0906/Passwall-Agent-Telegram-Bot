@@ -264,7 +264,7 @@ function v060_issue_provision_token(int $uid,string $deviceId): array {
 function v060_provision_command(string $token): string {
     $base=rtrim((string)cfg()['base_url'],'/');
     $raw='https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh';
-    return 'PW_SERVER_BASE='.escapeshellarg($base).' PW_PROVISION_TOKEN='.escapeshellarg($token).' sh -c "$(wget -qO- '.escapeshellarg($raw).')"';
+    return 'PW_SERVER_BASE='.escapeshellarg($base).' PW_PROVISION_TOKEN='.escapeshellarg($token).' PW_AGENT_VERSION='.escapeshellarg('v'.app_version()).' sh -c "$(wget -qO- '.escapeshellarg($raw).')"';
 }
 
 function v060_user(int $uid): ?array {
