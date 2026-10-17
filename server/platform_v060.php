@@ -394,9 +394,11 @@ function v060_record_metric(string $deviceId,array $body): void {
     $q=$pdo->prepare("SELECT id FROM pw_metrics WHERE device_id=? AND captured_at > (NOW()-INTERVAL 50 SECOND) LIMIT 1");$q->execute([$deviceId]);if($q->fetch())return;
     $mem=is_array($body['memory']??null)?$body['memory']:[];
     $total=(float)($mem['total_bytes']??0);$used=(float)($mem['used_bytes']??0);$memPct=$total>0?($used/$total)*100:null;
-    $wan=is_array($body['wan']??null)?$body['wan']:[];
+    $wan=is_array($body['wan']??null)?$body['wan']:null;
+    $passwall=array_key_exists('passwall_running',$body)?(!empty($body['passwall_running'])?1:0):null;
+    $wanUp=is_array($wan)&&array_key_exists('up',$wan)?(!empty($wan['up'])?1:0):null;
     $st=$pdo->prepare('INSERT INTO pw_metrics(device_id,uptime_seconds,load1,cpu_percent,memory_json,memory_used_percent,passwall_running,wan_up,wan_ip,rx_bytes,tx_bytes) VALUES(?,?,?,?,?,?,?,?,?,?,?)');
-    $st->execute([$deviceId,(int)($body['uptime_seconds']??0),(float)($body['load1']??0),isset($body['cpu_percent'])?(float)$body['cpu_percent']:null,json_encode($mem,JSON_UNESCAPED_SLASHES),$memPct,!empty($body['passwall_running'])?1:0,!empty($wan['up'])?1:0,(string)($wan['ip']??''),(int)($wan['rx_bytes']??0),(int)($wan['tx_bytes']??0)]);
+    $st->execute([$deviceId,(int)($body['uptime_seconds']??0),(float)($body['load1']??0),isset($body['cpu_percent'])?(float)$body['cpu_percent']:null,json_encode($mem,JSON_UNESCAPED_SLASHES),$memPct,$passwall,$wanUp,is_array($wan)?(string)($wan['ip']??''):null,is_array($wan)&&isset($wan['rx_bytes'])?(int)$wan['rx_bytes']:null,is_array($wan)&&isset($wan['tx_bytes'])?(int)$wan['tx_bytes']:null]);
 }
 function v060_metric_value(array $row,string $metric): ?float {
     return match($metric){
