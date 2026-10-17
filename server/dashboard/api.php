@@ -59,6 +59,7 @@ try{
         $location=trim((string)($in['location']??''));if(strlen($location)>128)throw new RuntimeException('Location too long');
         $tags=dash_json($in['tags']??[]);$tags=array_values(array_unique(array_filter(array_map(fn($x)=>substr(trim((string)$x),0,48),$tags))));
         $groupId=isset($in['group_id'])&&$in['group_id']!==''?(int)$in['group_id']:null;
+        if($groupId!==null){$g=db()->prepare('SELECT id FROM pw_device_groups WHERE id=?');$g->execute([$groupId]);if(!$g->fetchColumn())throw new RuntimeException('Group not found');}
         db()->prepare('UPDATE pw_device_registry SET display_name=?,location=?,tags_json=?,group_id=? WHERE device_id=?')->execute([$name,$location,json_encode($tags,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$groupId,$device]);
         v060_audit_event($device,$uid,'dashboard','device.update','done',['display_name'=>$name,'location'=>$location,'tags'=>$tags,'group_id'=>$groupId]);
         response_json(['ok'=>true,'device'=>v060_device_row($device)]);
@@ -85,10 +86,17 @@ try{
     }
     if($action==='user_upsert'){
         dash_need($uid,'rbac.manage');
+        $caller=v060_user($uid);$callerRole=(string)($caller['role']??'viewer');
         $target=(int)($in['telegram_user_id']??0);if($target<=0)throw new RuntimeException('Invalid Telegram user ID');
         $role=(string)($in['role']??'viewer');if(!in_array($role,['owner','admin','operator','viewer'],true))throw new RuntimeException('Invalid role');
-        $scope=dash_json($in['device_scope']??['*']);$scope=array_values(array_unique(array_map('strval',$scope)));if(!$scope)$scope=['*'];
+        $existing=v060_user($target);$existingRole=(string)($existing['role']??'');
+        if(($role==='owner'||$existingRole==='owner')&&$callerRole!=='owner')throw new RuntimeException('Only an Owner may create or modify another Owner');
+        $scope=dash_json($in['device_scope']??['*']);$scope=array_values(array_unique(array_filter(array_map('strval',$scope),fn($x)=>$x==='*'||preg_match('/^[A-Za-z0-9_-]{1,64}$/',$x))));if(!$scope)$scope=['*'];
         $enabled=!isset($in['enabled'])||!empty($in['enabled']);
+        if($existingRole==='owner'&&(!$enabled||$role!=='owner')){
+            $owners=(int)db()->query("SELECT COUNT(*) FROM pw_users WHERE enabled=1 AND role='owner'")->fetchColumn();
+            if($owners<=1)throw new RuntimeException('The last enabled Owner cannot be demoted or disabled');
+        }
         db()->prepare('INSERT INTO pw_users(telegram_user_id,role,enabled,device_scope_json) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE role=VALUES(role),enabled=VALUES(enabled),device_scope_json=VALUES(device_scope_json),updated_at=NOW()')->execute([$target,$role,$enabled?1:0,json_encode($scope,JSON_UNESCAPED_SLASHES)]);
         v060_audit_event($device?:'fleet',$uid,'dashboard','rbac.user_upsert','done',['target_user'=>$target,'role'=>$role,'scope'=>$scope,'enabled'=>$enabled]);
         response_json(['ok'=>true]);
