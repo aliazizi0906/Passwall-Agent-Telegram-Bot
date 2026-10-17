@@ -210,7 +210,7 @@ Expected:
 ```json
 {
   "ok": true,
-  "version": "0.5.0"
+  "version": "0.6.0"
 }
 ```
 
@@ -328,3 +328,50 @@ php bin/sync-release.php --all
 ```
 
 See [Updates](UPDATES.md) for details.
+
+
+## Adding more routers in v0.6
+
+After the initial backend installation, do not edit `config.php` for every additional router.
+
+From Telegram:
+
+```text
+/start
+→ Fleet / Devices
+→ Add Device
+```
+
+or open the **Dashboard** Mini App and use **Add device**.
+
+Enter a display name. PW Agent creates a Device ID, encrypted Device Secret and a single-use provisioning token, then returns an installation command valid for 30 minutes.
+
+Run that command on the new OpenWrt router. After its first poll, it appears Online in Fleet.
+
+You can then assign:
+
+- Group
+- Location
+- Tags
+
+from the Dashboard.
+
+### RBAC after installation
+
+The Telegram ID used during initial setup is seeded as **Owner**. Additional users can be added from:
+
+```text
+Dashboard → Access
+```
+
+Roles are Owner, Admin, Operator and Viewer. Operator/Viewer accounts can be limited to selected Device IDs.
+
+### v0.6 cron responsibilities
+
+The one-minute cron is now required for three functions:
+
+- Offline/Recovery monitoring
+- Alert Rule evaluation
+- Scheduled Action execution
+
+Maintenance Mode suppresses alerts and pauses scheduled actions for the selected device.
