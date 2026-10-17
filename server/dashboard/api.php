@@ -157,6 +157,7 @@ try{
     }
     if($action==='release_sync'){
         dash_need($uid,'agent.update');
+        @set_time_limit(180);
         $arch=(string)($in['arch']??'');
         $arches=$arch==='all'?['armv7','arm64','amd64','386','mips','mipsle']:[$arch];
         $results=[];$errors=[];
