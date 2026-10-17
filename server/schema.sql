@@ -55,6 +55,17 @@ CREATE TABLE IF NOT EXISTS pw_metrics (
   wan_ip VARCHAR(64) NULL,
   rx_bytes BIGINT UNSIGNED NULL,
   tx_bytes BIGINT UNSIGNED NULL,
+  packet_loss DOUBLE NULL,
+  dns_ok TINYINT(1) NULL,
+  dns_ms DOUBLE NULL,
+  internet_ok TINYINT(1) NULL,
+  internet_tcp_ms DOUBLE NULL,
+  active_node_id VARCHAR(96) NULL,
+  active_node_name VARCHAR(192) NULL,
+  node_relay_ok TINYINT(1) NULL,
+  node_relay_ms DOUBLE NULL,
+  wan_ip_changed TINYINT(1) NOT NULL DEFAULT 0,
+  agent_reconnected TINYINT(1) NOT NULL DEFAULT 0,
   INDEX idx_metric_device_time (device_id,captured_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
