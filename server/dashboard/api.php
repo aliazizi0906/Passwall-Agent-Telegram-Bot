@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__) . '/lib.php';
+require dirname(__DIR__) . '/release_tools.php';
 header('Cache-Control: no-store');
 
 $in=json_decode_assoc(raw_body());
@@ -131,6 +132,36 @@ try{
         response_json(['ok'=>true]);
     }
 
+
+    if($action==='release_status'){
+        dash_need($uid,'agent.update');
+        $dir=dirname(__DIR__).'/releases';
+        $rows=[];
+        foreach(['armv7','arm64','amd64','386','mips','mipsle'] as $arch){
+            $path=$dir.'/pw-agent-openwrt-'.app_version().'-'.$arch.'.tar.gz';
+            $rows[]=[
+                'arch'=>$arch,
+                'available'=>is_file($path),
+                'size'=>is_file($path)?filesize($path):null,
+                'sha256'=>is_file($path)?hash_file('sha256',$path):null,
+                'updated_at'=>is_file($path)?date('c',filemtime($path)):null,
+            ];
+        }
+        response_json(['ok'=>true,'version'=>app_version(),'releases'=>$rows]);
+    }
+    if($action==='release_sync'){
+        dash_need($uid,'agent.update');
+        $arch=(string)($in['arch']??'');
+        $arches=$arch==='all'?['armv7','arm64','amd64','386','mips','mipsle']:[$arch];
+        $results=[];$errors=[];
+        foreach($arches as $a){
+            try{$results[]=pw_release_sync_arch(dirname(__DIR__),app_version(),$a);}
+            catch(Throwable $e){$errors[]=['arch'=>$a,'error'=>$e->getMessage()];}
+        }
+        v060_audit_event($device?:'fleet',$uid,'dashboard','release.sync',$errors?'failed':'done',['arch'=>$arch],['synced'=>array_column($results,'arch'),'errors'=>$errors]);
+        if(!$results&&$errors)response_json(['ok'=>false,'error'=>'Release sync failed','details'=>$errors],null,400);
+        response_json(['ok'=>true,'results'=>$results,'errors'=>$errors]);
+    }
 
     if($action==='command'){
         dash_device($uid,$device);
