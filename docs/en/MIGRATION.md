@@ -125,4 +125,4 @@ The generated provisioning command contains a one-time token, not the permanent 
 
 Config History begins only after the router is running the v0.6 Agent. Older v0.5 mutations cannot be reconstructed retroactively.
 
-Rollback snapshots are encrypted by the Agent using the Device Secret and are intentionally unreadable to the backend.
+Rollback snapshots are encrypted by the Agent using a router-only key in `/etc/pw-agent/history.key`. The backend does not receive this key during normal config-history operation.
