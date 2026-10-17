@@ -29,8 +29,16 @@ jobs:
       - name: Go vet
         run: go vet ./...
 
-      - name: ARMv7 static build
-        run: GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-armv7 .
+      - name: Multi-architecture static builds
+        shell: bash
+        run: |
+          set -euo pipefail
+          GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-armv7 .
+          GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-arm64 .
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-amd64 .
+          GOOS=linux GOARCH=386 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-386 .
+          GOOS=linux GOARCH=mips GOMIPS=softfloat CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-mips .
+          GOOS=linux GOARCH=mipsle GOMIPS=softfloat CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-mipsle .
 
       - name: PHP lint
         run: find server -name '*.php' -print0 | xargs -0 -n1 php -l
