@@ -2,116 +2,192 @@
 
 [صفحه مستندات](README.md) · [English](../en/TROUBLESHOOTING.md)
 
-## Doctor در Backend
+## Web Setup باز نمی‌شود
 
-اول این دستور را اجرا کنید:
+URL دقیق همان فولدری را باز کن که محتویات `server/` را داخلش آپلود کرده‌ای.
 
-```bash
-cd /path/to/deployed/backend
-php bin/doctor.php
-```
-
-Doctor موارد PHP، Extensionها، HTTPS، Database/Schema، Device، Telegram API/Webhook و Signed Update Bundle را بررسی می‌کند.
-
-## Health Endpoint
-
-باز کنید:
+مثال:
 
 ```text
-https://YOUR-DOMAIN/health.php
+https://example.com/pw/
+https://example.com/tools/router/
+https://router.example.com/
 ```
 
-خروجی سالم:
+اگر `config.php` وجود نداشته باشد، `index.php` خودکار به `setup.php` Redirect می‌کند.
 
-```json
-{"ok":true,"version":"0.6.0",...}
-```
+Backend هیچ مسیر ثابت cPanel نمی‌خواهد.
 
-HTTP 500 معمولاً یعنی Backend نتوانسته Database/Schema را Initialize کند.
+اگر قبل از Setup خطای HTTP 500 می‌گیری، در cPanel بررسی کن:
 
-## PHP CLI قدیمی است
+- PHP حداقل 8.1 باشد.
+- `pdo_mysql`، `curl` و `openssl` فعال باشند.
+- فایل `.htaccess` آپلود شده باشد.
+- PHP Version انتخابی روی همین فولدر اعمال شده باشد.
 
-```bash
-php -v
-```
+## Web Setup می‌گوید Directory Writable نیست
 
-در cPanel می‌توانید EA-PHP را بررسی کنید:
+از cPanel File Manager Permission/Ownership فولدری که `setup.php` داخلش است را بررسی کن.
 
-```bash
-/opt/cpanel/ea-php83/root/usr/bin/php -v
-```
+PW Agent باید بتواند `config.php` و Runtime Fileهای محافظت‌شده را بسازد.
 
-در صورت نیاز همین مسیر کامل را برای Setup، Doctor و Cron استفاده کنید.
+کل Web Directory را World-writable نکن.
 
-## PHP Extension وجود ندارد
+## Base URL اشتباه تشخیص داده شده
 
-```bash
-php -m | grep -Ei 'pdo_mysql|curl|openssl'
-```
+Web Setup از Request فعلی یک URL پیشنهادی می‌سازد، ولی باید Public HTTPS URL نهایی را خودت تأیید کنی.
 
-هر سه مورد لازم هستند.
-
-## مشکل Telegram Webhook
-
-اول Doctor را اجرا کنید.
-
-اگر Bot Token عوض شده، `config.php` را اصلاح کرده و Webhook را دوباره ثبت کنید.
-
-Webhook باید روی مسیر زیر باشد:
+مثلاً اگر Backend اینجاست:
 
 ```text
-https://YOUR-DOMAIN/bot/webhook.php
+public_html/network/control
 ```
+
+Base URL باید باشد:
+
+```text
+https://example.com/network/control
+```
+
+به URL مسیرهای `/api`، `/bot` یا `/setup.php` را اضافه نکن؛ مگر اینکه عمداً خود فولدر `server/` را زیر چنین مسیری Deploy کرده باشی.
+
+## Detect my Telegram ID چیزی پیدا نمی‌کند
+
+قبل از زدن دکمه:
+
+1. Bot جدید را در Telegram باز کن.
+2. برایش `/start` بفرست.
+3. به Web Setup برگرد و دوباره Detect را بزن.
+
+اگر Bot قبلاً Webhook دیگری داشته باشد، ممکن است `getUpdates` پیام جدیدی نداشته باشد. برای نصب تازه بهتر است Bot تازه استفاده شود یا Webhook قبلی حذف شود.
+
+## Setup قفل شده
+
+بعد از ساخته‌شدن `config.php`، صفحه `setup.php` عمداً Lock می‌شود تا شخص دیگری از اینترنت نتواند تنظیمات Backend را Overwrite کند.
+
+برای اضافه کردن Router دوباره Setup را اجرا نکن.
+
+از:
+
+```text
+Telegram → Fleet / Devices → Add Device
+```
+
+یا:
+
+```text
+Dashboard → Devices → Add device
+```
+
+استفاده کن.
 
 ## Provisioning Token منقضی شده
 
-کل نصب را از اول نسازید.
+Router فعلی را در:
 
-```bash
-php bin/new-provision-token.php
+```text
+Dashboard → Devices
 ```
 
-Token یک‌بارمصرف است و ۳۰ دقیقه اعتبار دارد.
+انتخاب کن و:
 
-## دانلود Release در Setup شکست خورده
-
-ابتدا بررسی کنید معماری موردنظر در GitHub Release فعلی وجود دارد.
-
-بعد:
-
-```bash
-php bin/sync-release.php --arch=armv7
+```text
+Provision / Reinstall
 ```
 
-را با معماری صحیح اجرا کنید.
+را بزن.
 
-## مشکل Service Agent
+PW Agent Tokenهای استفاده‌نشده قبلی را Revoke می‌کند و Command جدید ۳۰ دقیقه‌ای می‌سازد.
+
+نیازی به cPanel Terminal نیست.
+
+## Release در Backend Cache وجود ندارد
+
+وارد:
+
+```text
+Dashboard → Release Cache
+```
+
+شو و Architecture لازم یا **Sync all architectures** را اجرا کن.
+
+اگر Sync شکست خورد، بررسی کن GitHub Release همان نسخه واقعاً این فایل‌ها را داشته باشد:
+
+```text
+pw-agent-openwrt-ARCH.tar.gz
+pw-agent-openwrt-ARCH.tar.gz.sha256
+pw-agent-openwrt-ARCH.tar.gz.sig
+```
+
+## Health Endpoint خطای 500 می‌دهد
+
+باز کن:
+
+```text
+https://YOUR-BACKEND-URL/health.php
+```
+
+خطای 500 معمولاً مربوط به Database/Schema است.
+
+در Web Setup یا cPanel بررسی کن:
+
+- MySQL Host و Port
+- Database Name
+- Username/Password
+- ALL PRIVILEGES
+- Permissionهای CREATE و ALTER هنگام Migration
+
+## Cron / Alert / Schedule اجرا نمی‌شود
+
+در **cPanel → Cron Jobs** بررسی کن.
+
+برای نصب تازه، دقیقاً Command تولیدشده توسط Web Setup را استفاده کن؛ چون همان Command مسیر واقعی Backend و PHP CLI را دارد.
+
+Cron باید هر یک دقیقه اجرا شود.
+
+Maintenance Mode عمداً Alertها را Mute و Scheduleهای Due را Pause می‌کند.
+
+## Dashboard خطای Unauthorized می‌دهد
+
+Dashboard باید از دکمه Telegram Mini App باز شود تا `initData` معتبر Telegram وجود داشته باشد.
+
+همچنین بررسی کن:
+
+- User در RBAC فعال باشد.
+- Role Permission لازم را داشته باشد.
+- Device Scope شامل Router فعال باشد.
+
+## Device در Fleet دیده نمی‌شود
+
+یک بار `health.php` را باز کن تا Migration/Seed اجرا شود.
+
+بعد دوباره `/start` بفرست.
+
+Deviceهای v0.5 که در `config.php` وجود دارند خودکار وارد Fleet Registry می‌شوند.
+
+## Agent Router Offline است
 
 روی OpenWrt:
 
 ```sh
 pgrep -af pw-agent
 logread -e pw-agent
+/usr/bin/pw-agent diagnose-json
 /etc/init.d/pw-agent restart
 ```
 
-## Diagnostics اتصال Agent
-
-```sh
-/usr/bin/pw-agent diagnose-json
-```
-
-موارد مهم:
+این موارد را بررسی کن:
 
 - Server URL
 - Device ID
 - HMAC Authentication
-- Response Signature
-- Round-trip Latency
+- Signed Response
+- HTTPS Reachability
+- Clock روتر و سرور
 
-در LuCI هم از **Services → PW Agent** استفاده کنید.
+## Architecture Router اشتباه است
 
-## معماری اشتباه
+روی OpenWrt:
 
 ```sh
 uname -m
@@ -128,7 +204,7 @@ mips    -> mips
 mipsel  -> mipsle
 ```
 
-Remote Installer معمولاً این مورد را خودکار تشخیص می‌دهد.
+Remote Installer معمولاً Architecture را خودکار تشخیص می‌دهد.
 
 ## Passwall2 پیدا نمی‌شود
 
@@ -136,23 +212,33 @@ Remote Installer معمولاً این مورد را خودکار تشخیص م�
 test -f /etc/config/passwall2 && echo OK || echo NOT_FOUND
 ```
 
-برای قابلیت‌های Passwall، نصب Passwall2 لازم است.
+قابلیت‌های Passwall به نصب بودن Passwall2 نیاز دارند.
 
-## Telegram پاسخ می‌دهد ولی اطلاعات Router قدیمی است
+## Rollback در دسترس نیست
 
-Logهای Agent و `diagnose-json` را بررسی کنید. سپس دسترسی HTTPS روتر به Backend و منطقی بودن Clock روتر/سرور را بررسی کنید.
+Config History فقط بعد از اجرای Agent v0.6 ثبت می‌شود. تغییرات v0.5 Snapshot قابل Rollback ندارند.
 
-## Monitoring هشدار نمی‌دهد
+برای تغییر v0.6 بررسی کن Command اصلی Success شده و در Config History دیده شود.
 
-Cron را دستی اجرا کنید:
+Rollback Snapshot با History Key مخصوص Router رمزنگاری می‌شود:
 
-```bash
-php cron/monitor.php
+```text
+/etc/pw-agent/history.key
 ```
 
-بعد بررسی کنید Cron cPanel از مسیر Absolute صحیح PHP و Backend استفاده می‌کند.
+Snapshot روی Router دیگر قابل Decrypt نیست.
 
-## اطلاعات مناسب برای Bug Report
+## CLI Diagnostic اختیاری
+
+اگر هاست Terminal داشت، می‌توانی علاوه بر موارد بالا اجرا کنی:
+
+```bash
+php bin/doctor.php
+```
+
+این دستور اختیاری است و برای نصب عادی cPanel لازم نیست.
+
+## چه اطلاعاتی برای Bug Report امن است؟
 
 معمولاً قابل اشتراک:
 
@@ -161,9 +247,9 @@ php cron/monitor.php
 - Architecture
 - Error Message پاک‌سازی‌شده
 - `diagnose-json` بدون Secret
-- Logهای مرتبط بدون Token/Credential
+- Logهای مرتبط بدون Credential
 
-هرگز منتشر نکنید:
+هرگز منتشر نکن:
 
 - Telegram Bot Token
 - Device Secret
@@ -171,58 +257,4 @@ php cron/monitor.php
 - Private Ed25519 Signing Key
 - کل `config.php`
 - کل `/etc/pw-agent/config.json`
-
-
-## Device در Fleet دیده نمی‌شود
-
-اجرا کنید:
-
-```bash
-php bin/doctor.php
-```
-
-بعد بررسی کنید `pw_device_registry` برای Device ID موردنظر Row فعال داشته باشد و Router در حال Poll کردن Backend باشد.
-
-Deviceهای v0.5 باید هنگام Initialize شدن Schema نسخه v0.6 به‌صورت خودکار وارد Registry شوند.
-
-## Dashboard خطای Unauthorized می‌دهد
-
-Dashboard باید از دکمه Telegram Mini App باز شود. Browser عادی `initData` معتبر Telegram ندارد.
-
-همچنین بررسی کنید:
-
-- Telegram User در `pw_users` وجود داشته باشد.
-- User فعال باشد.
-- Role او Permission لازم را داشته باشد.
-- Device Scope شامل Router فعال باشد.
-
-## Scheduled Action اجرا نمی‌شود
-
-Cron یک‌دقیقه‌ای را بررسی کنید:
-
-```bash
-php cron/monitor.php
-```
-
-اگر Maintenance Mode برای Device فعال باشد، Scheduleهای Due عمداً Pause می‌شوند.
-
-همچنین User سازنده Schedule باید هنوز Permission اجرای Action را داشته باشد.
-
-## Alert Rule Trigger نمی‌شود
-
-بررسی کنید:
-
-- Cron هر دقیقه اجرا شود.
-- Metric جدید در `pw_metrics` وجود داشته باشد.
-- Rule فعال باشد.
-- Threshold و Duration برقرار باشند.
-- Cooldown تمام شده باشد.
-- Maintenance Mode فعال نباشد.
-
-## Rollback در دسترس نیست
-
-Config History فقط بعد از اجرای Agent v0.6 ثبت می‌شود. تغییرات قدیمی Snapshot قابل Rollback ندارند.
-
-برای تغییرات v0.6 بررسی کنید Command اصلی Success شده باشد و Record مربوطه در `pw_config_changes` وجود داشته باشد.
-
-Rollback Snapshot به Device Secret همان Router وابسته است و روی Router دیگر Authentication آن Fail می‌شود.
+- `/etc/pw-agent/history.key`
