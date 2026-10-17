@@ -2,6 +2,7 @@
   "server_url": "https://YOUR-DOMAIN.example/routerbot/api",
   "device_id": "gale-home",
   "device_secret": "CHANGE_ME_64_RANDOM_CHARS",
+  "update_public_key": "BASE64_RAW_ED25519_PUBLIC_KEY",
   "poll_interval_seconds": 3,
   "request_timeout_seconds": 25
 }
