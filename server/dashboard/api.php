@@ -67,8 +67,7 @@ try{
 
     if($action==='groups'){
         dash_need($uid,'device.read');
-        $rows=db()->query('SELECT g.*,COUNT(r.device_id) device_count FROM pw_device_groups g LEFT JOIN pw_device_registry r ON r.group_id=g.id GROUP BY g.id ORDER BY g.name')->fetchAll();
-        response_json(['ok'=>true,'groups'=>$rows]);
+        response_json(['ok'=>true,'groups'=>v060_accessible_groups($uid)]);
     }
     if($action==='group_create'){
         dash_need($uid,'group.manage');
@@ -77,6 +76,28 @@ try{
         db()->prepare('INSERT INTO pw_device_groups(name,description) VALUES(?,?)')->execute([$name,$desc]);
         v060_audit_event($device?:'fleet',$uid,'dashboard','group.create','done',['name'=>$name]);
         response_json(['ok'=>true,'id'=>(int)db()->lastInsertId()]);
+    }
+    if($action==='group_command'){
+        dash_need($uid,'device.read');
+        $groupId=(int)($in['group_id']??0);if($groupId<=0)throw new RuntimeException('Invalid group ID');
+        $commandAction=(string)($in['command_action']??'');
+        if(!v060_group_command_allowed($commandAction))throw new RuntimeException('Bulk action is not allowed');
+        $mutation=isMutationActionPHPV6($commandAction);
+        if($mutation&&empty($in['confirmed']))throw new RuntimeException('Explicit confirmation is required for bulk mutations');
+        $devices=v060_group_devices($uid,$groupId);
+        if(!$devices)throw new RuntimeException('No accessible devices in this group');
+        if(count($devices)>50)throw new RuntimeException('Bulk operation is limited to 50 devices');
+        $queued=[];$errors=[];
+        foreach($devices as $d){
+            $did=(string)$d['device_id'];
+            try{
+                $cid=queue_command($did,$commandAction,[],null,$uid,null,'dashboard-group');
+                db()->prepare("UPDATE pw_audit_log SET source='dashboard-group' WHERE command_id=?")->execute([$cid]);
+                $queued[]=['device_id'=>$did,'command_id'=>$cid];
+            }catch(Throwable $e){$errors[]=['device_id'=>$did,'error'=>$e->getMessage()];}
+        }
+        if(!$queued&&$errors)throw new RuntimeException('Bulk operation could not queue any command');
+        response_json(['ok'=>true,'queued'=>$queued,'errors'=>$errors]);
     }
 
     if($action==='users'){
