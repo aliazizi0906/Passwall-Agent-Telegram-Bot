@@ -25,7 +25,7 @@ d3e307fbb56acaf855f2f183d215bfb7c0beadaa04938cee512491e82bcfe012  ./server/bot/w
 af2422de2280c0539808d67fe63037e6b1658f1b3c1bc6c4d38c9576966bd8d0  ./server/health.php
 c0c685c1bac55c9ad184fbaa152dcc5e496f72b13133cf6f29c40b2f34c67406  ./server/lib.php
 fa28d421a28ed9b6f4b997d5119c2b8adbacff6e2dd119a179b71230f9664934  ./server/releases/.htaccess
-fefabbf93df429f8a82bb7ac1fac52bce087974178561dd78e2ab980a0c081c7  ./server/releases/pw-agent-openwrt-0.4.0.tar.gz
+6906d060b9b4fa6fbfcbcf70a1be0932ec57a15c171451c47d7d891bdcc30ac5  ./server/releases/pw-agent-openwrt-0.4.0.tar.gz
 eefc6bc75bb2c3e9b0ee4163b2f364948872f1a18b801f7ffc11a8c8ec22b26d  ./server/schema.sql
 31c8b7e37351038969cfb6122fb55c1b1fc079296d9eb55d2ca302796a6c9a6f  ./server/terminal/api.php
 f3d706220c2f933ce6f941f7cb8417bb26ec81289090d7502a1e4fb8c980916d  ./server/terminal/index.php
