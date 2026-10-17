@@ -6,7 +6,7 @@ f36329624e33c335d566fdb574bd8d4a2e2d43d9e61c876f6970d83854e39709  ./agent_main.g
 8d84b2cb046050cd0eb22e87dc17bfc32e3cb44fb92d46f496a2a0b755cc6a67  ./features_v030.go
 c5e1d483b07d68b924c7b789d6b72156410ae065d5131102788b4265f8d720dd  ./features_v040.go
 953fffe563a295c49dc665581c6724a7effd1b1742d54c8595e7da880bc1ccf5  ./openwrt/config.example.json
-dac0787fe357fdb848b09bb527227d319396605bcfceb56d3c892a696be71a63  ./openwrt/install-update.sh
+843759b4fadbfb456b4650cc5bd470da9d9a571fb6981e362c1101ebadf1517b  ./openwrt/install-update.sh
 a556f07bdd5ba8aacbd03b477bf5f765f6d1e061db6c2ee0fd2014205c15ef0d  ./openwrt/install.sh
 6cefc01e802abcc5c20ff79879b89386dd1c111fc6ad4f1c41517c76264a0cb9  ./openwrt/luci/usr/share/luci/menu.d/pw-agent.json
 4c039d02d7a72f430dfa0e4be0c42e4872b7c6562f3d1d73824568cb23118faf  ./openwrt/luci/usr/share/rpcd/acl.d/pw-agent.json
