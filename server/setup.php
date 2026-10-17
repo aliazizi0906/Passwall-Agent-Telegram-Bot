@@ -10,7 +10,12 @@ header('Referrer-Policy: no-referrer');
 header('Cache-Control: no-store');
 
 if(session_status()!==PHP_SESSION_ACTIVE){
+    $secureRequest=(isset($_SERVER['HTTPS'])&&strtolower((string)$_SERVER['HTTPS'])!=='off'&&(string)$_SERVER['HTTPS']!=='')
+        || (isset($_SERVER['REQUEST_SCHEME'])&&strtolower((string)$_SERVER['REQUEST_SCHEME'])==='https')
+        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO'])&&strtolower(trim(explode(',',(string)$_SERVER['HTTP_X_FORWARDED_PROTO'])[0]))==='https');
+    @ini_set('session.use_strict_mode','1');
     session_name('pw_agent_setup');
+    session_set_cookie_params(['httponly'=>true,'secure'=>$secureRequest,'samesite'=>'Strict']);
     session_start();
 }
 if(empty($_SESSION['pw_setup_csrf']))$_SESSION['pw_setup_csrf']=bin2hex(random_bytes(24));
