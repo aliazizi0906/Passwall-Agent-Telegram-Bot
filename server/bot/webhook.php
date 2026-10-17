@@ -7,24 +7,26 @@ $gotSecret=header_value('X-Telegram-Bot-Api-Secret-Token');
 if($expectedSecret===''||!hash_equals($expectedSecret,$gotSecret)){http_response_code(403);exit('forbidden');}
 
 $update=json_decode_assoc(raw_body());
-$tg=cfg()['telegram'];$allowed=array_map('intval',$tg['allowed_user_ids']??[]);$device=(string)$tg['default_device_id'];
+$tg=cfg()['telegram'];
 $userId=0;$chatId=0;$text='';$cb=null;$messageId=0;$document=null;
 if(isset($update['message'])){
     $m=$update['message'];$userId=(int)($m['from']['id']??0);$chatId=(int)($m['chat']['id']??0);$messageId=(int)($m['message_id']??0);$text=trim((string)($m['text']??''));$document=$m['document']??null;
 }elseif(isset($update['callback_query'])){
     $cb=$update['callback_query'];$userId=(int)($cb['from']['id']??0);$chatId=(int)($cb['message']['chat']['id']??0);$messageId=(int)($cb['message']['message_id']??0);
 }
-if(!in_array($userId,$allowed,true)){if($chatId){try{tg_send($chatId,'⛔ Unauthorized user.');}catch(Throwable $e){}}http_response_code(200);exit('ok');}
+ensure_v060_schema();
+if(!v060_user_allowed($userId)){if($chatId){try{tg_send($chatId,'⛔ Unauthorized user.');}catch(Throwable $e){}}http_response_code(200);exit('ok');}
+$device=v060_active_device($userId);
 
 function qcmd(string $device,string $action,array $params,int $chatId,int $userId,?int $messageId=null,?string $view=null): void {
     queue_command($device,$action,$params,$chatId,$userId,$messageId,$view);
 }
-function edit_home(int $chatId,int $messageId): void { tg_edit($chatId,$messageId,"🏠 <b>PW Agent</b>\nOpenWrt + Passwall2 Remote Management",main_keyboard()); }
+function edit_home(int $chatId,int $messageId,int $userId,string $device): void { tg_edit($chatId,$messageId,v060_home_text($userId,$device),v060_home_keyboard($userId,$device)); }
 
 try{
     if($text==='/start'){
-        session_clear($chatId,$userId,$device);
-        tg_send($chatId,"🏠 <b>PW Agent</b>\nOpenWrt + Passwall2 Remote Management",main_keyboard());
+        if($device!=='')session_clear($chatId,$userId,$device);
+        tg_send($chatId,v060_home_text($userId,$device),v060_home_keyboard($userId,$device));
         http_response_code(200);exit('ok');
     }
 
@@ -33,7 +35,103 @@ try{
         $preserveSession=str_starts_with($data,'ndpick|')||in_array($data,['nddelselectedq','nddelselected'],true);
         if(!$preserveSession)session_clear($chatId,$userId,$device);
 
-        if($data==='home'){edit_home($chatId,$messageId);}
+        if($data==='home'){edit_home($chatId,$messageId,$userId,$device);}
+        elseif($data==='fleet'){
+            $sum=v060_fleet_summary($userId);
+            $txt="🛰 <b>Fleet</b>\n\nTotal: <b>".$sum['total']."</b> · Online: <b>".$sum['online']."</b> · Offline: <b>".$sum['offline']."</b>\n\nSelect the active router:";
+            tg_edit($chatId,$messageId,$txt,v060_fleet_keyboard($userId,$device));
+        }
+        elseif(str_starts_with($data,'dev|')){
+            $selected=v060_device_from_token($userId,substr($data,4));
+            v060_set_active_device($userId,$selected);$device=$selected;
+            edit_home($chatId,$messageId,$userId,$device);
+        }
+        elseif($data==='fleethealth'){
+            $sum=v060_fleet_summary($userId);$lines=[];
+            foreach($sum['devices'] as $d){$lines[]=($d['maintenance']?'🟡':($d['online']?'🟢':'🔴')).' <b>'.h((string)$d['display_name']).'</b> · '.h((string)($d['agent_version']??'-')).' · '.h((string)($d['last_seen']??'never'));}
+            tg_edit($chatId,$messageId,"📊 <b>Fleet Health</b>\n\n".($lines?implode("\n",$lines):'No devices.'),v060_fleet_keyboard($userId,$device));
+        }
+        elseif($data==='devadd'){
+            if(!v060_has_permission($userId,'device.manage'))throw new RuntimeException('Device management permission required');
+            if($device==='')$device='_fleet';
+            session_set($chatId,$userId,$device,'await_new_device_name',['menu_message_id'=>$messageId]);
+            tg_edit($chatId,$messageId,"➕ <b>Add Device</b>\n\nSend a display name for the new OpenWrt router. A single-use 30-minute provisioning command will be generated.",nav_row('fleet'));
+        }
+        elseif($data==='groups'){
+            if(!v060_has_permission($userId,'device.read'))throw new RuntimeException('Permission denied');
+            $rows=db()->query('SELECT g.*,COUNT(r.device_id) device_count FROM pw_device_groups g LEFT JOIN pw_device_registry r ON r.group_id=g.id GROUP BY g.id ORDER BY g.name')->fetchAll();
+            $txt="🗂 <b>Device Groups</b>\n\n";foreach($rows as $g)$txt.='• <b>'.h((string)$g['name']).'</b> — '.(int)$g['device_count']." device(s)\n";
+            if(!$rows)$txt.='No groups yet.';
+            $kb=[];if(v060_has_permission($userId,'group.manage'))$kb[]=[['text'=>'➕ Create Group','callback_data'=>'groupadd']];$kb=array_merge($kb,nav_row('fleet'));
+            tg_edit($chatId,$messageId,$txt,$kb);
+        }
+        elseif($data==='groupadd'){
+            if(!v060_has_permission($userId,'group.manage'))throw new RuntimeException('Group management permission required');
+            session_set($chatId,$userId,$device?:'_fleet','await_group_name',['menu_message_id'=>$messageId]);
+            tg_edit($chatId,$messageId,"🗂 <b>Create Group</b>\n\nSend the new group name.",nav_row('groups'));
+        }
+        elseif($data==='audit'){
+            if($device==='')throw new RuntimeException('Select a device first');
+            $rows=v060_audit_recent($userId,$device,15);$txt="📜 <b>Audit — ".h(v060_device_label($device))."</b>\n\n";
+            foreach($rows as $a)$txt.='<code>'.h((string)$a['created_at']).'</code> · '.h((string)$a['status'])."\n".h((string)$a['action']).' · user '.h((string)($a['telegram_user_id']??$a['source']))."\n\n";
+            if(!$rows)$txt.='No audit entries.';
+            tg_edit($chatId,$messageId,$txt,nav_row('fleet'));
+        }
+        elseif($data==='history'){
+            if($device==='')throw new RuntimeException('Select a device first');
+            $rows=v060_config_changes($userId,$device,8);$txt="🧾 <b>Configuration History</b>\n".h(v060_device_label($device))."\n\n";$kb=[];
+            foreach($rows as $c){$diff=json_decode((string)$c['diff_json'],true);if(!is_array($diff))$diff=[];$txt.='<b>#'.(int)$c['id'].' '.h((string)$c['action'])."</b>\n".h((string)$c['created_at'])."\n".h(implode(', ',array_slice($diff,0,4)))."\n\n";if(v060_has_permission($userId,'rollback'))$kb[]=[['text'=>'↩️ Rollback #'.(int)$c['id'],'callback_data'=>'rb|'.(int)$c['id']]];}
+            if(!$rows)$txt.='No configuration changes recorded.';
+            $kb=array_merge($kb,nav_row('home'));tg_edit($chatId,$messageId,$txt,$kb);
+        }
+        elseif(str_starts_with($data,'rb|')){
+            if(!v060_has_permission($userId,'rollback'))throw new RuntimeException('Rollback permission required');
+            $changeId=(int)substr($data,3);if($changeId<=0)throw new RuntimeException('Invalid change');
+            $id=v060_queue_rollback($userId,$changeId,$chatId,$messageId);
+            tg_edit($chatId,$messageId,"↩️ <b>Rollback queued</b>\nCommand: <code>".$id."</code>",nav_row('history'));
+        }
+        elseif($data==='maint'){
+            if($device==='')throw new RuntimeException('Select a device first');
+            $m=v060_maintenance_row($device);$txt="🛠 <b>Maintenance Mode</b>\n".h(v060_device_label($device))."\n\n".($m?'Active until <code>'.h((string)$m['until_at']).'</code>':'Currently disabled.');
+            $kb=[[['text'=>'1 hour','callback_data'=>'maint|60'],['text'=>'2 hours','callback_data'=>'maint|120'],['text'=>'8 hours','callback_data'=>'maint|480']],[['text'=>'Disable','callback_data'=>'maint|0']],...nav_row('home')];
+            tg_edit($chatId,$messageId,$txt,$kb);
+        }
+        elseif(str_starts_with($data,'maint|')){
+            if($device==='')throw new RuntimeException('Select a device first');
+            v060_set_maintenance($userId,$device,(int)substr($data,6),'Telegram maintenance');
+            $m=v060_maintenance_row($device);tg_edit($chatId,$messageId,"🛠 <b>Maintenance updated</b>\n".($m?'Until <code>'.h((string)$m['until_at']).'</code>':'Disabled.'),nav_row('home'));
+        }
+        elseif($data==='alerts'){
+            if($device==='')throw new RuntimeException('Select a device first');
+            if(!v060_has_permission($userId,'monitor.read'))throw new RuntimeException('Monitoring permission required');
+            $st=db()->prepare('SELECT * FROM pw_alert_rules WHERE device_id=? ORDER BY id DESC LIMIT 20');$st->execute([$device]);$rows=$st->fetchAll();
+            $txt="🚨 <b>Alert Rules</b>\n".h(v060_device_label($device))."\n\n";foreach($rows as $a)$txt.='#'.(int)$a['id'].' '.h((string)$a['metric']).' '.h((string)$a['operator']).' '.h((string)$a['threshold']).' · '.(!empty($a['enabled'])?'ON':'OFF')."\n";if(!$rows)$txt.='No rules.';
+            $kb=[];if(v060_has_permission($userId,'alert.manage'))$kb=[[['text'=>'CPU > 90%','callback_data'=>'alertq|cpu'],['text'=>'RAM > 90%','callback_data'=>'alertq|ram']],[['text'=>'WAN Down','callback_data'=>'alertq|wan'],['text'=>'Passwall Down','callback_data'=>'alertq|pw']]];$kb=array_merge($kb,nav_row('home'));tg_edit($chatId,$messageId,$txt,$kb);
+        }
+        elseif(str_starts_with($data,'alertq|')){
+            if($device==='')throw new RuntimeException('Select a device first');
+            $kind=substr($data,7);$map=['cpu'=>['cpu_percent','>',90.0],'ram'=>['memory_percent','>',90.0],'wan'=>['wan_down','==',1.0],'pw'=>['passwall_down','==',1.0]];if(!isset($map[$kind]))throw new RuntimeException('Invalid quick alert');
+            [$metric,$op,$threshold]=$map[$kind];$id=v060_add_alert($userId,$device,$metric,$op,$threshold,300,900,$chatId);tg_edit($chatId,$messageId,"🚨 Alert rule <b>#".$id."</b> created.",nav_row('alerts'));
+        }
+        elseif($data==='schedules'){
+            if($device==='')throw new RuntimeException('Select a device first');
+            $st=db()->prepare('SELECT * FROM pw_schedules WHERE device_id=? ORDER BY id DESC LIMIT 20');$st->execute([$device]);$rows=$st->fetchAll();$txt="⏱ <b>Scheduled Actions</b>\n".h(v060_device_label($device))."\n\n";foreach($rows as $x)$txt.='#'.(int)$x['id'].' '.h((string)$x['name']).' · '.h((string)$x['next_run_at']).' · '.(!empty($x['enabled'])?'ON':'OFF')."\n";if(!$rows)$txt.='No schedules.';
+            $kb=[];if(v060_has_permission($userId,'schedule.manage'))$kb=[[['text'=>'Restart Passwall daily','callback_data'=>'schedq|pwr'],['text'=>'Update Subs / 6h','callback_data'=>'schedq|sub']],[['text'=>'Backup weekly','callback_data'=>'schedq|bak'],['text'=>'Agent Update weekly','callback_data'=>'schedq|upd']]];$kb=array_merge($kb,nav_row('home'));tg_edit($chatId,$messageId,$txt,$kb);
+        }
+        elseif(str_starts_with($data,'schedq|')){
+            if($device==='')throw new RuntimeException('Select a device first');
+            $kind=substr($data,7);
+            if($kind==='pwr')$id=v060_add_schedule($userId,$device,'Daily Passwall restart','passwall2.restart',[],'daily',['time'=>'04:00']);
+            elseif($kind==='sub')$id=v060_add_schedule($userId,$device,'Subscription update','passwall2.subscription.update',['id'=>'all'],'interval',['every_minutes'=>360]);
+            elseif($kind==='bak')$id=v060_add_schedule($userId,$device,'Weekly backup','system.backup.create',[],'weekly',['weekday'=>0,'time'=>'03:00']);
+            elseif($kind==='upd')$id=v060_add_schedule($userId,$device,'Weekly Agent update','agent.update.apply',[],'weekly',['weekday'=>0,'time'=>'04:00']);
+            else throw new RuntimeException('Invalid quick schedule');
+            tg_edit($chatId,$messageId,"⏱ Schedule <b>#".$id."</b> created.",nav_row('schedules'));
+        }
+        elseif($data==='access'){
+            if(!v060_has_permission($userId,'rbac.read'))throw new RuntimeException('Access management permission required');
+            $rows=db()->query('SELECT telegram_user_id,role,enabled,device_scope_json FROM pw_users ORDER BY created_at')->fetchAll();$txt="👥 <b>Access / RBAC</b>\n\n";foreach($rows as $u)$txt.='<code>'.h((string)$u['telegram_user_id']).'</code> · <b>'.h((string)$u['role']).'</b> · '.(!empty($u['enabled'])?'enabled':'disabled')."\n";$txt.="\nUse the Dashboard for RBAC changes.";tg_edit($chatId,$messageId,$txt,nav_row('home'));
+        }
         elseif($data==='status'){qcmd($device,'system.status',[],$chatId,$userId,$messageId,'status');}
         elseif($data==='monitoring'){tg_edit($chatId,$messageId,v050_monitoring_summary($device),nav_row('home'));}
         elseif($data==='pw'){qcmd($device,'passwall2.status',[],$chatId,$userId,$messageId,'passwall');}
@@ -252,14 +350,34 @@ try{
             session_set($chatId,$userId,$device,'await_backup_file',['menu_message_id'=>$messageId]);
             tg_edit($chatId,$messageId,"📥 <b>Restore OpenWrt Backup</b>\n\nSend the <code>.tar.gz</code> backup file as a Telegram document.\nMaximum size: 8 MiB.\n\nThe router validates the archive before restoring it.",nav_row('backup'));
         }
-        else { edit_home($chatId,$messageId); }
+        else { edit_home($chatId,$messageId,$userId,$device); }
         http_response_code(200);exit('ok');
     }
 
     $session=session_get($chatId,$userId,$device);
     if($session!==null){
         $state=$session['state'];$ctx=$session['context'];$menuId=(int)($ctx['menu_message_id']??0);
-        if($state==='await_node_link'){
+        if($state==='await_new_device_name'){
+            $name=trim($text);
+            if($name===''||strlen($name)>128){tg_send($chatId,'❌ Device name must be 1-128 bytes.',nav_row('fleet'));}
+            else{
+                session_clear($chatId,$userId,$device);
+                $created=v060_register_device($name,$userId);$cmd=v060_provision_command((string)$created['token']);
+                tg_edit($chatId,$menuId,"✅ <b>Device created</b>\nName: <b>".h($name)."</b>\nID: <code>".h((string)$created['device_id'])."</code>\n\nRun within 30 minutes:\n<pre>".h($cmd)."</pre>",v060_fleet_keyboard($userId,$device));
+                tg_delete($chatId,$messageId);
+            }
+        }
+        elseif($state==='await_group_name'){
+            $name=trim($text);
+            if($name===''||strlen($name)>96){tg_send($chatId,'❌ Group name must be 1-96 bytes.',nav_row('groups'));}
+            else{
+                if(!v060_has_permission($userId,'group.manage'))throw new RuntimeException('Group management permission required');
+                db()->prepare('INSERT INTO pw_device_groups(name) VALUES(?)')->execute([$name]);
+                session_clear($chatId,$userId,$device);v060_audit_event($device?:'fleet',$userId,'telegram','group.create','done',['name'=>$name]);
+                tg_edit($chatId,$menuId,"✅ Group <b>".h($name)."</b> created.",nav_row('groups'));tg_delete($chatId,$messageId);
+            }
+        }
+        elseif($state==='await_node_link'){
             $lines=preg_split('/\r?\n/',trim($text))?:[];$links=[];$valid=true;
             foreach($lines as $line){$line=trim($line);if($line==='')continue;if(!preg_match('/^(vless|vmess|trojan|ss|ssr|socks|socks5|hysteria2|hy2|tuic|naive|http|https|anytls|ssd):\/\//i',$line)){$valid=false;break;}$links[]=$line;}
             if(!$valid||!$links){tg_send($chatId,'❌ Every non-empty line must be a supported Passwall2 node link.',nav_row('nodes'));}
@@ -311,9 +429,9 @@ try{
     if($text!=='' && preg_match('/^(vless|vmess|trojan|ss|ssr|socks|socks5|hysteria2|hy2|tuic|naive|http|https):\/\//i',$text)){
         qcmd($device,'passwall2.node.add_link',['link'=>$text],$chatId,$userId,null,'nodes');tg_delete($chatId,$messageId);
     }else{
-        tg_send($chatId,"Use <code>/start</code> and the inline buttons to manage the router.\nNo other text commands are required.",main_keyboard());
+        tg_send($chatId,"Use <code>/start</code> and the inline buttons to manage the router.\nNo other text commands are required.",v060_home_keyboard($userId,$device));
     }
 }catch(Throwable $e){
-    if($chatId){try{tg_send($chatId,'❌ '.h($e->getMessage()),main_keyboard());}catch(Throwable $ignored){}}
+    if($chatId){try{tg_send($chatId,'❌ '.h($e->getMessage()),v060_home_keyboard($userId,$device));}catch(Throwable $ignored){}}
 }
 http_response_code(200);echo 'ok';
