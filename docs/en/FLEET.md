@@ -41,13 +41,13 @@ These values are fleet metadata and do not alter OpenWrt configuration.
 | Role | Typical access |
 |---|---|
 | Owner | Full platform access |
-| Admin | Full operational and RBAC management |
+| Admin | Broad operational management inside its Device Scope; RBAC is read-only |
 | Operator | Day-to-day operations without sensitive admin capabilities |
 | Viewer | Read-only monitoring/status access |
 
 Operator and Viewer accounts can be restricted to specific Device IDs.
 
-Sensitive permissions include Terminal, Backup Restore, Agent Update, Rollback, RBAC and alert/schedule management.
+Sensitive permissions include Terminal, Backup Restore, Agent Update, Rollback and alert/schedule management. RBAC mutation is Owner-only to prevent scoped administrators from escalating their own access.
 
 ## Audit log
 
