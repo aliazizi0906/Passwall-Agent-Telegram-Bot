@@ -231,6 +231,7 @@ function main_keyboard(): array {
         [['text'=>'🔌 Network','callback_data'=>'network'],['text'=>'📶 Wi-Fi','callback_data'=>'wifimenu']],
         [['text'=>'🛡 Firewall','callback_data'=>'firewall'],['text'=>'⚙️ System','callback_data'=>'systemmenu']],
         [['text'=>'🧪 Diagnostics','callback_data'=>'diag'],['text'=>'💾 Backup','callback_data'=>'backup']],
+        [['text'=>'📈 Monitoring','callback_data'=>'monitoring']],
     ];
     $base=rtrim((string)(cfg()['base_url']??''),'/');
     if((cfg()['telegram']['terminal_enabled'] ?? true) && str_starts_with($base,'https://')) {
