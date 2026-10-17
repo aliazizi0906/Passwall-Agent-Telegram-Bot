@@ -260,7 +260,17 @@ function v060_scope(int $uid): array {
 function v060_can_device(int $uid,string $deviceId): bool {
     $u=v060_user($uid);if(!$u||empty($u['enabled']))return false;
     if((string)$u['role']==='owner')return true;
-    $scope=v060_scope($uid);return in_array('*',$scope,true)||in_array($deviceId,$scope,true);
+    $scope=v060_scope($uid);
+    foreach($scope as $entry){
+        if($entry==='*'||hash_equals($entry,$deviceId))return true;
+        if(str_ends_with($entry,'*')&&strlen($entry)>1&&str_starts_with($deviceId,substr($entry,0,-1)))return true;
+        if(str_starts_with($entry,'group:')){
+            $gid=(int)substr($entry,6);if($gid<=0)continue;
+            $st=db()->prepare('SELECT 1 FROM pw_device_registry WHERE device_id=? AND group_id=? AND enabled=1');$st->execute([$deviceId,$gid]);
+            if($st->fetchColumn())return true;
+        }
+    }
+    return false;
 }
 function v060_action_permission(string $action): string {
     if($action==='terminal.exec')return 'terminal.execute';
