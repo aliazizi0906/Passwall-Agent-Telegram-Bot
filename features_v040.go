@@ -309,19 +309,17 @@ func failoverRunOneV4(a *Agent, shuntID string, manual bool) (map[string]interfa
 		_ = saveFailoverStore(store)
 		return map[string]interface{}{"healthy": false, "current": cur, "detail": p.LastError}, nil
 	}
-	curRelay := testRelay(cur)
-	curOK, _ := curRelay["ok"].(bool)
-	if curOK {
+	curHealth := scoreNodeV5(conf, cur)
+	curRelay := map[string]interface{}{"ok": curHealth.OK, "ms": curHealth.RelayMS, "jitter_ms": curHealth.JitterMS, "loss": curHealth.Loss, "tcp_ok": curHealth.TCP, "score": curHealth.Score}
+	if curHealth.OK {
 		p.ConsecutiveFailures = 0
 		p.LastError = ""
-		if ms, ok := curRelay["ms"].(float64); ok {
-			p.LastRelayMS = ms
-		}
+		p.LastRelayMS = curHealth.RelayMS
 		// Optional return to the preferred node after cooldown.
 		if p.AutoReturn && p.PreferredNode != "" && cur != p.PreferredNode && time.Now().Unix()-p.LastSwitchUnix >= int64(p.CooldownSeconds) {
 			if isNormalProxyNodeV4(conf, p.PreferredNode) {
-				rr := testRelay(p.PreferredNode)
-				if ok, _ := rr["ok"].(bool); ok {
+				rr := scoreNodeV5(conf, p.PreferredNode)
+				if rr.OK {
 					old := cur
 					if _, err := setShuntDefaultV3(shuntID, p.PreferredNode); err == nil {
 						p.LastSwitchUnix = time.Now().Unix()
@@ -355,7 +353,7 @@ func failoverRunOneV4(a *Agent, shuntID string, manual bool) (map[string]interfa
 	for _, id := range p.ExcludedNodes {
 		excluded[id] = true
 	}
-	ranks := relayRankAllV4(conf, excluded)
+	ranks := relayRankAllV5(conf, excluded)
 	if len(ranks) == 0 {
 		if a != nil {
 			_ = a.emitEventV4("failover.no_candidate", map[string]interface{}{"shunt_id": shuntID, "current": cur})
@@ -723,6 +721,13 @@ func (a *Agent) agentUpdateApplyV4() (map[string]interface{}, error) {
 	expected, _ := out["sha256"].(string)
 	if expected == "" || !strings.EqualFold(expected, actual) {
 		return nil, errors.New("update package checksum mismatch")
+	}
+	signature, _ := out["signature_b64"].(string)
+	if signature == "" {
+		return nil, errors.New("update package signature missing")
+	}
+	if err := a.verifyUpdateSignatureV5(rawPkg, signature); err != nil {
+		return nil, err
 	}
 	dir := "/tmp/pw-agent-update"
 	_ = os.RemoveAll(dir)
