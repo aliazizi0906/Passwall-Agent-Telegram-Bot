@@ -27,7 +27,8 @@ try{
         $fleet=v060_fleet_summary($uid);
         $active=v060_active_device($uid);
         $user=v060_user($uid);
-        response_json(['ok'=>true,'fleet'=>$fleet,'active_device_id'=>$active,'role'=>$user['role']??'viewer']);
+        $role=(string)($user['role']??'viewer');
+        response_json(['ok'=>true,'fleet'=>$fleet,'active_device_id'=>$active,'role'=>$role,'permissions'=>v060_role_permissions($role)]);
     }
 
     if($action==='select_device'){
