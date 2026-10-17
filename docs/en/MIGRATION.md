@@ -2,105 +2,127 @@
 
 [Documentation Home](README.md) · [فارسی](../fa/MIGRATION.md)
 
-## Upgrade to v0.5.x from an existing installation
+## Upgrade from v0.5.x to v0.6.x
 
-v0.5 changes the project from a device-specific deployment into a reusable public installation model and adds queue hardening, encrypted sensitive parameters, signed updates, monitoring and multi-architecture releases.
+v0.6 keeps the v0.5 outbound Agent protocol and adds the Fleet platform around it. Existing v0.5 Device IDs and Device Secrets are migrated into the new database-backed Device Registry automatically.
 
-### 1. Preserve runtime configuration
+### 1. Preserve runtime files
 
-Do not overwrite your existing:
+Keep the deployed config.php and the runtime release directory.
 
-```text
-server/config.php
-```
+Do not replace config.php with config.example.php.
 
-Also preserve runtime release files if you already synchronized them.
+### 2. Deploy the v0.6 backend
 
-### 2. Update backend files
+Update the source checkout and copy the new server files while excluding local runtime files.
 
-Update the source checkout and deploy the new `server/` files while excluding `config.php` and release runtime assets.
+Example:
 
-### 3. Apply schema changes
+~~~bash
+cd ~/Passwall-Agent-Telegram-Bot
+git pull --ff-only
 
-The configured MySQL account should have `ALTER` and `CREATE` privileges for the first v0.5 request so `ensure_v050_schema()` can apply required changes.
+rsync -a \
+  --exclude='config.php' \
+  --exclude='releases/*.tar.gz' \
+  --exclude='releases/*.sig' \
+  --exclude='releases/*.sha256' \
+  ~/Passwall-Agent-Telegram-Bot/server/ \
+  ~/public_html/pwagent/
+~~~
 
-Alternatively, import:
+### 3. Apply the v0.6 schema
 
-```text
-server/schema.sql
-```
+The first v0.6 backend request runs ensure_v060_schema().
 
-manually.
+The MySQL user must have CREATE and ALTER privileges during migration. You may alternatively import server/schema.sql manually.
 
-v0.5 adds command lease/idempotency fields and tables for metrics, events, alert state and provisioning tokens.
+New v0.6 tables include:
 
-### 4. Synchronize the signed release
+- pw_device_registry
+- pw_device_groups
+- pw_users
+- pw_user_state
+- pw_audit_log
+- pw_config_changes
+- pw_alert_rules
+- pw_maintenance
+- pw_schedules
 
-Example for ARMv7:
+Existing configured Telegram users are seeded into RBAC. The first configured allowed user becomes Owner; additional configured users become Admin.
 
-```bash
+Existing configured devices are seeded into the Fleet Registry.
+
+### 4. Instance-key behavior
+
+New installations generate security.instance_key automatically.
+
+Existing v0.5 installations can migrate without immediately editing config.php; v0.6 uses a stable backward-compatible key derivation for Fleet secret storage when no explicit instance key exists.
+
+Do not later replace the key arbitrarily after database-backed Device Secrets have been created, or those encrypted secrets will no longer decrypt.
+
+### 5. Update the Agent
+
+Sync the v0.6 signed package for the router architecture, then use the normal Agent update path or reinstall using a new provisioning token.
+
+Example:
+
+~~~bash
 php bin/sync-release.php --arch=armv7
-```
+~~~
 
-Supported values:
+The v0.6 Agent adds advanced heartbeat telemetry and encrypted configuration-history snapshots used by Rollback.
 
-```text
-armv7
-arm64
-amd64
-386
-mips
-mipsle
-```
+### 6. Cron is required
 
-### 5. Upgrade/reinstall the router Agent
+The existing one-minute monitoring cron now also runs Alert Rules and Scheduled Actions:
 
-Use the v0.5 release or generate a new provisioning token:
-
-```bash
-php bin/new-provision-token.php
-```
-
-Then execute the generated install command on OpenWrt.
-
-The official Ed25519 update public key is embedded in the v0.5 Agent. Normal users do not need to generate signing keys.
-
-### 6. Add monitoring cron
-
-```cron
+~~~cron
 * * * * * /usr/bin/php /absolute/path/to/cron/monitor.php >/dev/null 2>&1
-```
+~~~
+
+Maintenance Mode suppresses alerts and pauses due schedules for the affected device.
 
 ### 7. Validate
 
 Backend:
 
-```bash
+~~~bash
 php bin/doctor.php
-```
+~~~
 
 Router:
 
-```sh
+~~~sh
 /usr/bin/pw-agent --version
 /usr/bin/pw-agent diagnose-json
 logread -e pw-agent
-```
+~~~
 
 Telegram:
 
-```text
+~~~text
 /start
-```
+~~~
 
-## Migrating a fork with independent update trust
+Confirm that the Fleet menu shows the existing router, then open the Dashboard and verify Monitoring.
 
-A fork that wants to publish independently signed Agent releases should:
+## Additional routers after migration
 
-1. generate a new Ed25519 key pair;
-2. replace `UPDATE_PUBLIC_KEY.b64`;
-3. update the embedded official public key in the Agent source;
-4. store the matching private key only in its GitHub Actions secret;
-5. rebuild and publish its own releases.
+Do not edit config.php to add each new router.
 
-Never commit the private signing key.
+Use Telegram:
+
+~~~text
+/start → Fleet / Devices → Add Device
+~~~
+
+or use the Mini App Dashboard.
+
+The generated provisioning command contains a one-time token, not the permanent Device Secret.
+
+## Rollback considerations
+
+Config History begins only after the router is running the v0.6 Agent. Older v0.5 mutations cannot be reconstructed retroactively.
+
+Rollback snapshots are encrypted by the Agent using the Device Secret and are intentionally unreadable to the backend.
