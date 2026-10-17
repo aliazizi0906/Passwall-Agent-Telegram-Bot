@@ -8,6 +8,7 @@ TOKEN="${PW_PROVISION_TOKEN:-}"
 [ -n "$SERVER_BASE" ] || { echo "ERROR: PW_SERVER_BASE is required." >&2; exit 1; }
 [ -n "$TOKEN" ] || { echo "ERROR: PW_PROVISION_TOKEN is required." >&2; exit 1; }
 echo "$SERVER_BASE" | grep -Eq '^https://[^[:space:]"]+$' || { echo "ERROR: PW_SERVER_BASE must use HTTPS." >&2; exit 1; }
+echo "$TOKEN" | grep -Eq '^[A-Za-z0-9_-]{32,128}$' || { echo "ERROR: invalid provisioning token format." >&2; exit 1; }
 
 case "$(uname -m)" in
     armv7l|armv7*) ARCH=armv7 ;;
@@ -24,7 +25,8 @@ mkdir -p "$TMP"
 trap 'rm -rf "$TMP"' EXIT INT TERM
 
 download() {
-    url="$1"; out="$2"
+    url="$1"
+    out="$2"
     if command -v curl >/dev/null 2>&1; then
         curl -fL --connect-timeout 15 --max-time 180 "$url" -o "$out"
     elif command -v wget >/dev/null 2>&1; then
@@ -36,11 +38,16 @@ download() {
 }
 
 post_json() {
-    url="$1"; data="$2"
+    url="$1"
+    data="$2"
     if command -v curl >/dev/null 2>&1; then
-        curl -fsS --connect-timeout 15 --max-time 45 -H 'Content-Type: application/json' --data "$data" "$url"
+        curl -fsS --connect-timeout 15 --max-time 45 \
+            -H 'Content-Type: application/json' \
+            --data "$data" "$url"
     elif command -v wget >/dev/null 2>&1; then
-        wget -qO- --header='Content-Type: application/json' --post-data="$data" "$url"
+        wget -qO- \
+            --header='Content-Type: application/json' \
+            --post-data="$data" "$url"
     else
         return 1
     fi
@@ -48,30 +55,44 @@ post_json() {
 
 BASE_URL="https://github.com/$REPO/releases/latest/download"
 ASSET="pw-agent-openwrt-$ARCH.tar.gz"
+
 echo "Detected architecture: $ARCH"
 echo "Downloading latest PW Agent release..."
 download "$BASE_URL/$ASSET" "$TMP/bundle.tar.gz"
 download "$BASE_URL/$ASSET.sha256" "$TMP/bundle.sha256"
 
+command -v sha256sum >/dev/null 2>&1 || { echo "ERROR: sha256sum is required." >&2; exit 1; }
 EXPECTED="$(awk '{print $1}' "$TMP/bundle.sha256" | head -n1 | tr 'A-F' 'a-f')"
 ACTUAL="$(sha256sum "$TMP/bundle.tar.gz" | awk '{print $1}' | tr 'A-F' 'a-f')"
-[ -n "$EXPECTED" ] && [ "$EXPECTED" = "$ACTUAL" ] || { echo "ERROR: release SHA256 mismatch." >&2; exit 1; }
+[ -n "$EXPECTED" ] && [ "$EXPECTED" = "$ACTUAL" ] || {
+    echo "ERROR: release SHA256 mismatch." >&2
+    exit 1
+}
 
 tar -xzf "$TMP/bundle.tar.gz" -C "$TMP"
 [ -f "$TMP/install.sh" ] || { echo "ERROR: release installer missing." >&2; exit 1; }
 
 echo "Requesting one-time device credentials..."
-SAFE_TOKEN="$(printf '%s' "$TOKEN" | sed 's/["\\]/\\&/g')"
-RESP="$(post_json "$SERVER_BASE/api/provision.php" "{"token":"$SAFE_TOKEN"}")"
-printf '%s' "$RESP" | grep -q '"ok":true' || { echo "ERROR: provisioning failed: $RESP" >&2; exit 1; }
+JSON_PAYLOAD='{"token":"'"$TOKEN"'"}'
+RESP="$(post_json "$SERVER_BASE/api/provision.php" "$JSON_PAYLOAD")"
+printf '%s' "$RESP" | grep -q '"ok":true' || {
+    echo "ERROR: provisioning failed: $RESP" >&2
+    exit 1
+}
 
 SERVER_URL="$(printf '%s' "$RESP" | sed -n 's/.*"server_url":"\([^"]*\)".*/\1/p')"
 DEVICE_ID="$(printf '%s' "$RESP" | sed -n 's/.*"device_id":"\([^"]*\)".*/\1/p')"
 DEVICE_SECRET="$(printf '%s' "$RESP" | sed -n 's/.*"device_secret":"\([^"]*\)".*/\1/p')"
 
-[ -n "$SERVER_URL" ] && [ -n "$DEVICE_ID" ] && [ -n "$DEVICE_SECRET" ] || { echo "ERROR: invalid provisioning response." >&2; exit 1; }
+[ -n "$SERVER_URL" ] && [ -n "$DEVICE_ID" ] && [ -n "$DEVICE_SECRET" ] || {
+    echo "ERROR: invalid provisioning response." >&2
+    exit 1
+}
 
-PW_SERVER_URL="$SERVER_URL" PW_DEVICE_ID="$DEVICE_ID" PW_DEVICE_SECRET="$DEVICE_SECRET" sh "$TMP/install.sh"
+PW_SERVER_URL="$SERVER_URL" \
+PW_DEVICE_ID="$DEVICE_ID" \
+PW_DEVICE_SECRET="$DEVICE_SECRET" \
+sh "$TMP/install.sh"
 
 echo
 echo "Installation completed. Open Telegram and send /start to your bot."
