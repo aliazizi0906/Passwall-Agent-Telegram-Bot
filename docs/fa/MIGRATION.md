@@ -121,4 +121,4 @@ Telegram:
 
 Config History فقط از زمانی ثبت می‌شود که Router Agent نسخه v0.6 را اجرا کند. Mutationهای v0.5 را نمی‌توان به‌صورت Retroactive بازسازی کرد.
 
-Rollback Snapshot با Device Secret روی Agent رمزنگاری می‌شود و Backend عمداً نمی‌تواند محتوای خام آن را بخواند.
+Rollback Snapshot روی Agent با History Key مخصوص Router در `/etc/pw-agent/history.key` رمزنگاری می‌شود و Backend در عملیات عادی Config History این Key را دریافت نمی‌کند.
