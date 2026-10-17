@@ -543,6 +543,26 @@ function v060_fleet_summary(int $uid): array {
     foreach($rows as &$r){$last=!empty($r['last_seen'])?strtotime((string)$r['last_seen']):0;$r['online']=$last&&$now-$last<=$threshold;if($r['online'])$online++;else$offline++;$r['maintenance']=v060_is_maintenance((string)$r['device_id']);}
     return ['total'=>count($rows),'online'=>$online,'offline'=>$offline,'devices'=>$rows];
 }
+function v060_accessible_groups(int $uid): array {
+    ensure_v060_schema();$pdo=db();
+    $groups=$pdo->query('SELECT id,name,description FROM pw_device_groups ORDER BY name')->fetchAll();
+    $out=[];
+    foreach($groups as $g){
+        $st=$pdo->prepare('SELECT device_id FROM pw_device_registry WHERE enabled=1 AND group_id=? ORDER BY display_name');$st->execute([(int)$g['id']]);
+        $ids=[];foreach($st->fetchAll() as $r){$id=(string)$r['device_id'];if(v060_can_device($uid,$id))$ids[]=$id;}
+        if($ids||v060_has_permission($uid,'group.manage')){$g['accessible_device_count']=count($ids);$g['device_ids']=$ids;$out[]=$g;}
+    }
+    return $out;
+}
+function v060_group_devices(int $uid,int $groupId): array {
+    ensure_v060_schema();$st=db()->prepare('SELECT device_id,display_name FROM pw_device_registry WHERE enabled=1 AND group_id=? ORDER BY display_name');$st->execute([$groupId]);$out=[];
+    foreach($st->fetchAll() as $r)if(v060_can_device($uid,(string)$r['device_id']))$out[]=$r;
+    return $out;
+}
+function v060_group_command_allowed(string $action): bool {
+    return in_array($action,['system.status','agent.diagnose','agent.update.check','agent.update.apply','passwall2.status','passwall2.restart'],true);
+}
+
 function v060_device_token(string $deviceId): string { return substr(hash('sha256',$deviceId),0,16); }
 function v060_device_from_token(int $uid,string $token): string {
     foreach(v060_accessible_devices($uid) as $r){$id=(string)$r['device_id'];if(hash_equals(v060_device_token($id),$token))return $id;}
