@@ -1,40 +1,29 @@
 # PW Agent
 
-**OpenWrt + Passwall2 remote management through Telegram.**
+**OpenWrt + Passwall2 Remote Management via Telegram**
 
-PW Agent is a public remote-management stack for OpenWrt routers. The router initiates outbound HTTPS connections to a self-hosted PHP/MySQL backend, so no public IP and no inbound management port are required.
+[English Documentation](docs/en/README.md) · [مستندات فارسی](docs/fa/README.md) · [Releases](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases) · [Issues](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/issues)
 
-## Highlights
+---
 
-- OpenWrt system, network, Wi-Fi, firewall and service management
-- Passwall2 node, subscription and Shunt management
-- Smart Failover with relay/TCP health scoring
-- Telegram Mini App SSH command console through local Dropbear
-- Configuration backup and restore
-- Monitoring, event history and offline/recovery alerts
-- Reliable command leasing, retries and idempotent mutation replay
-- AES-256-GCM protection for sensitive queued parameters
-- HMAC-SHA256 device authentication and signed server responses
-- SHA256 + Ed25519 verified Agent updates
-- LuCI Agent diagnostics
-- Automated CI, tests and signed multi-architecture releases
+## English
 
-## Supported OpenWrt architectures
+PW Agent is a self-hosted remote-management stack for OpenWrt routers running Passwall2. The router communicates with a PHP/MySQL backend over outbound HTTPS, so it does not require a public IP or an exposed management port.
 
-Official release builds are produced for:
+### Documentation
 
-| OpenWrt / CPU | Release architecture |
-| --- | --- |
-| ARMv7 / armv7l | `armv7` |
-| ARM64 / aarch64 | `arm64` |
-| x86_64 | `amd64` |
-| x86 / i386-i686 | `386` |
-| MIPS big-endian | `mips` |
-| MIPS little-endian | `mipsle` |
+| Section | Description |
+|---|---|
+| [Install](docs/en/INSTALL.md) | Complete cPanel + OpenWrt installation |
+| [Features](docs/en/FEATURES.md) | Router, Passwall2, Failover, Monitoring and Terminal capabilities |
+| [Architecture](docs/en/ARCHITECTURE.md) | Agent, backend, queue and request flow |
+| [Security](docs/en/SECURITY.md) | HMAC, AES-GCM, Ed25519, allowlists and provisioning |
+| [Updates](docs/en/UPDATES.md) | Agent update and GitHub Release workflow |
+| [Migration](docs/en/MIGRATION.md) | Upgrade from earlier versions |
+| [Development](docs/en/DEVELOPMENT.md) | Build, test and CI information |
+| [Troubleshooting](docs/en/TROUBLESHOOTING.md) | Diagnostics and common problems |
 
-Passwall2 must already be installed on the router.
-
-## Architecture
+### Quick architecture
 
 ```text
 Telegram
@@ -42,202 +31,63 @@ Telegram
    v
 PHP Backend + MySQL
    ^
-   | HTTPS / HMAC
+   | HTTPS + HMAC
    |
 OpenWrt PW Agent
    |
    +-- UCI / ubus / procd
    +-- Passwall2
-   +-- Dropbear (localhost only for Terminal)
+   +-- Dropbear on localhost
 ```
 
-The router does not need a public/static IP. It polls the backend over HTTPS and executes only supported Agent actions.
+Official builds are available for `armv7`, `arm64`, `amd64`, `386`, `mips` and `mipsle`.
 
-# Public installation
+Start here: **[Installation Guide](docs/en/INSTALL.md)**
 
-Each user deploys their **own backend, Telegram bot and router credentials**. No project-owner credentials are built into the repository.
+---
 
-## 1. Prepare the server
+## فارسی
 
-Requirements:
+PW Agent یک سامانه‌ی Self-hosted برای مدیریت از راه دور **OpenWrt + Passwall2 از طریق Telegram** است. روتر فقط با اتصال خروجی HTTPS به Backend متصل می‌شود؛ بنابراین برای استفاده از پروژه نیازی به IP Public یا باز کردن پورت مدیریتی روی WAN نیست.
 
-- PHP 8.1+
-- MySQL / MariaDB
-- PHP extensions: `pdo_mysql`, `curl`, `openssl`
-- HTTPS
-- Cron access recommended for monitoring alerts
+### مستندات
 
-Upload the contents of `server/` to your web host and create an empty MySQL database.
+| بخش | توضیح |
+|---|---|
+| [نصب](docs/fa/INSTALL.md) | آموزش کامل نصب روی cPanel و OpenWrt |
+| [قابلیت‌ها](docs/fa/FEATURES.md) | امکانات روتر، Passwall2، Failover، Monitoring و Terminal |
+| [معماری](docs/fa/ARCHITECTURE.md) | ساختار Agent، Backend، Queue و جریان درخواست |
+| [امنیت](docs/fa/SECURITY.md) | HMAC، AES-GCM، Ed25519، Allowlist و Provisioning |
+| [به‌روزرسانی](docs/fa/UPDATES.md) | آپدیت Agent و GitHub Release |
+| [مهاجرت](docs/fa/MIGRATION.md) | ارتقا از نسخه‌های قبلی |
+| [توسعه](docs/fa/DEVELOPMENT.md) | Build، Test و CI |
+| [رفع اشکال](docs/fa/TROUBLESHOOTING.md) | Diagnostics و خطاهای متداول |
 
-If the full repository is on the server, run from the repository root:
-
-```bash
-php server/bin/setup.php
-```
-
-If you uploaded only the contents of `server/` into your web directory, run from that directory:
-
-```bash
-php bin/setup.php
-```
-
-The installer asks for:
-
-- public HTTPS URL
-- MySQL connection
-- Telegram Bot token
-- Telegram numeric administrator ID
-- router Device ID
-- router architecture
-
-It then automatically:
-
-1. installs/upgrades the database schema;
-2. generates random HMAC device credentials;
-3. generates the Telegram webhook secret;
-4. writes `server/config.php`;
-5. registers the Telegram webhook;
-6. downloads the signed Agent update package for the selected architecture;
-7. creates a **single-use 30-minute provisioning token**;
-8. prints the OpenWrt installation command.
-
-`server/config.php` is ignored by Git and must never be committed.
-
-## 2. Install the router
-
-Run the command printed by `server/bin/setup.php` on the OpenWrt router.
-
-It has this form:
-
-```bash
-PW_SERVER_BASE='https://example.com/routerbot' \
-PW_PROVISION_TOKEN='ONE_TIME_TOKEN' \
-sh -c "$(wget -qO- 'https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh')"
-```
-
-The installer:
-
-- detects the router architecture;
-- downloads the matching latest GitHub Release;
-- verifies its SHA256;
-- consumes the one-time provisioning token;
-- writes `/etc/pw-agent/config.json`;
-- installs the Agent, init script and LuCI integration;
-- enables and starts the service.
-
-The permanent device secret is **not** placed in the install command.
-
-If the provisioning token expires or is consumed before installation completes:
-
-```bash
-php server/bin/new-provision-token.php
-```
-
-## 3. Enable monitoring alerts
-
-Run once per minute using cPanel Cron or system cron:
-
-```cron
-* * * * * /usr/bin/php /absolute/path/to/server/cron/monitor.php >/dev/null 2>&1
-```
-
-The default offline threshold is 300 seconds.
-
-## 4. Telegram
-
-Send:
+### معماری خلاصه
 
 ```text
-/start
+Telegram
+   |
+   v
+PHP Backend + MySQL
+   ^
+   | HTTPS + HMAC
+   |
+OpenWrt PW Agent
+   |
+   +-- UCI / ubus / procd
+   +-- Passwall2
+   +-- Dropbear روی localhost
 ```
 
-All management operations are available through inline buttons, prompted input and the Mini App.
+Build رسمی برای معماری‌های `armv7`، `arm64`، `amd64`، `386`، `mips` و `mipsle` منتشر می‌شود.
 
-# Updating
+از اینجا شروع کنید: **[راهنمای نصب](docs/fa/INSTALL.md)**
 
-The Agent checks the backend for an architecture-specific signed update package.
+---
 
-Update trust is anchored to the official Ed25519 public key committed in:
+## Project status / وضعیت پروژه
 
-```text
-UPDATE_PUBLIC_KEY.b64
-```
+Current public release / نسخه عمومی فعلی: **v0.5.0**
 
-The same key is embedded in the Agent. Normal users do **not** need to generate signing keys.
-
-Backend release packages can be synchronized from the official GitHub Release with:
-
-```bash
-php server/bin/sync-release.php --arch=armv7
-```
-
-or:
-
-```bash
-php server/bin/sync-release.php --all
-```
-
-Self-hosted forks may override `update_public_key` in the Agent configuration and use their own release-signing key.
-
-# Maintainer release process
-
-Official releases are generated by GitHub Actions when a `v*` tag is pushed.
-
-The repository maintainer must configure only one GitHub Actions secret:
-
-```text
-UPDATE_SIGNING_PRIVATE_KEY_PEM_B64
-```
-
-The corresponding public key is already committed to this repository. The private key must never be committed.
-
-After that, open **Actions → Release → Run workflow**, enter a version such as `v0.5.0`, and run it. The workflow verifies that the version matches the application version, verifies that the private key matches `UPDATE_PUBLIC_KEY.b64`, builds all supported architectures, signs every bundle, creates the tag if necessary, and publishes the GitHub Release.
-
-For installation diagnostics:
-
-```bash
-php server/bin/doctor.php
-```
-
-# Security model
-
-- outbound-only router communication
-- HMAC-SHA256 authenticated device requests
-- HMAC-signed backend responses
-- numeric Telegram user allowlist
-- Telegram Mini App `initData` validation
-- AES-256-GCM protection of sensitive queued parameters
-- expiring command leases and retry limits
-- Agent-side idempotency journal for mutation replay
-- SHA256 + Ed25519 update verification
-- one-time router provisioning tokens
-- protected Passwall2 node references
-- no WAN SSH requirement
-
-# Development
-
-CI validates:
-
-```text
-gofmt
-go test
-go vet
-ARMv7 / ARM64 / AMD64 / 386 / MIPS / MIPSLE builds
-PHP syntax
-shell syntax
-JSON files
-```
-
-Run Go tests locally:
-
-```bash
-go test ./...
-```
-
-## Repository
-
-https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot
-
-## License
-
-A project license should be selected before accepting external contributions or redistribution assumptions.
+Repository / مخزن: https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot
