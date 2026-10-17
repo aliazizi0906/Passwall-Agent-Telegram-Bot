@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -18,6 +19,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -360,4 +362,102 @@ func defaultRouteInterfaceV6() string {
 		}
 	}
 	return ""
+}
+
+
+var healthTelemetryMuV6 sync.RWMutex
+var healthTelemetryDataV6 = map[string]interface{}{}
+
+func healthTelemetryLoopV6() {
+	for {
+		data := probeHealthTelemetryV6()
+		healthTelemetryMuV6.Lock()
+		healthTelemetryDataV6 = data
+		healthTelemetryMuV6.Unlock()
+		time.Sleep(60 * time.Second)
+	}
+}
+
+func cachedHealthTelemetryV6() map[string]interface{} {
+	healthTelemetryMuV6.RLock()
+	defer healthTelemetryMuV6.RUnlock()
+	out := make(map[string]interface{}, len(healthTelemetryDataV6))
+	for k, v := range healthTelemetryDataV6 {
+		out[k] = v
+	}
+	return out
+}
+
+func probeHealthTelemetryV6() map[string]interface{} {
+	out := map[string]interface{}{
+		"dns_ok":          false,
+		"dns_ms":          float64(0),
+		"internet_ok":     false,
+		"internet_tcp_ms": float64(0),
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	start := time.Now()
+	_, err := net.DefaultResolver.LookupHost(ctx, "example.com")
+	cancel()
+	if err == nil {
+		out["dns_ok"] = true
+		out["dns_ms"] = float64(time.Since(start).Microseconds()) / 1000.0
+	}
+
+	start = time.Now()
+	if conn, err := net.DialTimeout("tcp", "1.1.1.1:443", 4*time.Second); err == nil {
+		out["internet_ok"] = true
+		out["internet_tcp_ms"] = float64(time.Since(start).Microseconds()) / 1000.0
+		_ = conn.Close()
+	}
+
+	if p := commandPath("ping"); p != "" {
+		pingOut, _ := runOutput(12*time.Second, p, "-c", "3", "-W", "2", "1.1.1.1")
+		re := regexp.MustCompile(`([0-9]+(?:\.[0-9]+)?)%\s*packet loss`)
+		if m := re.FindStringSubmatch(pingOut); len(m) == 2 {
+			if loss, err := strconv.ParseFloat(m[1], 64); err == nil {
+				out["packet_loss"] = loss
+			}
+		}
+	}
+
+	if conf, err := loadUCI(); err == nil {
+		root := ""
+		for id, typ := range conf.SectionType {
+			if typ == "global" {
+				root = strings.TrimSpace(conf.Options[id]["node"])
+				if root != "" {
+					break
+				}
+			}
+		}
+		if root != "" {
+			out["passwall_root_node"] = root
+			exitID := root
+			if conf.SectionType[root] == "nodes" && strings.TrimSpace(conf.Options[root]["protocol"]) == "_shunt" {
+				if d := strings.TrimSpace(conf.Options[root]["default_node"]); d != "" {
+					exitID = d
+				}
+			}
+			out["active_node_id"] = exitID
+			if opts := conf.Options[exitID]; opts != nil {
+				out["active_node_name"] = displayNodeName(exitID, opts)
+			}
+			if isNormalProxyNodeV4(conf, exitID) {
+				relay := testRelay(exitID)
+				if ok, _ := relay["ok"].(bool); ok {
+					out["node_relay_ok"] = true
+					if ms, ok := relay["ms"].(float64); ok {
+						out["node_relay_ms"] = ms
+					}
+				} else {
+					out["node_relay_ok"] = false
+				}
+			}
+		}
+	}
+
+	out["sampled_at"] = time.Now().Unix()
+	return out
 }
