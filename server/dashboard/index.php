@@ -146,10 +146,27 @@ async function loadTab(name){
   document.querySelectorAll('.rb').forEach(b=>b.onclick=async()=>{if(!confirm('Rollback this configuration change?'))return;await api('rollback',{device_id:state.active,change_id:Number(b.dataset.id)});alert('Rollback command queued')});return;
  }
  if(name==='alerts'){
-  const j=await api('alerts',{device_id:state.active});
-  document.querySelector('#alerts').innerHTML=`<div class="card"><b>Alert rules</b>${j.alerts.map(a=>`<div class="row card"><span class="grow">${esc(a.metric)} ${esc(a.operator)} ${esc(a.threshold)} · ${Number(a.enabled)?'enabled':'disabled'}</span><button class="at" data-id="${a.id}" data-on="${Number(a.enabled)?0:1}">${Number(a.enabled)?'Disable':'Enable'}</button></div>`).join('')}<button id="newAlert">+ Alert rule</button></div>`;
-  document.querySelectorAll('.at').forEach(b=>b.onclick=async()=>{await api('alert_toggle',{device_id:state.active,id:Number(b.dataset.id),enabled:Number(b.dataset.on)});loadTab('alerts')});
-  const na=document.querySelector('#newAlert');if(na)na.onclick=async()=>{const metric=prompt('Metric: cpu_percent, memory_percent, load1, passwall_down, wan_down','cpu_percent');if(!metric)return;const threshold=Number(prompt('Threshold','90'));await api('alert_create',{device_id:state.active,metric,operator:'>',threshold,duration_seconds:300,cooldown_seconds:900});loadTab('alerts')};return;
+  const j=await api('alerts',{device_id:state.active}),canManage=has('alert.manage');
+  const templates=[
+    ['CPU > 90%','cpu_percent','>',90,300],
+    ['RAM > 90%','memory_percent','>',90,300],
+    ['Packet loss > 30%','packet_loss','>',30,120],
+    ['Relay > 500ms','node_relay_ms','>',500,180],
+    ['DNS down','dns_down','==',1,120],
+    ['Internet down','internet_down','==',1,120],
+    ['WAN IP changed','wan_ip_changed','==',1,0],
+    ['Agent reconnected','agent_reconnected','==',1,0],
+    ['WAN down','wan_down','==',1,180],
+    ['Passwall down','passwall_down','==',1,180]
+  ];
+  document.querySelector('#alerts').innerHTML=\`<div class="card"><div class="row"><b>Alert rules</b><span class="grow"></span>\${canManage?'<button id="newAlert">+ Custom rule</button>':'<span class="pill">read-only</span>'}</div>\${j.alerts.map(a=>\`<div class="row card"><span class="grow">\${esc(a.metric)} \${esc(a.operator)} \${esc(a.threshold)} · \${Number(a.duration_seconds||0)}s · \${Number(a.enabled)?'enabled':'disabled'}</span>\${canManage?\`<button class="at" data-id="\${a.id}" data-on="\${Number(a.enabled)?0:1}">\${Number(a.enabled)?'Disable':'Enable'}</button>\`:''}</div>\`).join('')}\${canManage?'<div class="row" id="alertTemplates"></div>':''}</div>\`;
+  if(canManage){
+    document.querySelector('#alertTemplates').innerHTML=templates.map((x,i)=>\`<button data-tpl="\${i}">\${x[0]}</button>\`).join('');
+    document.querySelectorAll('[data-tpl]').forEach(b=>b.onclick=async()=>{const x=templates[Number(b.dataset.tpl)];await api('alert_create',{device_id:state.active,metric:x[1],operator:x[2],threshold:x[3],duration_seconds:x[4],cooldown_seconds:900});loadTab('alerts')});
+    document.querySelectorAll('.at').forEach(b=>b.onclick=async()=>{await api('alert_toggle',{device_id:state.active,id:Number(b.dataset.id),enabled:Number(b.dataset.on)});loadTab('alerts')});
+    const na=document.querySelector('#newAlert');if(na)na.onclick=async()=>{const metric=prompt('Metric: cpu_percent, memory_percent, load1, packet_loss, node_relay_ms, passwall_down, wan_down, dns_down, internet_down, wan_ip_changed, agent_reconnected','cpu_percent');if(!metric)return;const operator=prompt('Operator: >, >=, <, <=, ==','>')||'>';const threshold=Number(prompt('Threshold','90'));const duration=Number(prompt('Required breach duration in seconds','300'));const cooldown=Number(prompt('Notification cooldown in seconds','900'));await api('alert_create',{device_id:state.active,metric,operator,threshold,duration_seconds:duration,cooldown_seconds:cooldown});loadTab('alerts')};
+  }
+  return;
  }
  if(name==='maintenance'){
   const j=await api('device_detail',{device_id:state.active});document.querySelector('#maintenance').innerHTML=`<div class="card"><b>Maintenance mode</b><p class="muted">${j.maintenance?'Active until '+esc(j.maintenance.until_at):'Inactive'}</p><div class="row"><button data-m="60">1 hour</button><button data-m="120">2 hours</button><button data-m="480">8 hours</button><button data-m="0">Disable</button></div></div>`;document.querySelectorAll('#maintenance [data-m]').forEach(b=>b.onclick=async()=>{await api('maintenance_set',{device_id:state.active,minutes:Number(b.dataset.m),reason:'Dashboard maintenance'});loadTab('maintenance')});return;
