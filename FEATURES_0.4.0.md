@@ -21,4 +21,4 @@
 - Update release storage is denied to direct HTTP access; Agent receives releases via HMAC-authenticated API only.
 - Terminal queue payloads are encrypted with AES-256-GCM using a key derived from the device secret.
 - Terminal command/result payloads are scrubbed from the queue after completion.
-- Relay scan concurrency is limited to three tests to reduce load on Gale.
+- Relay scan concurrency is limited to three tests to reduce load on the router.
