@@ -51,7 +51,7 @@ Password، Node Link، Subscription URL، Backup Payload و Terminal Payload د�
 
 برای Mutationهای UCI پشتیبانی‌شده، Agent قبل از تغییر فایل مربوط در /etc/config را Snapshot می‌گیرد.
 
-Snapshot روی خود Router با Key مشتق‌شده از Device Secret رمزنگاری می‌شود و Backend فقط Ciphertext را نگه می‌دارد. Diff فقط نام UCI Keyهای تغییرکرده را نشان می‌دهد و Valueها را نمایش نمی‌دهد.
+Snapshot روی خود Router با یک Key تصادفی ۳۲‌بایتی مخصوص همان Router در مسیر `/etc/pw-agent/history.key` رمزنگاری می‌شود. Backend در حالت عادی این History Key را دریافت نمی‌کند و فقط Ciphertext را نگه می‌دارد. Diff فقط نام UCI Keyهای تغییرکرده را نشان می‌دهد و Valueها را نمایش نمی‌دهد.
 
 Owner و Admin می‌توانند از Telegram یا Dashboard Rollback را Queue کنند.
 
