@@ -28,7 +28,7 @@ PW Agent is a self-hosted remote-management stack for OpenWrt routers running Pa
 
 ```text
 1. Create MySQL database/user in cPanel
-2. Upload server/ contents anywhere under the domain document root
+2. Upload + extract the Release asset pw-agent-cpanel-v0.6.0.zip anywhere under the document root
 3. Open https://YOUR-DOMAIN/YOUR-PATH/setup.php
 4. Complete the Web Setup form
 5. Copy the generated Cron command into cPanel → Cron Jobs
@@ -82,7 +82,7 @@ PW Agent یک سامانه‌ی Self-hosted برای مدیریت از راه د
 
 ```text
 1. Database و User را در cPanel بساز
-2. محتویات server/ را در هر مسیر دلخواه زیر Document Root آپلود کن
+2. فایل pw-agent-cpanel-v0.6.0.zip را از Release در هر مسیر دلخواه Upload و Extract کن
 3. https://YOUR-DOMAIN/YOUR-PATH/setup.php را باز کن
 4. فرم Web Setup را کامل کن
 5. Cron تولیدشده را در cPanel → Cron Jobs قرار بده
