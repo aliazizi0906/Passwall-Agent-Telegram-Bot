@@ -2,7 +2,7 @@
 
 **OpenWrt + Passwall2 Remote Management via Telegram**
 
-[English Documentation](docs/en/README.md) · [مستندات فارسی](docs/fa/README.md) · [Releases](../../releases) · [Issues](../../issues)
+[English Documentation](docs/en/README.md) · [مستندات فارسی](docs/fa/README.md) · [Releases](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases) · [Issues](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/issues)
 
 ---
 
@@ -86,8 +86,8 @@ Build رسمی برای معماری‌های `armv7`، `arm64`، `amd64`، `386
 
 ---
 
-## Project status
+## Project status / وضعیت پروژه
 
-Current public release: **v0.5.0**
+Current public release / نسخه عمومی فعلی: **v0.5.0**
 
-Repository: https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot
+Repository / مخزن: https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot
