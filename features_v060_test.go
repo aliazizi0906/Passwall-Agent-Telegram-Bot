@@ -62,14 +62,14 @@ func TestConfigSnapshotRejectsWrongDeviceSecretV6(t *testing.T) {
 func TestDiffOptionHashesV6DoesNotExposeValues(t *testing.T) {
 	before := map[string]map[string]string{
 		"wireless": {
-			"wireless.radio0.channel": "oldhash",
+			"wireless.radio0.channel":     "oldhash",
 			"wireless.default_radio0.key": "secret-old-hash",
 		},
 	}
 	after := map[string]map[string]string{
 		"wireless": {
-			"wireless.radio0.channel": "newhash",
-			"wireless.default_radio0.key": "secret-new-hash",
+			"wireless.radio0.channel":      "newhash",
+			"wireless.default_radio0.key":  "secret-new-hash",
 			"wireless.default_radio0.ssid": "addedhash",
 		},
 	}
