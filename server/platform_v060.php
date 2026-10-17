@@ -206,7 +206,8 @@ function v060_device_enabled(string $deviceId): bool {
 function v060_register_device(string $name,?int $createdBy=null): array {
     ensure_v060_schema();
     $name=trim($name);if($name===''||strlen($name)>128)throw new RuntimeException('Device name must be 1-128 bytes');
-    $base=strtolower((string)preg_replace('/[^A-Za-z0-9]+/','-',iconv('UTF-8','ASCII//TRANSLIT//IGNORE',$name)?:$name));
+    $ascii=function_exists('iconv')?(iconv('UTF-8','ASCII//TRANSLIT//IGNORE',$name)?:$name):$name;
+    $base=strtolower((string)preg_replace('/[^A-Za-z0-9]+/','-',$ascii));
     $base=trim($base,'-');if($base==='')$base='router';
     $base=substr($base,0,48);$id=$base.'-'.substr(bin2hex(random_bytes(5)),0,8);
     $secret=bin2hex(random_bytes(32));
@@ -215,7 +216,7 @@ function v060_register_device(string $name,?int $createdBy=null): array {
     $token=rtrim(strtr(base64_encode(random_bytes(36)),'+/','-_'),'=');
     db()->prepare('INSERT INTO pw_provision_tokens(token_hash,device_id,expires_at) VALUES(?,?,DATE_ADD(NOW(),INTERVAL 30 MINUTE))')->execute([hash('sha256',$token),$id]);
     v060_audit_event($id,$createdBy,'telegram','device.provision','done',['display_name'=>$name],['token_expires_minutes'=>30]);
-    return ['device_id'=>$id,'display_name'=>$name,'token'=>$token,'secret'=>$secret];
+    return ['device_id'=>$id,'display_name'=>$name,'token'=>$token];
 }
 function v060_provision_command(string $token): string {
     $base=rtrim((string)cfg()['base_url'],'/');
