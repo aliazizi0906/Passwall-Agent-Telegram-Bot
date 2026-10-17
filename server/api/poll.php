@@ -7,7 +7,7 @@ $auth = authenticate_device($raw);
 $device = $auth['device_id'];
 $secret = $auth['secret'];
 $body = json_decode_assoc($raw);
-ensure_v050_schema();
+ensure_v060_schema();
 
 $pdo = db();
 $st = $pdo->prepare(
@@ -57,5 +57,5 @@ try {
     response_json(['ok'=>false,'error'=>'queue failure'], $secret, 500);
 }
 
-v050_record_metric($device,$body);
+v060_record_metric($device,$body);
 response_json(['ok'=>true,'command'=>$cmd], $secret);
