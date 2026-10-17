@@ -1,7 +1,8 @@
 package main
 
 import (
-	"testing"\n\t"path/filepath"
+	"path/filepath"
+	"testing"
 )
 
 func TestConfigPackagesForActionV6(t *testing.T) {
