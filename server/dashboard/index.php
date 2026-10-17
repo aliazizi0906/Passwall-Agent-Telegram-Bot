@@ -30,6 +30,7 @@ canvas{width:100%;height:150px}
 <div class="grid" id="stats"></div>
 <nav id="tabs">
 <button data-tab="devices" class="primary">Devices</button>
+<button data-tab="groups">Groups</button>
 <button data-tab="monitor">Monitoring</button>
 <button data-tab="operations">Operations</button>
 <button data-tab="audit">Audit & Rollback</button>
@@ -39,6 +40,7 @@ canvas{width:100%;height:150px}
 <button data-tab="access">Access</button>
 </nav>
 <section id="devices"></section>
+<section id="groups" class="hidden"></section>
 <section id="monitor" class="hidden"></section>
 <section id="operations" class="hidden"></section>
 <section id="audit" class="hidden"></section>
@@ -71,12 +73,21 @@ async function renderDevices(){
  rows.map(d=>`<div class="card device ${d.device_id===state.active?'active':''}" data-id="${esc(d.device_id)}"><div class="row"><b>${d.online?'🟢':'🔴'} ${esc(d.display_name)}</b><span class="grow"></span>${d.group_name?'<span class="pill">'+esc(d.group_name)+'</span>':''}${d.maintenance?'<span class="pill warn">Maintenance</span>':''}</div><div class="muted">${esc(d.hostname||d.device_id)} · ${esc(d.location||'No location')} · Agent ${esc(d.agent_version||'-')} · ${fmtTime(d.last_seen)}</div><div>${(JSON.parse(d.tags_json||'[]')).map(t=>'<span class="pill">'+esc(t)+'</span>').join('')}</div></div>`).join('');
  document.querySelectorAll('.device').forEach(x=>x.onclick=async()=>{await api('select_device',{device_id:x.dataset.id});await refresh();});
  const add=document.querySelector('#addDev');if(add)add.onclick=async()=>{const name=prompt('Device name');if(!name)return;const j=await api('device_create',{name});prompt('Run this command on the new OpenWrt router within 30 minutes:',j.install_command);await refresh()};
- const groups=document.querySelector('#groupsBtn');if(groups)groups.onclick=async()=>{const g=await api('groups');const list=(g.groups||[]).map(x=>x.id+': '+x.name+' ('+x.device_count+')').join('\n');const name=prompt('Groups:\n'+(list||'No groups')+'\n\nEnter a new group name to create, or leave blank to cancel');if(name){await api('group_create',{name});await refresh()}};
+ const groups=document.querySelector('#groupsBtn');if(groups)groups.onclick=()=>tab('groups');
  const edit=document.querySelector('#editDev');if(edit)edit.onclick=async()=>{if(!state.active)return;const d=(state.summary?.devices||[]).find(x=>x.device_id===state.active);if(!d)return;const groupsData=await api('groups');const groupList=(groupsData.groups||[]).map(x=>x.id+':'+x.name).join(', ');const display_name=prompt('Display name',d.display_name||state.active);if(display_name===null)return;const location=prompt('Location',d.location||'')??'';const tagsRaw=prompt('Tags (comma separated)',(JSON.parse(d.tags_json||'[]')).join(', '))??'';const gid=prompt('Group ID (blank = none). Available: '+groupList,String(d.group_id||''));await api('device_update',{device_id:state.active,display_name,location,tags:tagsRaw.split(',').map(x=>x.trim()).filter(Boolean),group_id:gid||null});await refresh()};
 }
 async function loadTab(name){
  if(name==='devices')return renderDevices();
  if(!state.active){document.querySelector('#'+name).innerHTML='<div class="card">No active device.</div>';return}
+ if(name==='groups'){
+  const j=await api('groups');
+  const canManage=['owner','admin'].includes(state.role);
+  document.querySelector('#groups').innerHTML=`<div class="card"><div class="row"><b>Device Groups</b><span class="grow"></span>${canManage?'<button id="newGroup">+ Group</button>':''}</div><p class="muted">Bulk mutations require explicit confirmation and still pass RBAC on every router.</p></div>`+
+  (j.groups||[]).map(g=>`<div class="card"><div class="row"><b class="grow">${esc(g.name)}</b><span class="pill">${Number(g.accessible_device_count||0)} accessible</span></div><div class="muted">${esc(g.description||'')}</div><div class="row"><button class="gop" data-g="${g.id}" data-a="system.status">Status</button><button class="gop" data-g="${g.id}" data-a="agent.diagnose">Diagnostics</button><button class="gop" data-g="${g.id}" data-a="agent.update.check">Update check</button><button class="gop" data-g="${g.id}" data-a="passwall2.status">Passwall</button><button class="gop" data-g="${g.id}" data-a="passwall2.restart" data-mut="1">Restart Passwall</button><button class="gop danger" data-g="${g.id}" data-a="agent.update.apply" data-mut="1">Install Agent update</button></div><pre id="groupOut-${g.id}">Devices: ${esc((g.device_ids||[]).join(', ')||'none')}</pre></div>`).join('') || '<div class="card">No groups are visible in your scope.</div>';
+  const ng=document.querySelector('#newGroup');if(ng)ng.onclick=async()=>{const name=prompt('Group name');if(!name)return;const description=prompt('Description','')||'';await api('group_create',{name,description});loadTab('groups')};
+  document.querySelectorAll('.gop').forEach(b=>b.onclick=async()=>{const mut=Number(b.dataset.mut||0)===1;if(mut&&!confirm('Run '+b.dataset.a+' on every accessible router in this group?'))return;const out=document.querySelector('#groupOut-'+b.dataset.g);out.textContent='Queuing…';try{const x=await api('group_command',{group_id:Number(b.dataset.g),command_action:b.dataset.a,confirmed:mut});out.textContent=JSON.stringify(x,null,2)}catch(e){out.textContent=e.message}});
+  return;
+ }
  if(name==='monitor'){
   const j=await api('device_detail',{device_id:state.active}),d=j.device,m=j.metrics||[];
   const last=m[m.length-1]||{};
