@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release tag, for example v0.5.0"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -17,6 +23,85 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.23.x"
+
+      - name: Resolve and validate release version
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            RELEASE_TAG="${{ inputs.version }}"
+          else
+            RELEASE_TAG="$GITHUB_REF_NAME"
+          fi
+          echo "$RELEASE_TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?
+      - name: Load Ed25519 signing key
+        shell: bash
+        env:
+          SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_PRIVATE_KEY_PEM_B64 }}
+        run: |
+          set -euo pipefail
+          test -n "$SIGNING_KEY"
+          echo "$SIGNING_KEY" | base64 -d > /tmp/update-ed25519.pem
+          chmod 600 /tmp/update-ed25519.pem
+          openssl pkey -in /tmp/update-ed25519.pem -pubout -outform DER | tail -c 32 | base64 -w0 > /tmp/update-public.b64
+          test "$(cat /tmp/update-public.b64)" = "$(tr -d '\\r\\n' < UPDATE_PUBLIC_KEY.b64)" || {
+            echo "Signing key does not match UPDATE_PUBLIC_KEY.b64" >&2
+            exit 1
+          }
+
+      - name: Build and sign multi-architecture OpenWrt bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+
+          build_bundle() {
+            label="$1"; goarch="$2"; goarm="${3:-}"; gomips="${4:-}"
+            stage="/tmp/pw-agent-$label"
+            rm -rf "$stage"
+            mkdir -p "$stage"
+
+            env_args=(GOOS=linux GOARCH="$goarch" CGO_ENABLED=0)
+            [ -z "$goarm" ] || env_args+=(GOARM="$goarm")
+            [ -z "$gomips" ] || env_args+=(GOMIPS="$gomips")
+
+            env "${env_args[@]}" go build -trimpath -ldflags="-s -w" -o "$stage/pw-agent" .
+            cp openwrt/install.sh "$stage/"
+            cp openwrt/install-update.sh "$stage/"
+            cp openwrt/pw-agent.init "$stage/"
+            cp openwrt/config.example.json "$stage/"
+            cp -a openwrt/luci "$stage/"
+            chmod 755 "$stage/pw-agent" "$stage/install.sh" "$stage/install-update.sh" "$stage/pw-agent.init"
+
+            asset="dist/pw-agent-openwrt-$label.tar.gz"
+            tar -C "$stage" -czf "$asset" .
+            sha256sum "$asset" > "$asset.sha256"
+            openssl pkeyutl -sign -rawin -inkey /tmp/update-ed25519.pem -in "$asset" -out "$asset.sig"
+          }
+
+          build_bundle armv7 arm 7
+          build_bundle arm64 arm64
+          build_bundle amd64 amd64
+          build_bundle 386 386
+          build_bundle mips mips "" softfloat
+          build_bundle mipsle mipsle "" softfloat
+
+          rm -f /tmp/update-ed25519.pem
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$RELEASE_TAG" dist/* --target "$GITHUB_SHA" --generate-notes --title "PW Agent $RELEASE_TAG"
+
+          APP_VERSION="$(php -r "require 'server/lib.php'; echo app_version();")"
+          [ "$RELEASE_TAG" = "v$APP_VERSION" ] || {
+            echo "Release tag $RELEASE_TAG does not match app version v$APP_VERSION" >&2
+            exit 1
+          }
+          echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
 
       - name: Test
         run: |
