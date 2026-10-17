@@ -120,6 +120,7 @@ function ensure_v060_schema(): void {
       created_by BIGINT NULL,
       last_run_at DATETIME NULL,
       last_command_id BIGINT UNSIGNED NULL,
+      last_error TEXT NULL,
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_schedule_due(enabled,next_run_at),
       INDEX idx_schedule_device(device_id)
@@ -137,6 +138,10 @@ function ensure_v060_schema(): void {
       'tx_bytes'=>"ADD COLUMN tx_bytes BIGINT UNSIGNED NULL AFTER rx_bytes",
     ];
     foreach($metricAdds as $c=>$sql)if(!isset($cols[$c]))$pdo->exec('ALTER TABLE pw_metrics '.$sql);
+
+    $scheduleCols=[];
+    foreach($pdo->query('SHOW COLUMNS FROM pw_schedules')->fetchAll() as $r)$scheduleCols[(string)$r['Field']]=true;
+    if(!isset($scheduleCols['last_error']))$pdo->exec('ALTER TABLE pw_schedules ADD COLUMN last_error TEXT NULL AFTER last_command_id');
 
     v060_seed_from_config();
     $done=true;
@@ -470,8 +475,9 @@ function v060_add_schedule(int $uid,string $deviceId,string $name,string $action
     if(!v060_schedule_allowed_action($action))throw new RuntimeException('Action is not allowed for scheduling');
     v060_authorize_command($uid,$deviceId,$action);
     $next=v060_next_run($type,$spec);
+    $safeName=substr(trim($name),0,128);if($safeName==='')$safeName=$action;
     $st=db()->prepare('INSERT INTO pw_schedules(device_id,name,action,params_json,schedule_type,schedule_spec_json,next_run_at,created_by) VALUES(?,?,?,?,?,?,?,?)');
-    $st->execute([$deviceId,substr(trim($name),0,128),$action,json_encode($params,JSON_UNESCAPED_SLASHES),$type,json_encode($spec,JSON_UNESCAPED_SLASHES),$next->format('Y-m-d H:i:s'),$uid]);return (int)db()->lastInsertId();
+    $st->execute([$deviceId,$safeName,$action,json_encode($params,JSON_UNESCAPED_SLASHES),$type,json_encode($spec,JSON_UNESCAPED_SLASHES),$next->format('Y-m-d H:i:s'),$uid]);return (int)db()->lastInsertId();
 }
 function v060_run_due_schedules(): void {
     ensure_v060_schema();$pdo=db();
@@ -484,10 +490,21 @@ function v060_run_due_schedules(): void {
             $chat=((string)$r['action']==='system.backup.create'&&$uid>0)?$uid:null;
             $cid=queue_command($dev,(string)$r['action'],$params,$chat,$uid?:null,null,'scheduled');
             $spec=json_decode((string)$r['schedule_spec_json'],true);if(!is_array($spec))$spec=[];
-            if((string)$r['schedule_type']==='one_time'){$pdo->prepare('UPDATE pw_schedules SET enabled=0,last_run_at=NOW(),last_command_id=? WHERE id=?')->execute([$cid,$id]);}
-            else{$next=v060_next_run((string)$r['schedule_type'],$spec);$pdo->prepare('UPDATE pw_schedules SET next_run_at=?,last_run_at=NOW(),last_command_id=? WHERE id=?')->execute([$next->format('Y-m-d H:i:s'),$cid,$id]);}
+            if((string)$r['schedule_type']==='one_time'){$pdo->prepare('UPDATE pw_schedules SET enabled=0,last_run_at=NOW(),last_command_id=?,last_error=NULL WHERE id=?')->execute([$cid,$id]);}
+            else{$next=v060_next_run((string)$r['schedule_type'],$spec);$pdo->prepare('UPDATE pw_schedules SET next_run_at=?,last_run_at=NOW(),last_command_id=?,last_error=NULL WHERE id=?')->execute([$next->format('Y-m-d H:i:s'),$cid,$id]);}
             $pdo->prepare("UPDATE pw_audit_log SET source='schedule' WHERE command_id=?")->execute([$cid]);
-        }catch(Throwable $e){error_log('schedule '.$id.': '.$e->getMessage());}
+        }catch(Throwable $e){
+            $message=short_text($e->getMessage(),1000);
+            error_log('schedule '.$id.': '.$message);
+            $spec=json_decode((string)$r['schedule_spec_json'],true);if(!is_array($spec))$spec=[];
+            if((string)$r['schedule_type']==='one_time'){
+                $pdo->prepare('UPDATE pw_schedules SET enabled=0,last_run_at=NOW(),last_error=? WHERE id=?')->execute([$message,$id]);
+            }else{
+                try{$next=v060_next_run((string)$r['schedule_type'],$spec);$pdo->prepare('UPDATE pw_schedules SET next_run_at=?,last_run_at=NOW(),last_error=? WHERE id=?')->execute([$next->format('Y-m-d H:i:s'),$message,$id]);}
+                catch(Throwable $nextError){$pdo->prepare('UPDATE pw_schedules SET enabled=0,last_run_at=NOW(),last_error=? WHERE id=?')->execute([short_text($message.'; '.$nextError->getMessage(),1000),$id]);}
+            }
+            try{v060_audit_event($dev,(int)($r['created_by']??0)?:null,'schedule',(string)$r['action'],'failed',$params,['error'=>$message]);}catch(Throwable $ignored){}
+        }
     }
 }
 
