@@ -24,7 +24,7 @@ https://YOUR-DOMAIN/health.php
 Expected:
 
 ```json
-{"ok":true,"version":"0.5.0",...}
+{"ok":true,"version":"0.6.0",...}
 ```
 
 A 500 response normally means the backend could not initialize the database/schema.
@@ -181,3 +181,58 @@ Never share:
 - private Ed25519 signing key
 - full `config.php`
 - full `/etc/pw-agent/config.json`
+
+
+## Device is missing from Fleet
+
+Run:
+
+```bash
+php bin/doctor.php
+```
+
+Then verify that `pw_device_registry` contains an enabled row for the Device ID and that the router is polling the backend.
+
+Existing v0.5 devices should be seeded automatically when the v0.6 schema initializes.
+
+## Dashboard says Unauthorized
+
+The Dashboard must be opened from the Telegram Mini App button. A normal browser does not provide valid Telegram `initData`.
+
+Also verify:
+
+- the Telegram user exists in `pw_users`;
+- the user is enabled;
+- the user's role grants the requested permission;
+- the Device Scope includes the active router.
+
+## Scheduled actions do not run
+
+Verify the one-minute cron is active:
+
+```bash
+php cron/monitor.php
+```
+
+Check whether Maintenance Mode is enabled for the device. Due schedules are intentionally paused during maintenance.
+
+Also verify the schedule creator still has permission to execute the scheduled action.
+
+## Alert rule does not trigger
+
+Check that:
+
+- cron runs every minute;
+- recent metrics exist in `pw_metrics`;
+- the alert is enabled;
+- the threshold/duration are satisfied;
+- cooldown has expired;
+- Maintenance Mode is not active.
+
+## Rollback is unavailable
+
+Config History starts only after the router runs Agent v0.6. Older changes do not have rollback snapshots.
+
+For a v0.6 change, verify that the original command finished successfully and that a record exists in `pw_config_changes`.
+
+A rollback snapshot is tied cryptographically to the same Device Secret. Moving the snapshot to another router will fail authentication.
