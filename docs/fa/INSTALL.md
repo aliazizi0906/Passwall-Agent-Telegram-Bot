@@ -85,15 +85,17 @@ Bot Token را نگه دار.
 
 ## ۳. آپلود Backend با cPanel File Manager
 
-ZIP پروژه را از GitHub روی کامپیوترت دانلود و Extract کن.
-
-داخل پروژه وارد فولدر:
+ساده‌ترین روش این است که از Release رسمی **v0.6.0** فایل زیر را دانلود کنی:
 
 ```text
-server/
+pw-agent-cpanel-v0.6.0.zip
 ```
 
-شو و **محتویات داخل `server/`** را در هر مسیر دلخواه زیر Document Root دامنه آپلود کن.
+در cPanel هر فولدر دلخواهی زیر Document Root بساز، ZIP را همان‌جا Upload کن و با **File Manager → Extract** بازش کن. محتویات ZIP مستقیماً فایل‌های Backend هستند و `setup.php` و فایل‌های لازم `.htaccess` را هم شامل می‌شوند.
+
+روش جایگزین این است که ZIP کامل Repository را دانلود کنی، آن را Extract کنی، وارد فولدر `server/` شوی و **محتویات داخل `server/`** را Upload کنی.
+
+Backend را می‌توانی در هر مسیر دلخواه زیر Document Root قرار بدهی.
 
 مثال:
 
