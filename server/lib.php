@@ -232,7 +232,9 @@ function nav_row(string $back='home'): array { return [[['text'=>'⬅️ Back','
 function append_nav(array $kb,string $back='home'): array { return array_merge($kb,nav_row($back)); }
 
 function main_keyboard(): array {
+    $base=rtrim((string)(cfg()['base_url']??''),'/');
     $kb=[
+        [['text'=>'🛰 Fleet','callback_data'=>'fleet'],['text'=>'🌐 Dashboard','web_app'=>['url'=>$base.'/dashboard/']]],
         [['text'=>'📊 Status','callback_data'=>'status'],['text'=>'🧱 Passwall2','callback_data'=>'pw']],
         [['text'=>'🌐 Nodes','callback_data'=>'nodes'],['text'=>'🧭 Shunt','callback_data'=>'shunt']],
         [['text'=>'🔌 Network','callback_data'=>'network'],['text'=>'📶 Wi-Fi','callback_data'=>'wifimenu']],
@@ -240,7 +242,6 @@ function main_keyboard(): array {
         [['text'=>'🧪 Diagnostics','callback_data'=>'diag'],['text'=>'💾 Backup','callback_data'=>'backup']],
         [['text'=>'📈 Monitoring','callback_data'=>'monitoring']],
     ];
-    $base=rtrim((string)(cfg()['base_url']??''),'/');
     if((cfg()['telegram']['terminal_enabled'] ?? true) && str_starts_with($base,'https://')) {
         $kb[]=[['text'=>'⌨️ SSH Console','web_app'=>['url'=>$base.'/terminal/']]];
     }
