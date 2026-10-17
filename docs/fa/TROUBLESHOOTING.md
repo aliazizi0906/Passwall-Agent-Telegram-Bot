@@ -24,7 +24,7 @@ https://YOUR-DOMAIN/health.php
 خروجی سالم:
 
 ```json
-{"ok":true,"version":"0.5.0",...}
+{"ok":true,"version":"0.6.0",...}
 ```
 
 HTTP 500 معمولاً یعنی Backend نتوانسته Database/Schema را Initialize کند.
@@ -171,3 +171,58 @@ php cron/monitor.php
 - Private Ed25519 Signing Key
 - کل `config.php`
 - کل `/etc/pw-agent/config.json`
+
+
+## Device در Fleet دیده نمی‌شود
+
+اجرا کنید:
+
+```bash
+php bin/doctor.php
+```
+
+بعد بررسی کنید `pw_device_registry` برای Device ID موردنظر Row فعال داشته باشد و Router در حال Poll کردن Backend باشد.
+
+Deviceهای v0.5 باید هنگام Initialize شدن Schema نسخه v0.6 به‌صورت خودکار وارد Registry شوند.
+
+## Dashboard خطای Unauthorized می‌دهد
+
+Dashboard باید از دکمه Telegram Mini App باز شود. Browser عادی `initData` معتبر Telegram ندارد.
+
+همچنین بررسی کنید:
+
+- Telegram User در `pw_users` وجود داشته باشد.
+- User فعال باشد.
+- Role او Permission لازم را داشته باشد.
+- Device Scope شامل Router فعال باشد.
+
+## Scheduled Action اجرا نمی‌شود
+
+Cron یک‌دقیقه‌ای را بررسی کنید:
+
+```bash
+php cron/monitor.php
+```
+
+اگر Maintenance Mode برای Device فعال باشد، Scheduleهای Due عمداً Pause می‌شوند.
+
+همچنین User سازنده Schedule باید هنوز Permission اجرای Action را داشته باشد.
+
+## Alert Rule Trigger نمی‌شود
+
+بررسی کنید:
+
+- Cron هر دقیقه اجرا شود.
+- Metric جدید در `pw_metrics` وجود داشته باشد.
+- Rule فعال باشد.
+- Threshold و Duration برقرار باشند.
+- Cooldown تمام شده باشد.
+- Maintenance Mode فعال نباشد.
+
+## Rollback در دسترس نیست
+
+Config History فقط بعد از اجرای Agent v0.6 ثبت می‌شود. تغییرات قدیمی Snapshot قابل Rollback ندارند.
+
+برای تغییرات v0.6 بررسی کنید Command اصلی Success شده باشد و Record مربوطه در `pw_config_changes` وجود داشته باشد.
+
+Rollback Snapshot به Device Secret همان Router وابسته است و روی Router دیگر Authentication آن Fail می‌شود.
