@@ -69,10 +69,16 @@ Requirements:
 
 Upload the contents of `server/` to your web host and create an empty MySQL database.
 
-From the repository root run:
+If the full repository is on the server, run from the repository root:
 
 ```bash
 php server/bin/setup.php
+```
+
+If you uploaded only the contents of `server/` into your web directory, run from that directory:
+
+```bash
+php bin/setup.php
 ```
 
 The installer asks for:
@@ -185,7 +191,13 @@ UPDATE_SIGNING_PRIVATE_KEY_PEM_B64
 
 The corresponding public key is already committed to this repository. The private key must never be committed.
 
-The Release workflow builds and signs packages for all supported architectures.
+After that, open **Actions → Release → Run workflow**, enter a version such as `v0.5.0`, and run it. The workflow verifies that the version matches the application version, verifies that the private key matches `UPDATE_PUBLIC_KEY.b64`, builds all supported architectures, signs every bundle, creates the tag if necessary, and publishes the GitHub Release.
+
+For installation diagnostics:
+
+```bash
+php server/bin/doctor.php
+```
 
 # Security model
 
