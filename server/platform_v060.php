@@ -425,6 +425,14 @@ function v060_add_alert(int $uid,string $deviceId,string $metric,string $op,floa
     $st->execute([$deviceId,$metric,$op,$threshold,max(0,$duration),max(60,$cooldown),$chatId?:$uid,$uid]);return (int)db()->lastInsertId();
 }
 
+function v060_dashboard_command_allowed(string $action): bool {
+    return in_array($action,[
+      'system.status','passwall2.status','passwall2.nodes.list','passwall2.nodes.relay_ranking',
+      'passwall2.failover.list','passwall2.failover.run','passwall2.restart',
+      'system.backup.create','agent.update.check','agent.update.apply'
+    ],true);
+}
+
 function v060_schedule_allowed_action(string $action): bool {
     return in_array($action,['passwall2.restart','passwall2.subscription.update','system.backup.create','system.reboot','agent.update.apply','passwall2.failover.run'],true);
 }
@@ -461,7 +469,8 @@ function v060_run_due_schedules(): void {
         $id=(int)$r['id'];$dev=(string)$r['device_id'];if(v060_is_maintenance($dev))continue;
         $params=json_decode((string)$r['params_json'],true);if(!is_array($params))$params=[];
         try{
-            $uid=(int)($r['created_by']??0);$chat=$uid>0?$uid:null;
+            $uid=(int)($r['created_by']??0);
+            $chat=((string)$r['action']==='system.backup.create'&&$uid>0)?$uid:null;
             $cid=queue_command($dev,(string)$r['action'],$params,$chat,$uid?:null,null,'scheduled');
             $spec=json_decode((string)$r['schedule_spec_json'],true);if(!is_array($spec))$spec=[];
             if((string)$r['schedule_type']==='one_time'){$pdo->prepare('UPDATE pw_schedules SET enabled=0,last_run_at=NOW(),last_command_id=? WHERE id=?')->execute([$cid,$id]);}
