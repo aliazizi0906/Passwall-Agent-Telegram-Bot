@@ -22,6 +22,16 @@ return [
         'offline_after_seconds' => 300,
     ],
 
+    // Generated automatically by bin/setup.php. Required for encrypting
+    // database-backed device secrets in multi-device deployments.
+    'security' => [
+        'instance_key' => 'BASE64_RANDOM_32_BYTE_KEY',
+    ],
+
+    'scheduling' => [
+        'timezone' => 'UTC',
+    ],
+
     // Use server/bin/setup.php instead of editing these values manually.
     'devices' => [
         'router-01' => [
