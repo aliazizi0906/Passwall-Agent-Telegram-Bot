@@ -213,6 +213,16 @@ function v060_register_device(string $name,?int $createdBy=null): array {
     $secret=bin2hex(random_bytes(32));
     $st=db()->prepare("INSERT INTO pw_device_registry(device_id,display_name,secret_sealed,enabled,tags_json) VALUES(?,?,?,1,'[]')");
     $st->execute([$id,$name,v060_seal_secret($secret)]);
+    if($createdBy!==null&&$createdBy>0){
+        $creator=v060_user($createdBy);
+        if($creator&&((string)$creator['role'])!=='owner'){
+            $scope=v060_scope($createdBy);
+            if(!in_array('*',$scope,true)&&!in_array($id,$scope,true)){
+                $scope[]=$id;
+                db()->prepare('UPDATE pw_users SET device_scope_json=?,updated_at=NOW() WHERE telegram_user_id=?')->execute([json_encode(array_values(array_unique($scope)),JSON_UNESCAPED_SLASHES),$createdBy]);
+            }
+        }
+    }
     $token=rtrim(strtr(base64_encode(random_bytes(36)),'+/','-_'),'=');
     db()->prepare('INSERT INTO pw_provision_tokens(token_hash,device_id,expires_at) VALUES(?,?,DATE_ADD(NOW(),INTERVAL 30 MINUTE))')->execute([hash('sha256',$token),$id]);
     v060_audit_event($id,$createdBy,'telegram','device.provision','done',['display_name'=>$name],['token_expires_minutes'=>30]);
@@ -230,7 +240,7 @@ function v060_user(int $uid): ?array {
 function v060_user_allowed(int $uid): bool {$u=v060_user($uid);return $u!==null&&!empty($u['enabled']);}
 function v060_role_permissions(string $role): array {
     if($role==='owner')return ['*'];
-    if($role==='admin')return ['device.read','device.manage','group.manage','rbac.read','rbac.manage','system.read','system.modify','network.read','network.modify','wifi.read','wifi.modify','firewall.read','firewall.modify','passwall.read','passwall.modify','terminal.execute','backup.create','backup.restore','agent.update','audit.read','rollback','monitor.read','alert.manage','maintenance.manage','schedule.manage'];
+    if($role==='admin')return ['device.read','device.manage','group.manage','rbac.read','system.read','system.modify','network.read','network.modify','wifi.read','wifi.modify','firewall.read','firewall.modify','passwall.read','passwall.modify','terminal.execute','backup.create','backup.restore','agent.update','audit.read','rollback','monitor.read','alert.manage','maintenance.manage','schedule.manage'];
     if($role==='operator')return ['device.read','system.read','system.modify','network.read','network.modify','wifi.read','wifi.modify','firewall.read','passwall.read','passwall.modify','backup.create','audit.read','monitor.read','maintenance.manage','schedule.manage'];
     return ['device.read','system.read','network.read','wifi.read','firewall.read','passwall.read','audit.read','monitor.read'];
 }
@@ -244,7 +254,7 @@ function v060_scope(int $uid): array {
 }
 function v060_can_device(int $uid,string $deviceId): bool {
     $u=v060_user($uid);if(!$u||empty($u['enabled']))return false;
-    if(in_array((string)$u['role'],['owner','admin'],true))return true;
+    if((string)$u['role']==='owner')return true;
     $scope=v060_scope($uid);return in_array('*',$scope,true)||in_array($deviceId,$scope,true);
 }
 function v060_action_permission(string $action): string {
