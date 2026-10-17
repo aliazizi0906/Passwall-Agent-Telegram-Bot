@@ -224,10 +224,11 @@ Cron این بخش‌ها را اجرا می‌کند:
 ```sh
 PW_SERVER_BASE='https://example.com/your/chosen/path' \
 PW_PROVISION_TOKEN='ONE_TIME_TOKEN' \
+PW_AGENT_VERSION='v0.6.0' \
 sh -c "$(wget -qO- 'https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh')"
 ```
 
-Token فقط یک بار قابل استفاده است و بعد از ۳۰ دقیقه Expire می‌شود.
+Token فقط یک بار قابل استفاده است و بعد از ۳۰ دقیقه Expire می‌شود. Command تولیدشده به نسخه Agent همان Backend Pin می‌شود؛ بنابراین اگر GitHub `latest` قدیمی‌تر باشد، نسخه اشتباه به‌صورت Silent نصب نخواهد شد.
 
 Installer:
 
