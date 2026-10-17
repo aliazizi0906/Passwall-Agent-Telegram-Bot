@@ -464,11 +464,17 @@ function v060_fleet_summary(int $uid): array {
     foreach($rows as &$r){$last=!empty($r['last_seen'])?strtotime((string)$r['last_seen']):0;$r['online']=$last&&$now-$last<=180;if($r['online'])$online++;else$offline++;$r['maintenance']=v060_is_maintenance((string)$r['device_id']);}
     return ['total'=>count($rows),'online'=>$online,'offline'=>$offline,'devices'=>$rows];
 }
+function v060_device_token(string $deviceId): string { return substr(hash('sha256',$deviceId),0,16); }
+function v060_device_from_token(int $uid,string $token): string {
+    foreach(v060_accessible_devices($uid) as $r){$id=(string)$r['device_id'];if(hash_equals(v060_device_token($id),$token))return $id;}
+    throw new RuntimeException('Device selector expired or is unavailable');
+}
+
 function v060_fleet_keyboard(int $uid,string $active=''): array {
     $sum=v060_fleet_summary($uid);$kb=[];
     foreach(array_slice($sum['devices'],0,12) as $r){
         $id=(string)$r['device_id'];$icon=$r['maintenance']?'🟡':($r['online']?'🟢':'🔴');$check=$id===$active?' ✓':'';
-        $kb[]=[['text'=>$icon.' '.short_text((string)$r['display_name'],28).$check,'callback_data'=>'dev|'.$id]];
+        $kb[]=[['text'=>$icon.' '.short_text((string)$r['display_name'],28).$check,'callback_data'=>'dev|'.v060_device_token($id)]];
     }
     if(v060_has_permission($uid,'device.manage'))$kb[]=[['text'=>'➕ Add Device','callback_data'=>'devadd'],['text'=>'🗂 Groups','callback_data'=>'groups']];
     $kb[]=[['text'=>'📊 Fleet Health','callback_data'=>'fleethealth'],['text'=>'📜 Audit','callback_data'=>'audit']];
@@ -480,6 +486,7 @@ function v060_home_keyboard(int $uid,string $deviceId): array {
     array_unshift($kb,[['text'=>'🛰 Fleet / Devices','callback_data'=>'fleet'],['text'=>'🌐 Dashboard','web_app'=>['url'=>rtrim((string)cfg()['base_url'],'/').'/dashboard/']]]);
     $kb[]=[['text'=>'🧾 History','callback_data'=>'history'],['text'=>'🛠 Maintenance','callback_data'=>'maint']];
     $kb[]=[['text'=>'⏱ Schedules','callback_data'=>'schedules'],['text'=>'🚨 Alerts','callback_data'=>'alerts']];
+    if(v060_has_permission($uid,'rbac.read'))$kb[]=[['text'=>'👥 Access / RBAC','callback_data'=>'access']];
     return $kb;
 }
 function v060_home_text(int $uid,string $deviceId): string {
