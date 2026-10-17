@@ -11,7 +11,11 @@ foreach($rows as $r){
     $s=$pdo->prepare('SELECT offline_alerted_at FROM pw_alert_state WHERE device_id=?');$s->execute([$device]);$state=$s->fetch();
     $alerted=!empty($state['offline_alerted_at']);
     $maintenance=v060_is_maintenance($device);
-    if($offline&&!$alerted&&!$maintenance){
+    if($maintenance){
+        if(!$offline&&$alerted)$pdo->prepare('UPDATE pw_alert_state SET offline_alerted_at=NULL,recovered_alerted_at=NOW() WHERE device_id=?')->execute([$device]);
+        continue;
+    }
+    if($offline&&!$alerted){
         foreach(v060_notification_chats($device) as $chat)tg_send($chat,"🔴 <b>Router Offline</b>\nDevice: <b>".h(v060_device_label($device))."</b>\nLast seen: <code>".h((string)($r['last_seen']??'never'))."</code>",main_keyboard());
         $pdo->prepare('INSERT INTO pw_alert_state(device_id,offline_alerted_at) VALUES(?,NOW()) ON DUPLICATE KEY UPDATE offline_alerted_at=NOW()')->execute([$device]);
     }elseif(!$offline&&$alerted){
