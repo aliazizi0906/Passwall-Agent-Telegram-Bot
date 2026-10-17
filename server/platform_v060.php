@@ -182,8 +182,8 @@ function v060_seed_from_config(): void {
     $ids=array_values(array_unique(array_map('intval',cfg()['telegram']['allowed_user_ids']??[])));
     foreach($ids as $i=>$uid){
         if($uid<=0)continue;
-        $st=$pdo->prepare("INSERT IGNORE INTO pw_users(telegram_user_id,role,enabled,device_scope_json) VALUES(?,?,1,'["*"]')");
-        $st->execute([$uid,$i===0?'owner':'admin']);
+        $st=$pdo->prepare('INSERT IGNORE INTO pw_users(telegram_user_id,role,enabled,device_scope_json) VALUES(?,?,1,?)');
+        $st->execute([$uid,$i===0?'owner':'admin','["*"]']);
     }
 }
 
@@ -220,7 +220,7 @@ function v060_register_device(string $name,?int $createdBy=null): array {
 function v060_provision_command(string $token): string {
     $base=rtrim((string)cfg()['base_url'],'/');
     $raw='https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh';
-    return "PW_SERVER_BASE='".str_replace("'","'\\''",$base)."' PW_PROVISION_TOKEN='".str_replace("'","'\\''",$token)."' sh -c "\$(wget -qO- '".$raw."')"";
+    return 'PW_SERVER_BASE='.escapeshellarg($base).' PW_PROVISION_TOKEN='.escapeshellarg($token).' sh -c "$(wget -qO- '.escapeshellarg($raw).')"';
 }
 
 function v060_user(int $uid): ?array {
