@@ -112,7 +112,14 @@ try{
         $role=(string)($in['role']??'viewer');if(!in_array($role,['owner','admin','operator','viewer'],true))throw new RuntimeException('Invalid role');
         $existing=v060_user($target);$existingRole=(string)($existing['role']??'');
         if(($role==='owner'||$existingRole==='owner')&&$callerRole!=='owner')throw new RuntimeException('Only an Owner may create or modify another Owner');
-        $scope=dash_json($in['device_scope']??['*']);$scope=array_values(array_unique(array_filter(array_map('strval',$scope),fn($x)=>$x==='*'||preg_match('/^[A-Za-z0-9_-]{1,64}$/',$x))));if(!$scope)$scope=['*'];
+        $scope=dash_json($in['device_scope']??['*']);
+        $scope=array_values(array_unique(array_filter(array_map('strval',$scope),function($x){
+            return $x==='*'
+                || preg_match('/^[A-Za-z0-9_-]{1,64}$/',$x)
+                || preg_match('/^[A-Za-z0-9_-]{1,63}\*$/',$x)
+                || preg_match('/^group:[1-9][0-9]{0,18}$/',$x);
+        })));
+        if(!$scope)$scope=['*'];
         $enabled=!isset($in['enabled'])||!empty($in['enabled']);
         if($existingRole==='owner'&&(!$enabled||$role!=='owner')){
             $owners=(int)db()->query("SELECT COUNT(*) FROM pw_users WHERE enabled=1 AND role='owner'")->fetchColumn();
