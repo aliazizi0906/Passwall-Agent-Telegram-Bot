@@ -41,7 +41,7 @@ try{
         $m=db()->prepare('SELECT * FROM pw_metrics WHERE device_id=? ORDER BY captured_at DESC LIMIT 60');$m->execute([$device]);
         $metrics=array_reverse($m->fetchAll());
         $maint=v060_maintenance_row($device);
-        response_json(['ok'=>true,'device'=>$row,'metrics'=>$metrics,'maintenance'=>$maint]);
+        response_json(['ok'=>true,'device'=>$row,'metrics'=>$metrics,'maintenance'=>$maint,'overview'=>v060_monitoring_overview($uid,$device)]);
     }
 
     if($action==='device_create'){
