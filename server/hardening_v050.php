@@ -10,7 +10,7 @@ function v050_sensitive_action(string $action): bool {
 }
 
 function v050_queue_key(string $deviceId): string {
-    $secret=(string)(cfg()['devices'][$deviceId]['secret']??'');
+    $secret=function_exists('v060_device_secret')?v060_device_secret($deviceId):(string)(cfg()['devices'][$deviceId]['secret']??'');
     if($secret==='') throw new RuntimeException('Device secret missing for queue encryption');
     return hash_hmac('sha256','pw-agent-db-queue-v1',$secret,true);
 }
