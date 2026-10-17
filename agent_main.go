@@ -124,6 +124,7 @@ func main() {
 	}
 	fmt.Printf("pw-agent %s started for %s\n", agentVersion, cfg.DeviceID)
 	go a.failoverLoopV4()
+	go healthTelemetryLoopV6()
 	a.loop()
 }
 
@@ -172,6 +173,7 @@ func (a *Agent) poll() (*Command, error) {
 		"memory":           memoryInfo(),
 		"passwall_running": passwallRunning(),
 		"wan":              heartbeatNetworkV6(),
+		"health":           cachedHealthTelemetryV6(),
 	}
 	raw, _, err := a.signedPOST(a.cfg.ServerURL+"/poll.php", hb)
 	if err != nil {
