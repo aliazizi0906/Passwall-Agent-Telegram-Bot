@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"sync"
 	"time"
@@ -24,6 +25,8 @@ type idempotencyRecordV5 struct {
 type idempotencyStoreV5 struct {
 	Records map[string]idempotencyRecordV5 `json:"records"`
 }
+
+const officialUpdatePublicKeyV5 = "fDiTaZG26qn3BCI3c8cFiO0KdqMW561w6JSaMwXCecw="
 
 var idempotencyMuV5 sync.Mutex
 
@@ -139,11 +142,26 @@ func verifyEd25519SignatureV5(publicKeyB64 string, payload []byte, signatureB64 
 	return nil
 }
 
-func (a *Agent) verifyUpdateSignatureV5(payload []byte, signatureB64 string) error {
-	if a.cfg.UpdatePublicKey == "" {
-		return errors.New("update_public_key is not configured; refusing unsigned update")
+func effectiveUpdatePublicKeyV5(cfg Config) string {
+	if cfg.UpdatePublicKey != "" {
+		return cfg.UpdatePublicKey
 	}
-	return verifyEd25519SignatureV5(a.cfg.UpdatePublicKey, payload, signatureB64)
+	return officialUpdatePublicKeyV5
+}
+
+func (a *Agent) verifyUpdateSignatureV5(payload []byte, signatureB64 string) error {
+	return verifyEd25519SignatureV5(effectiveUpdatePublicKeyV5(a.cfg), payload, signatureB64)
+}
+
+func agentArchV5() string {
+	switch runtime.GOARCH {
+	case "arm":
+		return "armv7"
+	case "amd64", "arm64", "386", "mips", "mipsle":
+		return runtime.GOARCH
+	default:
+		return runtime.GOARCH
+	}
 }
 
 type nodeHealthV5 struct {
