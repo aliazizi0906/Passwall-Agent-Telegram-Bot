@@ -1,34 +1,66 @@
-# v0.5.0 hardening migration
+# v0.5.0 migration
 
-v0.5 introduces resilient command leasing/idempotency, encrypted sensitive queue parameters, Ed25519-signed agent updates, scored failover, metrics/events, CI/CD and automated tests.
+v0.5 changes the project from a device-specific deployment into a reusable public installation flow.
 
-## Database
-The backend calls `ensure_v050_schema()` and adds the required columns/tables automatically when the configured DB user has ALTER/CREATE privileges. The same definitions are also present in `server/schema.sql`.
+## Existing installations
+
+1. Preserve your current `server/config.php`.
+2. Deploy the new `server/` files.
+3. Ensure the MySQL account has `ALTER` and `CREATE` privileges for the first v0.5 request, or import `server/schema.sql` manually.
+4. Sync the signed update bundle for your router architecture:
+
+```bash
+php server/bin/sync-release.php --arch=armv7
+```
+
+Supported values are `armv7`, `arm64`, `amd64`, `386`, `mips` and `mipsle`.
+
+5. Upgrade the router once using the v0.5 release bundle or reinstall through the public provisioning flow.
+
+The Agent contains the official Ed25519 update public key, so existing users do not need to add `update_public_key` to their config.
+
+## New installations
+
+Use:
+
+```bash
+php server/bin/setup.php
+```
+
+The setup utility creates the database schema, instance configuration, Telegram webhook, device credentials and a one-time provisioning token.
+
+Then run the printed command on the OpenWrt router.
 
 ## Monitoring cron
-Run once per minute from cPanel:
 
-```sh
-/usr/local/bin/php /home/USER/public_html/routerbot/cron/monitor.php
+Run once per minute:
+
+```cron
+* * * * * /usr/bin/php /absolute/path/to/server/cron/monitor.php >/dev/null 2>&1
 ```
 
-The default offline threshold is 300 seconds and can be overridden with:
+## Official Ed25519 signing
 
-```php
-'monitoring' => ['offline_after_seconds' => 300],
+Normal users do **not** create signing keys.
+
+The official update public key is committed as `UPDATE_PUBLIC_KEY.b64` and embedded in the Agent. Official GitHub Releases are signed by the repository maintainer.
+
+The maintainer stores the matching private key only as the GitHub Actions secret:
+
+```text
+UPDATE_SIGNING_PRIVATE_KEY_PEM_B64
 ```
 
-## Ed25519 update signing
-Generate a dedicated Ed25519 key and keep the private key offline / in the GitHub Actions secret `UPDATE_SIGNING_PRIVATE_KEY_PEM_B64`.
+The private key must never be committed.
 
-Example:
+## Forks with independent update trust
 
-```sh
-openssl genpkey -algorithm ED25519 -out update-ed25519.pem
-openssl pkey -in update-ed25519.pem -pubout -outform DER | tail -c 32 | base64
-base64 -w0 update-ed25519.pem
-```
+A fork that wants to publish independently signed updates should:
 
-Put the raw public key base64 in OpenWrt `update_public_key`. Put the base64-encoded PEM private key in the GitHub Actions secret.
+1. generate its own Ed25519 key pair;
+2. replace `UPDATE_PUBLIC_KEY.b64`;
+3. replace `officialUpdatePublicKeyV5` with the matching raw public key;
+4. configure its own `UPDATE_SIGNING_PRIVATE_KEY_PEM_B64` Actions secret;
+5. optionally set `update_public_key` in existing router configs during migration.
 
-The cPanel release directory must contain both the release tarball and its matching `.sig` file. The Agent refuses an update if the Ed25519 signature is missing or invalid.
+The Release workflow verifies that the configured private key matches the published public key before creating assets.
