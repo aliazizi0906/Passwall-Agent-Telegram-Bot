@@ -399,7 +399,11 @@ function v060_evaluate_alerts(): void {
     ensure_v060_schema();$pdo=db();
     $rules=$pdo->query('SELECT * FROM pw_alert_rules WHERE enabled=1')->fetchAll();
     foreach($rules as $r){
-        $dev=(string)$r['device_id'];if(v060_is_maintenance($dev))continue;
+        $dev=(string)$r['device_id'];
+        if(v060_is_maintenance($dev)){
+            if(!empty($r['breach_since']))$pdo->prepare('UPDATE pw_alert_rules SET breach_since=NULL WHERE id=?')->execute([(int)$r['id']]);
+            continue;
+        }
         $m=$pdo->prepare('SELECT * FROM pw_metrics WHERE device_id=? ORDER BY captured_at DESC LIMIT 1');$m->execute([$dev]);$row=$m->fetch();if(!$row)continue;
         $v=v060_metric_value($row,(string)$r['metric']);if($v===null)continue;
         $breach=v060_compare($v,(string)$r['operator'],(float)$r['threshold']);
@@ -465,6 +469,34 @@ function v060_run_due_schedules(): void {
             $pdo->prepare("UPDATE pw_audit_log SET source='schedule' WHERE command_id=?")->execute([$cid]);
         }catch(Throwable $e){error_log('schedule '.$id.': '.$e->getMessage());}
     }
+}
+
+
+function v060_monitoring_overview(int $uid,string $deviceId): array {
+    if(!v060_has_permission($uid,'monitor.read')||!v060_can_device($uid,$deviceId))throw new RuntimeException('Monitoring permission denied');
+    ensure_v060_schema();$pdo=db();
+    $windows=['24h'=>['hours'=>24,'expected'=>1440],'7d'=>['hours'=>168,'expected'=>10080],'30d'=>['hours'=>720,'expected'=>43200]];
+    $availability=[];
+    foreach($windows as $name=>$w){
+        $st=$pdo->prepare('SELECT COUNT(*) samples,AVG(cpu_percent) avg_cpu,MAX(cpu_percent) max_cpu,AVG(memory_used_percent) avg_memory,SUM(CASE WHEN wan_up=0 THEN 1 ELSE 0 END) wan_down_samples,SUM(CASE WHEN passwall_running=0 THEN 1 ELSE 0 END) passwall_down_samples,MIN(rx_bytes) min_rx,MAX(rx_bytes) max_rx,MIN(tx_bytes) min_tx,MAX(tx_bytes) max_tx,COUNT(DISTINCT NULLIF(wan_ip,\'\')) wan_ip_count FROM pw_metrics WHERE device_id=? AND captured_at >= (NOW()-INTERVAL '.$w['hours'].' HOUR)');
+        $st->execute([$deviceId]);$r=$st->fetch()?:[];$samples=(int)($r['samples']??0);
+        $coverage=min(100.0,$w['expected']>0?($samples/$w['expected'])*100.0:0.0);
+        $availability[$name]=[
+          'heartbeat_coverage'=>round($coverage,2),
+          'samples'=>$samples,
+          'avg_cpu'=>round((float)($r['avg_cpu']??0),2),
+          'max_cpu'=>round((float)($r['max_cpu']??0),2),
+          'avg_memory'=>round((float)($r['avg_memory']??0),2),
+          'wan_down_samples'=>(int)($r['wan_down_samples']??0),
+          'passwall_down_samples'=>(int)($r['passwall_down_samples']??0),
+          'rx_bytes'=>max(0,(int)($r['max_rx']??0)-(int)($r['min_rx']??0)),
+          'tx_bytes'=>max(0,(int)($r['max_tx']??0)-(int)($r['min_tx']??0)),
+          'wan_ip_changes'=>max(0,(int)($r['wan_ip_count']??0)-1),
+        ];
+    }
+    $e=$pdo->prepare("SELECT COUNT(*) FROM pw_events WHERE device_id=? AND kind IN ('failover.switch','failover.return') AND created_at >= (NOW()-INTERVAL 24 HOUR)");$e->execute([$deviceId]);
+    $availability['24h']['failover_events']=(int)$e->fetchColumn();
+    return $availability;
 }
 
 function v060_fleet_summary(int $uid): array {
