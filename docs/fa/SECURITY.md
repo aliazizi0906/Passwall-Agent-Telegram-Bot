@@ -110,9 +110,9 @@ Permission قبل از ورود Command به Queue بررسی می‌شود. ب�
 
 ## محرمانگی Config History
 
-Rollback Snapshot توسط Agent و با AES-GCM و Key مشتق‌شده از Device Secret رمزنگاری می‌شود.
+Rollback Snapshot توسط Agent با AES-GCM و یک History Key تصادفی ۳۲‌بایتی مخصوص Router در مسیر `/etc/pw-agent/history.key` رمزنگاری می‌شود.
 
-Backend فقط Snapshot رمزنگاری‌شده را نگه می‌دارد. Diffهای Audit/Config History فقط نام UCI Option و نوع تغییر را نمایش می‌دهند، نه Value آن را.
+Backend در عملیات عادی Config History این Key را دریافت نمی‌کند و فقط Snapshot رمزنگاری‌شده را نگه می‌دارد. Diffهای Audit/Config History فقط نام UCI Option و نوع تغییر را نمایش می‌دهند، نه Value آن را. Full Backup روتر می‌تواند فایل‌های محلی PW Agent را شامل شود، بنابراین Backup باید Sensitive تلقی شود.
 
 Rollback Payload در Queue نیز Sensitive محسوب می‌شود و بعد از اتمام Command پاک می‌شود.
 
