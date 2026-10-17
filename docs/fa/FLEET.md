@@ -33,13 +33,13 @@ Routerها را می‌توان با Group، Tag و Location مرتب کرد؛ �
 | Role | سطح کلی دسترسی |
 |---|---|
 | Owner | دسترسی کامل |
-| Admin | مدیریت عملیاتی و RBAC |
+| Admin | مدیریت عملیاتی گسترده در Device Scope؛ RBAC فقط Read-only |
 | Operator | عملیات روزمره بدون قابلیت‌های حساس Admin |
 | Viewer | دسترسی Read-only |
 
 برای Operator و Viewer می‌توان Device Scope مشخص کرد.
 
-Permissionهای حساس شامل Terminal، Backup Restore، Agent Update، Rollback، RBAC، Alert و Scheduler هستند.
+Permissionهای حساس شامل Terminal، Backup Restore، Agent Update، Rollback، Alert و Scheduler هستند. تغییر Role و Scope فقط توسط Owner انجام می‌شود تا Admin محدود نتواند سطح دسترسی خودش را افزایش دهد.
 
 ## Audit Log
 
