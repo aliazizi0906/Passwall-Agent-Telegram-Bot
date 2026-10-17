@@ -32,7 +32,7 @@ return [
         'timezone' => 'UTC',
     ],
 
-    // Use server/bin/setup.php instead of editing these values manually.
+    // Prefer browser setup.php on cPanel. server/bin/setup.php remains an optional CLI alternative.
     'devices' => [
         'router-01' => [
             'secret' => 'CHANGE_ME_64_RANDOM_HEX',
