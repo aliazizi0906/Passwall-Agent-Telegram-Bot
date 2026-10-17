@@ -4,8 +4,9 @@ if(PHP_SAPI!=='cli'){fwrite(STDERR,"CLI only\n");exit(1);}
 require dirname(__DIR__) . '/lib.php';
 try{
     ensure_v050_schema();
+    ensure_v060_schema();
     $device=$argv[1]??(string)(cfg()['telegram']['default_device_id']??'');
-    if($device===''||!isset((cfg()['devices']??[])[$device]))throw new RuntimeException('Unknown device ID');
+    if($device===''||!v060_device_enabled($device))throw new RuntimeException('Unknown or disabled device ID');
     $token=rtrim(strtr(base64_encode(random_bytes(36)),'+/','-_'),'=');
     $st=db()->prepare('INSERT INTO pw_provision_tokens(token_hash,device_id,expires_at) VALUES(?,?,DATE_ADD(NOW(),INTERVAL 30 MINUTE))');
     $st->execute([hash('sha256',$token),$device]);
