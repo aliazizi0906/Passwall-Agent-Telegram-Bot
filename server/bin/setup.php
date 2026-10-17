@@ -35,7 +35,7 @@ try{
     $root=dirname(__DIR__);$configPath=$root.'/config.php';
     if(is_file($configPath)&&!in_array('--force',$argv,true))throw new RuntimeException('server/config.php already exists. Use --force only if you intend to replace it.');
 
-    echo "PW Agent public installer v0.5\n\n";
+    echo "PW Agent public installer v0.6\n\n";
     $base=rtrim(env_or_prompt('PW_BASE_URL','Public HTTPS base URL','https://example.com/routerbot'),'/');
     if(!preg_match('#^https://[A-Za-z0-9.-]+(?::[0-9]+)?(?:/[^\s]*)?$#',$base))throw new RuntimeException('Base URL must be a valid HTTPS URL.');
 
@@ -61,6 +61,7 @@ try{
 
     $deviceSecret=bin2hex(random_bytes(32));
     $webhookSecret=bin2hex(random_bytes(32));
+    $instanceKey=base64_encode(random_bytes(32));
     $config=[
         'base_url'=>$base,
         'db'=>['dsn'=>$dsn,'user'=>$dbUser,'pass'=>(string)$dbPass],
@@ -70,11 +71,18 @@ try{
             'alert_chat_id'=>(int)$admin,'terminal_enabled'=>true,
         ],
         'monitoring'=>['offline_after_seconds'=>300],
+        'security'=>['instance_key'=>$instanceKey],
+        'scheduling'=>['timezone'=>'UTC'],
         'devices'=>[$device=>['secret'=>$deviceSecret,'enabled'=>true]],
     ];
     $php="<?php\ndeclare(strict_types=1);\nreturn ".var_export($config,true).";\n";
     if(file_put_contents($configPath,$php,LOCK_EX)===false)throw new RuntimeException('Could not write server/config.php');
     @chmod($configPath,0600);
+
+    // Load the application after config.php exists so v0.6 can seed the
+    // initial Device Registry and owner RBAC row from this configuration.
+    require_once $root.'/lib.php';
+    ensure_v060_schema();
 
     $provisionToken=rtrim(strtr(base64_encode(random_bytes(36)),'+/','-_'),'=');
     $st=$pdo->prepare('INSERT INTO pw_provision_tokens(token_hash,device_id,expires_at) VALUES(?,?,DATE_ADD(NOW(),INTERVAL 30 MINUTE))');
