@@ -4,7 +4,6 @@ require dirname(__DIR__) . '/lib.php';
 ensure_v060_schema();
 $pdo=db();$threshold=max(120,(int)(cfg()['monitoring']['offline_after_seconds']??300));
 $rows=$pdo->query('SELECT device_id,last_seen,hostname FROM pw_devices')->fetchAll();
-$alertChat=(int)(cfg()['telegram']['alert_chat_id']??(cfg()['telegram']['allowed_user_ids'][0]??0));
 foreach($rows as $r){
     $device=(string)$r['device_id'];
     if(!v060_device_enabled($device))continue;$last=$r['last_seen']?strtotime((string)$r['last_seen']):0;
@@ -13,13 +12,10 @@ foreach($rows as $r){
     $alerted=!empty($state['offline_alerted_at']);
     $maintenance=v060_is_maintenance($device);
     if($offline&&!$alerted&&!$maintenance){
-        if($alertChat>0)tg_send($alertChat,"🔴 <b>Router Offline</b>
-Device: <code>".h($device)."</code>
-Last seen: <code>".h((string)($r['last_seen']??'never'))."</code>",main_keyboard());
+        foreach(v060_notification_chats($device) as $chat)tg_send($chat,"🔴 <b>Router Offline</b>\nDevice: <b>".h(v060_device_label($device))."</b>\nLast seen: <code>".h((string)($r['last_seen']??'never'))."</code>",main_keyboard());
         $pdo->prepare('INSERT INTO pw_alert_state(device_id,offline_alerted_at) VALUES(?,NOW()) ON DUPLICATE KEY UPDATE offline_alerted_at=NOW()')->execute([$device]);
     }elseif(!$offline&&$alerted){
-        if($alertChat>0)tg_send($alertChat,"🟢 <b>Router Recovered</b>
-Device: <code>".h($device)."</code>",main_keyboard());
+        foreach(v060_notification_chats($device) as $chat)tg_send($chat,"🟢 <b>Router Recovered</b>\nDevice: <b>".h(v060_device_label($device))."</b>",main_keyboard());
         $pdo->prepare('UPDATE pw_alert_state SET offline_alerted_at=NULL,recovered_alerted_at=NOW() WHERE device_id=?')->execute([$device]);
     }
 }
