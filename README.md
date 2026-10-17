@@ -2,7 +2,7 @@
 
 **OpenWrt + Passwall2 remote management through Telegram.**
 
-PW Agent is an open-source remote-management stack for OpenWrt routers. The router initiates outbound HTTPS connections to a self-hosted PHP/MySQL backend, so no public IP and no inbound management port are required.
+PW Agent is a public remote-management stack for OpenWrt routers. The router initiates outbound HTTPS connections to a self-hosted PHP/MySQL backend, so no public IP and no inbound management port are required.
 
 ## Highlights
 
