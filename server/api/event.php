@@ -3,6 +3,7 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/lib.php';
 $raw=raw_body();$auth=authenticate_device($raw);$body=json_decode_assoc($raw);
 $kind=(string)($body['kind']??'event');$data=is_array($body['data']??null)?$body['data']:[];
+v050_record_event($auth['device_id'],$kind,$data);
 try{
     $tg=cfg()['telegram']??[];
     $chat=(int)($tg['alert_chat_id']??(($tg['allowed_user_ids'][0]??0)));

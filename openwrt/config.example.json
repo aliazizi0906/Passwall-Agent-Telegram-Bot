@@ -1,7 +1,7 @@
 {
   "server_url": "https://YOUR-DOMAIN.example/routerbot/api",
-  "device_id": "gale-home",
-  "device_secret": "CHANGE_ME_64_RANDOM_CHARS",
+  "device_id": "router-01",
+  "device_secret": "CHANGE_ME_64_RANDOM_HEX",
   "poll_interval_seconds": 3,
   "request_timeout_seconds": 25
 }

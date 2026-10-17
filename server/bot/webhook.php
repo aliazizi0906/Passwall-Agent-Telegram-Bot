@@ -19,12 +19,12 @@ if(!in_array($userId,$allowed,true)){if($chatId){try{tg_send($chatId,'⛔ Unauth
 function qcmd(string $device,string $action,array $params,int $chatId,int $userId,?int $messageId=null,?string $view=null): void {
     queue_command($device,$action,$params,$chatId,$userId,$messageId,$view);
 }
-function edit_home(int $chatId,int $messageId): void { tg_edit($chatId,$messageId,"🏠 <b>Gale Router Remote</b>\nOpenWrt + Passwall2",main_keyboard()); }
+function edit_home(int $chatId,int $messageId): void { tg_edit($chatId,$messageId,"🏠 <b>PW Agent</b>\nOpenWrt + Passwall2 Remote Management",main_keyboard()); }
 
 try{
     if($text==='/start'){
         session_clear($chatId,$userId,$device);
-        tg_send($chatId,"🏠 <b>Gale Router Remote</b>\nOpenWrt + Passwall2",main_keyboard());
+        tg_send($chatId,"🏠 <b>PW Agent</b>\nOpenWrt + Passwall2 Remote Management",main_keyboard());
         http_response_code(200);exit('ok');
     }
 
@@ -35,6 +35,7 @@ try{
 
         if($data==='home'){edit_home($chatId,$messageId);}
         elseif($data==='status'){qcmd($device,'system.status',[],$chatId,$userId,$messageId,'status');}
+        elseif($data==='monitoring'){tg_edit($chatId,$messageId,v050_monitoring_summary($device),nav_row('home'));}
         elseif($data==='pw'){qcmd($device,'passwall2.status',[],$chatId,$userId,$messageId,'passwall');}
         elseif($data==='pwon'){qcmd($device,'passwall2.enable',[],$chatId,$userId,$messageId,'passwall');}
         elseif($data==='pwoff'){qcmd($device,'passwall2.disable',[],$chatId,$userId,$messageId,'passwall');}

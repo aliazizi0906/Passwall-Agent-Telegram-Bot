@@ -1,32 +1,31 @@
 <?php
 return [
-    // Public base URL, without trailing slash.
-    'base_url' => 'https://YOUR-DOMAIN.example/routerbot',
+    // The public HTTPS URL where the contents of server/ are deployed.
+    'base_url' => 'https://example.com/routerbot',
 
     'db' => [
-        'dsn' => 'mysql:host=localhost;dbname=CPANEL_DB;charset=utf8mb4',
-        'user' => 'CPANEL_DB_USER',
+        'dsn' => 'mysql:host=localhost;port=3306;dbname=PW_AGENT;charset=utf8mb4',
+        'user' => 'PW_AGENT_USER',
         'pass' => 'CHANGE_ME',
     ],
 
     'telegram' => [
-        'bot_token' => '123456789:AA_CHANGE_ME',
-        // Generate a long random value and set the same value when setting the Telegram webhook.
-        'webhook_secret' => 'CHANGE_ME_LONG_RANDOM',
-        // Numeric Telegram user IDs only.
+        'bot_token' => 'CHANGE_ME',
+        'webhook_secret' => 'CHANGE_ME',
         'allowed_user_ids' => [123456789],
-        'default_device_id' => 'gale-home',
-        // Optional: where autonomous failover alerts are sent. Defaults to the first allowed user.
+        'default_device_id' => 'router-01',
         'alert_chat_id' => 123456789,
-        // Enables the Telegram Mini App SSH console. HTTPS base_url is required.
         'terminal_enabled' => true,
     ],
 
-    // Device IDs and secrets must match /etc/pw-agent/config.json on OpenWrt.
-    // For v1 the secret is kept here instead of in the database, reducing accidental DB exposure.
+    'monitoring' => [
+        'offline_after_seconds' => 300,
+    ],
+
+    // Use server/bin/setup.php instead of editing these values manually.
     'devices' => [
-        'gale-home' => [
-            'secret' => 'CHANGE_ME_64_RANDOM_CHARS',
+        'router-01' => [
+            'secret' => 'CHANGE_ME_64_RANDOM_HEX',
             'enabled' => true,
         ],
     ],

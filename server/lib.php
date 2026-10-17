@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/hardening_v050.php';
 
 function cfg(): array {
     static $cfg;
@@ -11,7 +12,7 @@ function cfg(): array {
     return $cfg;
 }
 
-function app_version(): string { return '0.4.0'; }
+function app_version(): string { return '0.5.0'; }
 
 function tg_validate_webapp_init_data(string $initData, int $maxAgeSeconds = 600): array {
     if ($initData === '' || strlen($initData) > 16384) throw new RuntimeException('Missing or invalid Telegram Mini App authentication data');
@@ -138,12 +139,15 @@ function authenticate_device(string $raw): array {
 
 function queue_command(string $deviceId, string $action, array $params, ?int $chatId, ?int $userId, ?int $messageId = null, ?string $view = null): int {
     if (!isset((cfg()['devices'] ?? [])[$deviceId])) throw new RuntimeException('Unknown device');
+    ensure_v050_schema();
     if ($messageId !== null && $messageId > 0) $params['__message_id'] = $messageId;
     if ($view !== null && $view !== '') $params['__view'] = $view;
     $paramsJson = ($params === []) ? '{}' : json_encode($params, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
     if ($paramsJson === false) throw new RuntimeException('Could not encode command parameters');
-    $st = db()->prepare('INSERT INTO pw_commands (device_id,action,params_json,chat_id,user_id) VALUES (?,?,?,?,?)');
-    $st->execute([$deviceId,$action,$paramsJson,$chatId,$userId]);
+    $storedParams = v050_seal_params($deviceId,$action,$paramsJson);
+    $idempotencyKey = bin2hex(random_bytes(16));
+    $st = db()->prepare('INSERT INTO pw_commands (device_id,action,params_json,chat_id,user_id,idempotency_key,max_attempts) VALUES (?,?,?,?,?,?,3)');
+    $st->execute([$deviceId,$action,$storedParams,$chatId,$userId,$idempotencyKey]);
     return (int)db()->lastInsertId();
 }
 
@@ -227,6 +231,7 @@ function main_keyboard(): array {
         [['text'=>'🔌 Network','callback_data'=>'network'],['text'=>'📶 Wi-Fi','callback_data'=>'wifimenu']],
         [['text'=>'🛡 Firewall','callback_data'=>'firewall'],['text'=>'⚙️ System','callback_data'=>'systemmenu']],
         [['text'=>'🧪 Diagnostics','callback_data'=>'diag'],['text'=>'💾 Backup','callback_data'=>'backup']],
+        [['text'=>'📈 Monitoring','callback_data'=>'monitoring']],
     ];
     $base=rtrim((string)(cfg()['base_url']??''),'/');
     if((cfg()['telegram']['terminal_enabled'] ?? true) && str_starts_with($base,'https://')) {
@@ -303,7 +308,7 @@ function format_result(string $action, bool $ok, $result, string $error, array $
         $mem=$result['memory']??[];$sto=$result['storage']??[];$board=$result['board']??[];$release=is_array($board['release']??null)?$board['release']:[];
         $wan=$result['wan']??[];$wanIp='';
         foreach (($wan['ipv4-address']??[]) as $ip) { if(is_array($ip)&&!empty($ip['address'])){$wanIp=(string)$ip['address'];break;} }
-        $text="📊 <b>Gale System Status</b>\n\n";
+        $text="📊 <b>OpenWrt System Status</b>\n\n";
         $text.="CPU: <b>".number_format((float)($result['cpu_percent']??0),1)."%</b>\n";
         $text.="Load 1m: <code>".h((string)($result['load1']??0))."</code>\n";
         $text.="RAM: <b>".h(pct($mem['used_bytes']??0,$mem['total_bytes']??0))."</b> (".h(bytes_human($mem['used_bytes']??0))." / ".h(bytes_human($mem['total_bytes']??0)).")\n";

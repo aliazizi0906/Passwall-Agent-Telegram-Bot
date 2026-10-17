@@ -7,6 +7,7 @@ $auth = authenticate_device($raw);
 $device = $auth['device_id'];
 $secret = $auth['secret'];
 $body = json_decode_assoc($raw);
+ensure_v050_schema();
 
 $pdo = db();
 $st = $pdo->prepare(
@@ -22,18 +23,21 @@ $st->execute([
 ]);
 
 $cmd = null;
-// Recover commands leased by an agent that crashed or rebooted before returning a result.
-$pdo->prepare("UPDATE pw_commands SET status='queued', leased_at=NULL WHERE device_id=? AND status='leased' AND leased_at < (NOW() - INTERVAL 5 MINUTE)")->execute([$device]);
+// Recover expired leases while respecting the retry budget.
+$pdo->prepare("UPDATE pw_commands SET status='failed', finished_at=NOW(), error_text='retry budget exhausted' WHERE device_id=? AND status='leased' AND expires_at IS NOT NULL AND expires_at < NOW() AND attempt_count >= max_attempts")->execute([$device]);
+$pdo->prepare("UPDATE pw_commands SET status='queued', leased_at=NULL, lease_token=NULL, expires_at=NULL WHERE device_id=? AND status='leased' AND expires_at IS NOT NULL AND expires_at < NOW() AND attempt_count < max_attempts")->execute([$device]);
 $pdo->beginTransaction();
 try {
-    $q = $pdo->prepare("SELECT id,action,params_json FROM pw_commands WHERE device_id=? AND status='queued' ORDER BY id ASC LIMIT 1 FOR UPDATE");
+    $q = $pdo->prepare("SELECT id,action,params_json,idempotency_key,attempt_count,max_attempts FROM pw_commands WHERE device_id=? AND status='queued' ORDER BY id ASC LIMIT 1 FOR UPDATE");
     $q->execute([$device]);
     $row = $q->fetch();
     if ($row) {
-        $u = $pdo->prepare("UPDATE pw_commands SET status='leased', leased_at=NOW() WHERE id=? AND status='queued'");
-        $u->execute([(int)$row['id']]);
+        $leaseToken=bin2hex(random_bytes(16));
+        $u = $pdo->prepare("UPDATE pw_commands SET status='leased', leased_at=NOW(), lease_token=?, expires_at=(NOW()+INTERVAL 90 SECOND), attempt_count=attempt_count+1 WHERE id=? AND status='queued' AND attempt_count < max_attempts");
+        $u->execute([$leaseToken,(int)$row['id']]);
         if ($u->rowCount() === 1) {
-            $params = json_decode((string)$row['params_json'], true);
+            $plainParams=v050_open_params($device,(string)$row['action'],(string)$row['params_json']);
+            $params = json_decode($plainParams, true);
             if (!is_array($params)) $params = [];
             // Go agent expects command.params to be a JSON object. PHP encodes an
             // empty array as [] rather than {}, so explicitly emit an empty object.
@@ -42,6 +46,8 @@ try {
                 'id' => (int)$row['id'],
                 'action' => (string)$row['action'],
                 'params' => $paramsOut,
+                'lease_token' => $leaseToken,
+                'idempotency_key' => (string)($row['idempotency_key']??''),
             ];
         }
     }
@@ -51,4 +57,5 @@ try {
     response_json(['ok'=>false,'error'=>'queue failure'], $secret, 500);
 }
 
+v050_record_metric($device,$body);
 response_json(['ok'=>true,'command'=>$cmd], $secret);

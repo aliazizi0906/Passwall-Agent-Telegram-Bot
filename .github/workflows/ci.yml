@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+
+      - name: Go format
+        run: test -z "$(gofmt -l *.go)"
+
+      - name: Go test
+        run: go test ./...
+
+      - name: Go vet
+        run: go vet ./...
+
+      - name: Multi-architecture static builds
+        shell: bash
+        run: |
+          set -euo pipefail
+          GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-armv7 .
+          GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-arm64 .
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-amd64 .
+          GOOS=linux GOARCH=386 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-386 .
+          GOOS=linux GOARCH=mips GOMIPS=softfloat CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-mips .
+          GOOS=linux GOARCH=mipsle GOMIPS=softfloat CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-mipsle .
+
+      - name: PHP lint
+        run: find server -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Shell syntax
+        run: |
+          sh -n openwrt/install.sh
+          sh -n openwrt/install-update.sh
+          sh -n openwrt/install-remote.sh
+
+      - name: JSON validation
+        run: find openwrt -name '*.json' -print0 | xargs -0 -n1 jq -e . >/dev/null

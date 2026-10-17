@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-const agentVersion = "0.4.0"
+const agentVersion = "0.5.0"
 
 type Config struct {
 	ServerURL           string `json:"server_url"`
@@ -33,6 +33,7 @@ type Config struct {
 	DeviceSecret        string `json:"device_secret"`
 	PollIntervalSeconds int    `json:"poll_interval_seconds"`
 	RequestTimeoutSec   int    `json:"request_timeout_seconds"`
+	UpdatePublicKey     string `json:"update_public_key"`
 }
 
 type CommandParams map[string]interface{}
@@ -55,9 +56,11 @@ func (p *CommandParams) UnmarshalJSON(data []byte) error {
 }
 
 type Command struct {
-	ID     int64         `json:"id"`
-	Action string        `json:"action"`
-	Params CommandParams `json:"params"`
+	ID             int64         `json:"id"`
+	Action         string        `json:"action"`
+	Params         CommandParams `json:"params"`
+	LeaseToken     string        `json:"lease_token,omitempty"`
+	IdempotencyKey string        `json:"idempotency_key,omitempty"`
 }
 
 type PollResponse struct {
@@ -67,10 +70,12 @@ type PollResponse struct {
 }
 
 type ResultPayload struct {
-	CommandID int64       `json:"command_id"`
-	Success   bool        `json:"success"`
-	Result    interface{} `json:"result,omitempty"`
-	Error     string      `json:"error,omitempty"`
+	CommandID      int64       `json:"command_id"`
+	LeaseToken     string      `json:"lease_token,omitempty"`
+	IdempotencyKey string      `json:"idempotency_key,omitempty"`
+	Success        bool        `json:"success"`
+	Result         interface{} `json:"result,omitempty"`
+	Error          string      `json:"error,omitempty"`
 }
 
 type UCIConfig struct {
@@ -139,11 +144,18 @@ func (a *Agent) loop() {
 			time.Sleep(time.Duration(a.cfg.PollIntervalSeconds) * time.Second)
 			continue
 		}
+		if cached, ok := lookupIdempotentResultV5(cmd); ok {
+			if err := a.sendResult(*cached); err != nil {
+				fmt.Fprintf(os.Stderr, "result replay command=%d: %v\n", cmd.ID, err)
+			}
+			continue
+		}
 		result, execErr := a.execute(cmd)
-		payload := ResultPayload{CommandID: cmd.ID, Success: execErr == nil, Result: result}
+		payload := ResultPayload{CommandID: cmd.ID, LeaseToken: cmd.LeaseToken, IdempotencyKey: cmd.IdempotencyKey, Success: execErr == nil, Result: result}
 		if execErr != nil {
 			payload.Error = execErr.Error()
 		}
+		saveIdempotentResultV5(cmd, payload)
 		if err := a.sendResult(payload); err != nil {
 			fmt.Fprintf(os.Stderr, "result command=%d: %v\n", cmd.ID, err)
 		}
@@ -152,10 +164,12 @@ func (a *Agent) loop() {
 
 func (a *Agent) poll() (*Command, error) {
 	hb := map[string]interface{}{
-		"agent_version":  agentVersion,
-		"hostname":       hostname(),
-		"uptime_seconds": uptimeSeconds(),
-		"load1":          load1(),
+		"agent_version":    agentVersion,
+		"hostname":         hostname(),
+		"uptime_seconds":   uptimeSeconds(),
+		"load1":            load1(),
+		"memory":           memoryInfo(),
+		"passwall_running": passwallRunning(),
 	}
 	raw, _, err := a.signedPOST(a.cfg.ServerURL+"/poll.php", hb)
 	if err != nil {

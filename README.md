@@ -1,157 +1,243 @@
-# Gale OpenWrt Telegram Remote v0.4.0
+# PW Agent
 
-Target: Google WiFi (Gale), ARMv7, OpenWrt 25.12.x, Passwall2.
+**OpenWrt + Passwall2 remote management through Telegram.**
 
-PW Agent lets a private Telegram bot manage and monitor OpenWrt without a public/static IP. The router creates only outbound HTTPS connections to the cPanel backend.
+PW Agent is a public remote-management stack for OpenWrt routers. The router initiates outbound HTTPS connections to a self-hosted PHP/MySQL backend, so no public IP and no inbound management port are required.
 
-## v0.4.0 highlights
+## Highlights
 
-### Smart Shunt Failover
-- Per-`_shunt` opt-in failover policy.
-- The current Shunt `Default` node becomes the Preferred node when Failover is enabled.
-- Tests the active Default node by Passwall2 HTTP Relay / URL test on a schedule.
-- Uses a failure threshold (default 2 checks) to avoid switching on a single transient failure.
-- When unhealthy, tests normal proxy nodes concurrently and switches `default_node` to the healthy node with the lowest HTTP Relay latency.
-- Cooldown (default 180s) prevents rapid route flapping.
-- Optional Auto-return moves Default back to the Preferred node after it recovers.
-- Special Passwall2 virtual nodes (`_shunt`, `_balancing`, `_urltest`, etc.) are excluded from candidate selection.
-- Autonomous switch/recovery alerts are sent to Telegram.
-- Configuration is stored at `/etc/pw-agent/failover.json` and included in standard OpenWrt backups.
+- OpenWrt system, network, Wi-Fi, firewall and service management
+- Passwall2 node, subscription and Shunt management
+- Smart Failover with relay/TCP health scoring
+- Telegram Mini App SSH command console through local Dropbear
+- Configuration backup and restore
+- Monitoring, event history and offline/recovery alerts
+- Reliable command leasing, retries and idempotent mutation replay
+- AES-256-GCM protection for sensitive queued parameters
+- HMAC-SHA256 device authentication and signed server responses
+- SHA256 + Ed25519 verified Agent updates
+- LuCI Agent diagnostics
+- Automated CI, tests and signed multi-architecture releases
 
-### Agent self-update
-- Telegram: System -> PW Agent Update -> Check / Install.
-- The Agent downloads the release only from the configured bot server API.
-- Server requests use the existing device HMAC authentication and signed responses.
-- The release tarball is SHA256-verified before installation.
-- Updates `/usr/bin/pw-agent`, the procd init script, and the LuCI integration, then restarts the agent.
-- `/etc/pw-agent/config.json` and Failover configuration are preserved.
-- Static release files are blocked from direct web access and are served only through authenticated API endpoints.
+## Supported OpenWrt architectures
 
-The initial upgrade to v0.4.0 is manual. From v0.4.0 onward, the OpenWrt component can be updated from Telegram after a newer release package is uploaded with the cPanel backend. cPanel/PHP backend files still have to be updated on the web host when a future release changes the server side.
+Official release builds are produced for:
 
-### LuCI integration
-A new `Services -> PW Agent` page checks:
-- Agent version
-- Device ID
-- Configured server URL
-- HTTPS/API reachability
-- HMAC device authentication
-- Signed server response validation
-- Round-trip time
-- Server version
+| OpenWrt / CPU | Release architecture |
+| --- | --- |
+| ARMv7 / armv7l | `armv7` |
+| ARM64 / aarch64 | `arm64` |
+| x86_64 | `amd64` |
+| x86 / i386-i686 | `386` |
+| MIPS big-endian | `mips` |
+| MIPS little-endian | `mipsle` |
 
-No Telegram command is leased for this test.
+Passwall2 must already be installed on the router.
 
-### Telegram SSH Console
-- `⌨️ SSH Console` opens as a Telegram Mini App.
-- Access is restricted to configured numeric Telegram user IDs and validated Telegram Mini App `initData`.
-- Requires the real OpenWrt username and password.
-- Authentication/execution goes through local Dropbear (`127.0.0.1`); no WAN SSH port is opened.
-- Credentials + command are encrypted with AES-256-GCM before entering the command queue and are scrubbed after completion.
-- This is a command console, not a persistent PTY: normal shell commands work; full-screen interactive programs such as `vi` and `top` are not interactive.
-
-### Passwall2 subscriptions and import
-- Add V2Ray/Passwall2 HTTP(S) subscription URLs from Telegram.
-- Uses Passwall2's own `subscribe_list` configuration and native `subscribe.lua` parser/update path.
-- Update one subscription or all subscriptions.
-- Delete a subscription; referenced nodes are preserved instead of breaking configuration.
-- Multi-link import: paste multiple node URLs, one per line.
-
-### Node lifecycle tools
-- HTTP Relay ranking.
-- Scan for nodes that fail HTTP Relay.
-- Delete Relay-failed nodes with safe reference checks.
-- Select multiple nodes and delete them.
-- Safe Delete All for normal proxy nodes.
-- Shunt and Passwall2 special virtual nodes are excluded from bulk cleanup.
-
-## Existing capabilities retained
-- System CPU/RAM/storage/uptime/OpenWrt/kernel/model status.
-- Passwall2 enable/disable/restart/log and Main Node selection.
-- Inline Shunt Default/Iran/other rule editing.
-- Ping + TCP + HTTP Relay tests.
-- Interfaces, WAN, DNS, routes, DHCP leases, connected clients, WireGuard.
-- Wi-Fi SSID/password/radio/channel/station management.
-- Firewall zones and port-forward enable/disable.
-- Logs, processes, services, APK inventory/update check.
-- Ping/Traceroute diagnostics.
-- OpenWrt backup to Telegram and restore from Telegram.
-- Router reboot with confirmation.
-
-## Security model
-- Router initiates outbound HTTPS polling; no public IP or inbound router port is required.
-- Device requests and server responses use HMAC-SHA256.
-- Telegram access is numeric-user-ID restricted.
-- Mini App identity is validated server-side before SSH console access.
-- Terminal secrets are encrypted in the queue; sensitive command parameters are scrubbed after completion.
-- Mutating OpenWrt operations remain explicit actions with validation.
-- Passwall2 node deletion checks live references.
-- Agent update packages require authenticated download plus SHA256 validation.
-
-## cPanel upgrade
-
-Preserve your current `server/config.php` and overwrite the other backend files with the contents of `server/`.
-
-Optional config keys (v0.4 defaults Terminal to enabled when the key is absent):
-
-```php
-'telegram' => [
-    // existing settings ...
-    'terminal_enabled' => true,
-    'alert_chat_id' => 123456789,
-],
-```
-
-Verify:
+## Architecture
 
 ```text
-https://YOUR-DOMAIN/routerbot/health.php
+Telegram
+   |
+   v
+PHP Backend + MySQL
+   ^
+   | HTTPS / HMAC
+   |
+OpenWrt PW Agent
+   |
+   +-- UCI / ubus / procd
+   +-- Passwall2
+   +-- Dropbear (localhost only for Terminal)
 ```
 
-Expected version: `0.4.0`.
+The router does not need a public/static IP. It polls the backend over HTTPS and executes only supported Agent actions.
 
-## Router upgrade to v0.4.0
+# Public installation
 
-### From a Git clone
+Each user deploys their **own backend, Telegram bot and router credentials**. No project-owner credentials are built into the repository.
 
-```sh
-cd /tmp
-git clone https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot.git
-cd Passwall-Agent-Telegram-Bot/openwrt
-chmod +x install.sh
-./install.sh
+## 1. Prepare the server
+
+Requirements:
+
+- PHP 8.1+
+- MySQL / MariaDB
+- PHP extensions: `pdo_mysql`, `curl`, `openssl`
+- HTTPS
+- Cron access recommended for monitoring alerts
+
+Upload the contents of `server/` to your web host and create an empty MySQL database.
+
+If the full repository is on the server, run from the repository root:
+
+```bash
+php server/bin/setup.php
 ```
 
-### If you copied the repository manually
+If you uploaded only the contents of `server/` into your web directory, run from that directory:
 
-From the repository root:
-
-```sh
-cd openwrt
-chmod +x install.sh
-./install.sh
+```bash
+php bin/setup.php
 ```
 
-The installer finds `pw-agent-armv7` one directory above `openwrt/`, copies it to `/usr/bin/pw-agent`, sets executable permissions on the installed binary, and preserves `/etc/pw-agent/config.json`.
+The installer asks for:
 
-Verify:
+- public HTTPS URL
+- MySQL connection
+- Telegram Bot token
+- Telegram numeric administrator ID
+- router Device ID
+- router architecture
 
-```sh
-/usr/bin/pw-agent --version
-pgrep -af pw-agent
-logread -e pw-agent
+It then automatically:
+
+1. installs/upgrades the database schema;
+2. generates random HMAC device credentials;
+3. generates the Telegram webhook secret;
+4. writes `server/config.php`;
+5. registers the Telegram webhook;
+6. downloads the signed Agent update package for the selected architecture;
+7. creates a **single-use 30-minute provisioning token**;
+8. prints the OpenWrt installation command.
+
+`server/config.php` is ignored by Git and must never be committed.
+
+## 2. Install the router
+
+Run the command printed by `server/bin/setup.php` on the OpenWrt router.
+
+It has this form:
+
+```bash
+PW_SERVER_BASE='https://example.com/routerbot' \
+PW_PROVISION_TOKEN='ONE_TIME_TOKEN' \
+sh -c "$(wget -qO- 'https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh')"
 ```
 
-Expected version: `0.4.0`.
+The installer:
 
-After this one manual upgrade, future OpenWrt-agent releases can be installed from Telegram through `System -> PW Agent Update`.
+- detects the router architecture;
+- downloads the matching latest GitHub Release;
+- verifies its SHA256;
+- consumes the one-time provisioning token;
+- writes `/etc/pw-agent/config.json`;
+- installs the Agent, init script and LuCI integration;
+- enables and starts the service.
 
-## Telegram
+The permanent device secret is **not** placed in the install command.
 
-The only slash command is:
+If the provisioning token expires or is consumed before installation completes:
+
+```bash
+php server/bin/new-provision-token.php
+```
+
+## 3. Enable monitoring alerts
+
+Run once per minute using cPanel Cron or system cron:
+
+```cron
+* * * * * /usr/bin/php /absolute/path/to/server/cron/monitor.php >/dev/null 2>&1
+```
+
+The default offline threshold is 300 seconds.
+
+## 4. Telegram
+
+Send:
 
 ```text
 /start
 ```
 
-All other operations are inline buttons, Telegram Mini App UI, or short prompted input.
+All management operations are available through inline buttons, prompted input and the Mini App.
+
+# Updating
+
+The Agent checks the backend for an architecture-specific signed update package.
+
+Update trust is anchored to the official Ed25519 public key committed in:
+
+```text
+UPDATE_PUBLIC_KEY.b64
+```
+
+The same key is embedded in the Agent. Normal users do **not** need to generate signing keys.
+
+Backend release packages can be synchronized from the official GitHub Release with:
+
+```bash
+php server/bin/sync-release.php --arch=armv7
+```
+
+or:
+
+```bash
+php server/bin/sync-release.php --all
+```
+
+Self-hosted forks may override `update_public_key` in the Agent configuration and use their own release-signing key.
+
+# Maintainer release process
+
+Official releases are generated by GitHub Actions when a `v*` tag is pushed.
+
+The repository maintainer must configure only one GitHub Actions secret:
+
+```text
+UPDATE_SIGNING_PRIVATE_KEY_PEM_B64
+```
+
+The corresponding public key is already committed to this repository. The private key must never be committed.
+
+After that, open **Actions → Release → Run workflow**, enter a version such as `v0.5.0`, and run it. The workflow verifies that the version matches the application version, verifies that the private key matches `UPDATE_PUBLIC_KEY.b64`, builds all supported architectures, signs every bundle, creates the tag if necessary, and publishes the GitHub Release.
+
+For installation diagnostics:
+
+```bash
+php server/bin/doctor.php
+```
+
+# Security model
+
+- outbound-only router communication
+- HMAC-SHA256 authenticated device requests
+- HMAC-signed backend responses
+- numeric Telegram user allowlist
+- Telegram Mini App `initData` validation
+- AES-256-GCM protection of sensitive queued parameters
+- expiring command leases and retry limits
+- Agent-side idempotency journal for mutation replay
+- SHA256 + Ed25519 update verification
+- one-time router provisioning tokens
+- protected Passwall2 node references
+- no WAN SSH requirement
+
+# Development
+
+CI validates:
+
+```text
+gofmt
+go test
+go vet
+ARMv7 / ARM64 / AMD64 / 386 / MIPS / MIPSLE builds
+PHP syntax
+shell syntax
+JSON files
+```
+
+Run Go tests locally:
+
+```bash
+go test ./...
+```
+
+## Repository
+
+https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot
+
+## License
+
+A project license should be selected before accepting external contributions or redistribution assumptions.
