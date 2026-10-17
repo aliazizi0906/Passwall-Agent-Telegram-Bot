@@ -2,8 +2,8 @@
   "luci-app-pw-agent": {
     "description": "Grant LuCI access to PW Agent connection diagnostics",
     "read": {
-      "ubus": {
-        "file": [ "exec" ]
+      "file": {
+        "/usr/bin/pw-agent diagnose-json": [ "exec" ]
       }
     }
   }
