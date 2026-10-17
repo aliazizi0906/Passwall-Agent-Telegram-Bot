@@ -93,9 +93,30 @@ async function loadTab(name){
  }
  if(name==='monitor'){
   const j=await api('device_detail',{device_id:state.active}),d=j.device,m=j.metrics||[];
-  const last=m[m.length-1]||{};
+  const last=m[m.length-1]||{},wan=healthState(last.wan_up),pw=healthState(last.passwall_running),dns=healthState(last.dns_ok),internet=healthState(last.internet_ok),relay=healthState(last.node_relay_ok);
   const o=j.overview||{},h=o['24h']||{},w=o['7d']||{},m30=o['30d']||{};
-  document.querySelector('#monitor').innerHTML=`<div class="grid"><div class="card"><div class="muted">CPU</div><div class="stat">${Number(last.cpu_percent||0).toFixed(1)}%</div></div><div class="card"><div class="muted">Memory</div><div class="stat">${Number(last.memory_used_percent||0).toFixed(1)}%</div></div><div class="card"><div class="muted">WAN</div><div class="stat ${Number(last.wan_up)?'good':'bad'}">${Number(last.wan_up)?'UP':'DOWN'}</div></div><div class="card"><div class="muted">Passwall2</div><div class="stat ${Number(last.passwall_running)?'good':'bad'}">${Number(last.passwall_running)?'UP':'DOWN'}</div></div></div><div class="grid"><div class="card"><div class="muted">Heartbeat 24h</div><div class="stat">${Number(h.heartbeat_coverage||0).toFixed(1)}%</div></div><div class="card"><div class="muted">Heartbeat 7d</div><div class="stat">${Number(w.heartbeat_coverage||0).toFixed(1)}%</div></div><div class="card"><div class="muted">Heartbeat 30d</div><div class="stat">${Number(m30.heartbeat_coverage||0).toFixed(1)}%</div></div><div class="card"><div class="muted">Failover 24h</div><div class="stat">${Number(h.failover_events||0)}</div></div></div><div class="card"><b>${esc(d.display_name)}</b><div class="muted">WAN IP: ${esc(last.wan_ip||'-')} · Last seen: ${fmtTime(d.last_seen)}</div><div class="muted">24h RX: ${bytes(h.rx_bytes||0)} · TX: ${bytes(h.tx_bytes||0)} · WAN IP changes: ${Number(h.wan_ip_changes||0)}</div><canvas id="chart" width="900" height="180"></canvas></div>`;
+  document.querySelector('#monitor').innerHTML=\`<div class="grid">
+    <div class="card"><div class="muted">CPU</div><div class="stat">\${num(last.cpu_percent,1,'%')}</div></div>
+    <div class="card"><div class="muted">Memory</div><div class="stat">\${num(last.memory_used_percent,1,'%')}</div></div>
+    <div class="card"><div class="muted">WAN</div><div class="stat \${wan[1]}">\${wan[0]}</div></div>
+    <div class="card"><div class="muted">Passwall2</div><div class="stat \${pw[1]}">\${pw[0]}</div></div>
+    <div class="card"><div class="muted">DNS</div><div class="stat \${dns[1]}">\${dns[0]}</div><div class="muted">\${num(last.dns_ms,1,' ms')}</div></div>
+    <div class="card"><div class="muted">Internet TCP</div><div class="stat \${internet[1]}">\${internet[0]}</div><div class="muted">\${num(last.internet_tcp_ms,1,' ms')}</div></div>
+    <div class="card"><div class="muted">Packet loss</div><div class="stat">\${num(last.packet_loss,1,'%')}</div></div>
+    <div class="card"><div class="muted">Active Relay</div><div class="stat \${relay[1]}">\${num(last.node_relay_ms,0,' ms')}</div></div>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="muted">Heartbeat 24h</div><div class="stat">\${Number(h.heartbeat_coverage||0).toFixed(1)}%</div></div>
+    <div class="card"><div class="muted">Heartbeat 7d</div><div class="stat">\${Number(w.heartbeat_coverage||0).toFixed(1)}%</div></div>
+    <div class="card"><div class="muted">Heartbeat 30d</div><div class="stat">\${Number(m30.heartbeat_coverage||0).toFixed(1)}%</div></div>
+    <div class="card"><div class="muted">Failover 24h</div><div class="stat">\${Number(h.failover_events||0)}</div></div>
+  </div>
+  <div class="card"><b>\${esc(d.display_name)}</b>
+    <div class="muted">WAN IP: \${esc(last.wan_ip||'-')} · Active node: \${esc(last.active_node_name||last.active_node_id||'-')} · Last seen: \${fmtTime(d.last_seen)}</div>
+    <div class="muted">24h RX: \${bytes(h.rx_bytes||0)} · TX: \${bytes(h.tx_bytes||0)} · WAN IP changes: \${Number(h.wan_ip_changes||0)} · Reconnects: \${Number(h.agent_reconnects||0)}</div>
+    <div class="muted">24h avg packet loss: \${num(h.avg_packet_loss,1,'%')} · avg node relay: \${num(h.avg_node_relay_ms,0,' ms')} · DNS failures: \${Number(h.dns_down_samples||0)} · Internet failures: \${Number(h.internet_down_samples||0)}</div>
+    <canvas id="chart" width="900" height="180"></canvas>
+  </div>\`;
   draw(m);return;
  }
  if(name==='operations'){
