@@ -480,8 +480,14 @@ function v060_metric_value(array $row,string $metric): ?float {
       'cpu_percent'=>isset($row['cpu_percent'])?(float)$row['cpu_percent']:null,
       'memory_percent'=>isset($row['memory_used_percent'])?(float)$row['memory_used_percent']:null,
       'load1'=>isset($row['load1'])?(float)$row['load1']:null,
+      'packet_loss'=>isset($row['packet_loss'])?(float)$row['packet_loss']:null,
+      'node_relay_ms'=>isset($row['node_relay_ms'])?(float)$row['node_relay_ms']:null,
       'passwall_down'=>isset($row['passwall_running'])?(!((bool)$row['passwall_running'])?1.0:0.0):null,
       'wan_down'=>isset($row['wan_up'])?(!((bool)$row['wan_up'])?1.0:0.0):null,
+      'dns_down'=>isset($row['dns_ok'])?(!((bool)$row['dns_ok'])?1.0:0.0):null,
+      'internet_down'=>isset($row['internet_ok'])?(!((bool)$row['internet_ok'])?1.0:0.0):null,
+      'wan_ip_changed'=>isset($row['wan_ip_changed'])?(float)$row['wan_ip_changed']:null,
+      'agent_reconnected'=>isset($row['agent_reconnected'])?(float)$row['agent_reconnected']:null,
       default=>null
     };
 }
@@ -512,7 +518,7 @@ function v060_evaluate_alerts(): void {
 }
 function v060_add_alert(int $uid,string $deviceId,string $metric,string $op,float $threshold,int $duration,int $cooldown,?int $chatId=null): int {
     if(!v060_has_permission($uid,'alert.manage')||!v060_can_device($uid,$deviceId))throw new RuntimeException('Permission denied');
-    if(!in_array($metric,['cpu_percent','memory_percent','load1','passwall_down','wan_down'],true))throw new RuntimeException('Unsupported metric');
+    if(!in_array($metric,['cpu_percent','memory_percent','load1','packet_loss','node_relay_ms','passwall_down','wan_down','dns_down','internet_down','wan_ip_changed','agent_reconnected'],true))throw new RuntimeException('Unsupported metric');
     if(!in_array($op,['>','>=','<','<=','=='],true))throw new RuntimeException('Unsupported operator');
     $st=db()->prepare('INSERT INTO pw_alert_rules(device_id,metric,operator,threshold,duration_seconds,cooldown_seconds,notify_chat_id,created_by) VALUES(?,?,?,?,?,?,?,?)');
     $st->execute([$deviceId,$metric,$op,$threshold,max(0,$duration),max(60,$cooldown),$chatId?:$uid,$uid]);return (int)db()->lastInsertId();
@@ -592,7 +598,7 @@ function v060_monitoring_overview(int $uid,string $deviceId): array {
     $windows=['24h'=>['hours'=>24,'expected'=>1440],'7d'=>['hours'=>168,'expected'=>10080],'30d'=>['hours'=>720,'expected'=>43200]];
     $availability=[];
     foreach($windows as $name=>$w){
-        $st=$pdo->prepare('SELECT COUNT(*) samples,AVG(cpu_percent) avg_cpu,MAX(cpu_percent) max_cpu,AVG(memory_used_percent) avg_memory,SUM(CASE WHEN wan_up=0 THEN 1 ELSE 0 END) wan_down_samples,SUM(CASE WHEN passwall_running=0 THEN 1 ELSE 0 END) passwall_down_samples,MIN(rx_bytes) min_rx,MAX(rx_bytes) max_rx,MIN(tx_bytes) min_tx,MAX(tx_bytes) max_tx,COUNT(DISTINCT NULLIF(wan_ip,\'\')) wan_ip_count FROM pw_metrics WHERE device_id=? AND captured_at >= (NOW()-INTERVAL '.$w['hours'].' HOUR)');
+        $st=$pdo->prepare('SELECT COUNT(*) samples,AVG(cpu_percent) avg_cpu,MAX(cpu_percent) max_cpu,AVG(memory_used_percent) avg_memory,AVG(packet_loss) avg_packet_loss,AVG(node_relay_ms) avg_node_relay_ms,SUM(CASE WHEN wan_up=0 THEN 1 ELSE 0 END) wan_down_samples,SUM(CASE WHEN passwall_running=0 THEN 1 ELSE 0 END) passwall_down_samples,SUM(CASE WHEN dns_ok=0 THEN 1 ELSE 0 END) dns_down_samples,SUM(CASE WHEN internet_ok=0 THEN 1 ELSE 0 END) internet_down_samples,SUM(wan_ip_changed) wan_ip_changes,SUM(agent_reconnected) agent_reconnects,MIN(rx_bytes) min_rx,MAX(rx_bytes) max_rx,MIN(tx_bytes) min_tx,MAX(tx_bytes) max_tx FROM pw_metrics WHERE device_id=? AND captured_at >= (NOW()-INTERVAL '.$w['hours'].' HOUR)');
         $st->execute([$deviceId]);$r=$st->fetch()?:[];$samples=(int)($r['samples']??0);
         $coverage=min(100.0,$w['expected']>0?($samples/$w['expected'])*100.0:0.0);
         $availability[$name]=[
@@ -601,11 +607,16 @@ function v060_monitoring_overview(int $uid,string $deviceId): array {
           'avg_cpu'=>round((float)($r['avg_cpu']??0),2),
           'max_cpu'=>round((float)($r['max_cpu']??0),2),
           'avg_memory'=>round((float)($r['avg_memory']??0),2),
+          'avg_packet_loss'=>round((float)($r['avg_packet_loss']??0),2),
+          'avg_node_relay_ms'=>round((float)($r['avg_node_relay_ms']??0),2),
           'wan_down_samples'=>(int)($r['wan_down_samples']??0),
           'passwall_down_samples'=>(int)($r['passwall_down_samples']??0),
+          'dns_down_samples'=>(int)($r['dns_down_samples']??0),
+          'internet_down_samples'=>(int)($r['internet_down_samples']??0),
           'rx_bytes'=>max(0,(int)($r['max_rx']??0)-(int)($r['min_rx']??0)),
           'tx_bytes'=>max(0,(int)($r['max_tx']??0)-(int)($r['min_tx']??0)),
-          'wan_ip_changes'=>max(0,(int)($r['wan_ip_count']??0)-1),
+          'wan_ip_changes'=>(int)($r['wan_ip_changes']??0),
+          'agent_reconnects'=>(int)($r['agent_reconnects']??0),
         ];
     }
     $e=$pdo->prepare("SELECT COUNT(*) FROM pw_events WHERE device_id=? AND kind IN ('failover.switch','failover.return') AND created_at >= (NOW()-INTERVAL 24 HOUR)");$e->execute([$deviceId]);
