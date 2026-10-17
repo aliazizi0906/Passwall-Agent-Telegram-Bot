@@ -77,3 +77,36 @@ function v050_record_event(string $deviceId,string $kind,array $data): void {
     $st=db()->prepare('INSERT INTO pw_events(device_id,kind,data_json) VALUES(?,?,?)');
     $st->execute([$deviceId,$kind,json_encode($data,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]);
 }
+
+
+function v050_monitoring_summary(string $deviceId): string {
+    ensure_v050_schema();$pdo=db();
+    $d=$pdo->prepare('SELECT last_seen,agent_version,hostname FROM pw_devices WHERE device_id=?');
+    $d->execute([$deviceId]);$dev=$d->fetch()?:[];
+    $m=$pdo->prepare("SELECT COUNT(*) samples,AVG(load1) avg_load,MAX(uptime_seconds) max_uptime FROM pw_metrics WHERE device_id=? AND captured_at >= (NOW()-INTERVAL 24 HOUR)");
+    $m->execute([$deviceId]);$metric=$m->fetch()?:[];
+    $e=$pdo->prepare("SELECT COUNT(*) failovers FROM pw_events WHERE device_id=? AND kind='failover.switch' AND created_at >= (NOW()-INTERVAL 24 HOUR)");
+    $e->execute([$deviceId]);$events=$e->fetch()?:[];
+    $last=$pdo->prepare("SELECT kind,data_json,created_at FROM pw_events WHERE device_id=? ORDER BY id DESC LIMIT 1");
+    $last->execute([$deviceId]);$lastEvent=$last->fetch()?:[];
+    $samples=(int)($metric['samples']??0);
+    $coverage=min(100.0,($samples/1440.0)*100.0);
+    $lastSeen=(string)($dev['last_seen']??'never');
+    $online=$lastSeen!=='never' && (time()-strtotime($lastSeen)) <= max(120,(int)(cfg()['monitoring']['offline_after_seconds']??300));
+    $txt="📈 <b>Monitoring / 24h</b>\n\n";
+    $txt.="Device: <code>".h($deviceId)."</code>\n";
+    $txt.="State: ".($online?'🟢 Online':'🔴 Offline')."\n";
+    $txt.="Last seen: <code>".h($lastSeen)."</code>\n";
+    $txt.="Agent: <code>".h((string)($dev['agent_version']??'-'))."</code>\n";
+    $txt.="Heartbeat coverage: <b>".number_format($coverage,1)."%</b>\n";
+    $txt.="Average load: <b>".number_format((float)($metric['avg_load']??0),2)."</b>\n";
+    $txt.="Router uptime: <b>".uptime_human((int)($metric['max_uptime']??0))."</b>\n";
+    $txt.="Failovers (24h): <b>".(int)($events['failovers']??0)."</b>";
+    if($lastEvent){
+        $data=json_decode((string)$lastEvent['data_json'],true);if(!is_array($data))$data=[];
+        $txt.="\n\nLast event: <code>".h((string)$lastEvent['kind'])."</code>";
+        if(!empty($data['to_name']))$txt.=" → <b>".h((string)$data['to_name'])."</b>";
+        $txt.="\n<code>".h((string)$lastEvent['created_at'])."</code>";
+    }
+    return $txt;
+}
