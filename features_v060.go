@@ -364,7 +364,6 @@ func defaultRouteInterfaceV6() string {
 	return ""
 }
 
-
 var healthTelemetryMuV6 sync.RWMutex
 var healthTelemetryDataV6 = map[string]interface{}{}
 
