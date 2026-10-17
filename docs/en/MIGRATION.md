@@ -4,125 +4,160 @@
 
 ## Upgrade from v0.5.x to v0.6.x
 
-v0.6 keeps the v0.5 outbound Agent protocol and adds the Fleet platform around it. Existing v0.5 Device IDs and Device Secrets are migrated into the new database-backed Device Registry automatically.
+v0.6 keeps the outbound Agent protocol from v0.5 and adds Fleet Management, RBAC, Audit, Config History/Rollback, advanced Monitoring, Maintenance and Scheduling.
 
-### 1. Preserve runtime files
+The migration can be completed from cPanel **without SSH or Terminal**.
 
-Keep the deployed config.php and the runtime release directory.
+## 1. Preserve runtime files
 
-Do not replace config.php with config.example.php.
+Keep the existing:
 
-### 2. Deploy the v0.6 backend
+```text
+config.php
+releases/
+```
 
-Update the source checkout and copy the new server files while excluding local runtime files.
+Do not replace `config.php` with `config.example.php`.
 
-Example:
+The physical installation directory does not matter. v0.6 continues to run from the directory in which the backend is already deployed.
 
-~~~bash
-cd ~/Passwall-Agent-Telegram-Bot
-git pull --ff-only
+## 2. Deploy v0.6 using File Manager
 
-rsync -a \
-  --exclude='config.php' \
-  --exclude='releases/*.tar.gz' \
-  --exclude='releases/*.sig' \
-  --exclude='releases/*.sha256' \
-  ~/Passwall-Agent-Telegram-Bot/server/ \
-  ~/public_html/pwagent/
-~~~
+Download the current repository ZIP from GitHub, extract it into a temporary directory and copy the contents of its `server/` directory over the existing backend directory.
 
-### 3. Apply the v0.6 schema
+Do not delete the destination directory first.
 
-The first v0.6 backend request runs ensure_v060_schema().
+Examples of valid existing installations:
 
-The MySQL user must have CREATE and ALTER privileges during migration. You may alternatively import server/schema.sql manually.
+```text
+public_html/pw
+public_html/tools/openwrt
+public_html/network/control
+a subdomain document root
+```
 
-New v0.6 tables include:
+No fixed `/home/USER/public_html/pwagent` path is required.
 
-- pw_device_registry
-- pw_device_groups
-- pw_users
-- pw_user_state
-- pw_audit_log
-- pw_config_changes
-- pw_alert_rules
-- pw_maintenance
-- pw_schedules
+## 3. Apply schema migration
 
-Existing configured Telegram users are seeded into RBAC. The first configured allowed user becomes Owner; additional configured users become Admin.
+Open:
 
-Existing configured devices are seeded into the Fleet Registry.
+```text
+https://YOUR-BACKEND-URL/health.php
+```
 
-### 4. Instance-key behavior
+The first v0.6 request runs `ensure_v060_schema()`.
 
-New installations generate security.instance_key automatically.
+The configured MySQL user needs CREATE and ALTER privileges while the migration runs.
 
-Existing v0.5 installations can migrate without immediately editing config.php; v0.6 uses a stable backward-compatible key derivation for Fleet secret storage when no explicit instance key exists.
+v0.6 adds platform data such as:
 
-Do not later replace the key arbitrarily after database-backed Device Secrets have been created, or those encrypted secrets will no longer decrypt.
+- Fleet Device Registry
+- Device Groups
+- RBAC Users and active-device state
+- Audit Log
+- encrypted Config History metadata
+- Alert Rules
+- Maintenance state
+- Scheduled Actions
+- additional Monitoring metrics
 
-### 5. Update the Agent
+Existing devices in `config.php` are seeded into the Fleet Registry.
 
-Sync the v0.6 signed package for the router architecture, then use the normal Agent update path or reinstall using a new provisioning token.
+Existing configured Telegram users are seeded into RBAC. The first configured allowed user becomes Owner and additional configured users become Admin.
 
-Example:
+## 4. Instance-key behavior
 
-~~~bash
-php bin/sync-release.php --arch=armv7
-~~~
+Fresh v0.6 Web Setup installations generate `security.instance_key`.
 
-The v0.6 Agent adds advanced heartbeat telemetry and encrypted configuration-history snapshots used by Rollback.
+For an existing v0.5 installation that does not have that field, v0.6 uses a stable backward-compatible derivation so migration can happen without manually editing `config.php`.
 
-### 6. Cron is required
+Once database-backed Device Secrets have been encrypted, do not arbitrarily change the effective instance key.
 
-The existing one-minute monitoring cron now also runs Alert Rules and Scheduled Actions:
+## 5. Sync v0.6 Agent packages without Terminal
 
-~~~cron
-* * * * * /usr/bin/php /absolute/path/to/cron/monitor.php >/dev/null 2>&1
-~~~
+After the backend migration, open:
 
-Maintenance Mode suppresses alerts and pauses due schedules for the affected device.
+```text
+Telegram → Dashboard → Release Cache
+```
 
-### 7. Validate
+Sync the architecture used by the router, or sync all architectures.
 
-Backend:
+The backend verifies SHA256 before storing each package.
 
-~~~bash
-php bin/doctor.php
-~~~
+## 6. Upgrade the router Agent
 
-Router:
+After the v0.6 package is available in the Release Cache, use the normal Agent update flow from Telegram/Dashboard.
 
-~~~sh
-/usr/bin/pw-agent --version
-/usr/bin/pw-agent diagnose-json
-logread -e pw-agent
-~~~
+If a router must be reinstalled instead, select it in:
+
+```text
+Dashboard → Devices → Provision / Reinstall
+```
+
+A new single-use 30-minute provisioning command is generated without cPanel Terminal.
+
+## 7. Cron
+
+The existing one-minute Cron Job now drives:
+
+- Offline/Recovery monitoring
+- Alert Rules
+- Scheduled Actions
+
+If the old Cron path is wrong because the backend directory moved, open `setup.php` only on a clean install or use cPanel File Manager to determine the current directory and update **cPanel → Cron Jobs** accordingly.
+
+New Web Setup installations print the exact absolute Cron command automatically.
+
+## 8. Validate
+
+Browser:
+
+```text
+https://YOUR-BACKEND-URL/health.php
+```
 
 Telegram:
 
-~~~text
+```text
 /start
-~~~
+```
 
-Confirm that the Fleet menu shows the existing router, then open the Dashboard and verify Monitoring.
+Dashboard checks:
 
-## Additional routers after migration
+```text
+Devices
+Monitoring
+Audit & Rollback
+Release Cache
+```
 
-Do not edit config.php to add each new router.
+Router:
 
-Use Telegram:
+```sh
+/usr/bin/pw-agent --version
+/usr/bin/pw-agent diagnose-json
+logread -e pw-agent
+```
 
-~~~text
-/start → Fleet / Devices → Add Device
-~~~
+## Config History compatibility
 
-or use the Mini App Dashboard.
+Config History begins only after the router runs Agent v0.6. Older v0.5 mutations do not have rollback snapshots.
 
-The generated provisioning command contains a one-time token, not the permanent Device Secret.
+Rollback snapshots are encrypted by the Agent with the router-only key at:
 
-## Rollback considerations
+```text
+/etc/pw-agent/history.key
+```
 
-Config History begins only after the router is running the v0.6 Agent. Older v0.5 mutations cannot be reconstructed retroactively.
+The backend stores ciphertext and does not receive this key during normal Config History operation.
 
-Rollback snapshots are encrypted by the Agent using a router-only key in `/etc/pw-agent/history.key`. The backend does not receive this key during normal config-history operation.
+## Optional CLI migration
+
+If SSH/Terminal exists, the CLI workflow remains available, but it is optional:
+
+```bash
+php bin/doctor.php
+php bin/sync-release.php --all
+```
