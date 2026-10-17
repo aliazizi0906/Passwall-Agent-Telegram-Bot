@@ -74,8 +74,7 @@ func uciOptionHashesV6(pkg string) map[string]string {
 	if err != nil {
 		return out
 	}
-	for _, line := range strings.Split(raw, "
-") {
+	for _, line := range strings.Split(raw, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
