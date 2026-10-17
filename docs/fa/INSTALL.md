@@ -206,7 +206,7 @@ https://pw.example.com/health.php
 ```json
 {
   "ok": true,
-  "version": "0.5.0"
+  "version": "0.6.0"
 }
 ```
 
@@ -324,3 +324,48 @@ php bin/sync-release.php --all
 ```
 
 جزئیات بیشتر: [به‌روزرسانی](UPDATES.md)
+
+
+## اضافه کردن Routerهای بیشتر در v0.6
+
+بعد از نصب اولیه Backend، برای هر Router جدید `config.php` را دستی تغییر ندهید.
+
+در Telegram:
+
+```text
+/start
+→ Fleet / Devices
+→ Add Device
+```
+
+یا Mini App **Dashboard** را باز کرده و **Add device** را انتخاب کنید.
+
+یک Display Name وارد کنید. PW Agent به‌صورت خودکار Device ID، Device Secret رمزنگاری‌شده و Provisioning Token یک‌بارمصرف می‌سازد و دستور نصب با اعتبار ۳۰ دقیقه تحویل می‌دهد.
+
+همان دستور را روی OpenWrt جدید اجرا کنید. بعد از اولین Poll، Router در Fleet به‌صورت Online دیده می‌شود.
+
+سپس از Dashboard می‌توانید برای Router موارد زیر را تنظیم کنید:
+
+- Group
+- Location
+- Tag
+
+### RBAC بعد از نصب
+
+Telegram ID که در Setup اولیه وارد شده به‌عنوان **Owner** ثبت می‌شود. Userهای جدید از مسیر زیر قابل اضافه‌شدن هستند:
+
+```text
+Dashboard → Access
+```
+
+Roleها شامل Owner، Admin، Operator و Viewer هستند. برای Operator و Viewer می‌توان Device Scope محدود تعریف کرد.
+
+### وظایف Cron در v0.6
+
+Cron یک‌دقیقه‌ای در v0.6 برای سه بخش استفاده می‌شود:
+
+- Monitoring و Offline/Recovery Alert
+- ارزیابی Alert Ruleها
+- اجرای Scheduled Actionها
+
+Maintenance Mode برای Device انتخاب‌شده Alertها را Mute و Scheduleها را Pause می‌کند.
