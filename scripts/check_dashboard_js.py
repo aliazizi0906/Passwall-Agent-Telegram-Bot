@@ -5,7 +5,10 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-targets = [ROOT / "server" / "dashboard" / "index.php"]
+targets = [
+    ROOT / "server" / "dashboard" / "index.php",
+    ROOT / "server" / "setup.php",
+]
 failed = False
 
 for path in targets:
