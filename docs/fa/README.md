@@ -8,6 +8,7 @@
 |---|---|
 | [نصب](INSTALL.md) | آموزش کامل cPanel + OpenWrt |
 | [قابلیت‌ها](FEATURES.md) | معرفی کامل امکانات |
+| [Fleet و Automation](FLEET.md) | Multi-Device، RBAC، Audit، Monitoring و Scheduler در v0.6 |
 | [معماری](ARCHITECTURE.md) | اجزا و جریان درخواست‌ها |
 | [امنیت](SECURITY.md) | احراز هویت، رمزنگاری و اعتماد Update |
 | [به‌روزرسانی](UPDATES.md) | آپدیت کاربران و Release برای Maintainer |
