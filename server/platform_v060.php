@@ -526,7 +526,7 @@ function v060_add_alert(int $uid,string $deviceId,string $metric,string $op,floa
 
 function v060_dashboard_command_allowed(string $action): bool {
     return in_array($action,[
-      'system.status','passwall2.status','passwall2.nodes.list','passwall2.nodes.relay_ranking',
+      'system.status','agent.diagnose','passwall2.status','passwall2.nodes.list','passwall2.nodes.relay_ranking',
       'passwall2.failover.list','passwall2.failover.run','passwall2.restart',
       'system.backup.create','agent.update.check','agent.update.apply'
     ],true);
