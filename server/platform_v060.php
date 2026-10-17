@@ -244,6 +244,23 @@ function v060_register_device(string $name,?int $createdBy=null): array {
     v060_audit_event($id,$createdBy,'telegram','device.provision','done',['display_name'=>$name],['token_expires_minutes'=>30]);
     return ['device_id'=>$id,'display_name'=>$name,'token'=>$token];
 }
+function v060_issue_provision_token(int $uid,string $deviceId): array {
+    ensure_v060_schema();
+    if(!v060_has_permission($uid,'device.manage')||!v060_can_device($uid,$deviceId)||!v060_device_enabled($deviceId))throw new RuntimeException('Device management permission required');
+    $pdo=db();$pdo->beginTransaction();
+    try{
+        $pdo->prepare('UPDATE pw_provision_tokens SET used_at=COALESCE(used_at,NOW()) WHERE device_id=? AND used_at IS NULL')->execute([$deviceId]);
+        $token=rtrim(strtr(base64_encode(random_bytes(36)),'+/','-_'),'=');
+        $pdo->prepare('INSERT INTO pw_provision_tokens(token_hash,device_id,expires_at) VALUES(?,?,DATE_ADD(NOW(),INTERVAL 30 MINUTE))')->execute([hash('sha256',$token),$deviceId]);
+        $pdo->commit();
+        v060_audit_event($deviceId,$uid,'dashboard','device.provision_token','done',[],['expires_minutes'=>30]);
+        return ['token'=>$token,'install_command'=>v060_provision_command($token),'expires_minutes'=>30];
+    }catch(Throwable $e){
+        if($pdo->inTransaction())$pdo->rollBack();
+        throw $e;
+    }
+}
+
 function v060_provision_command(string $token): string {
     $base=rtrim((string)cfg()['base_url'],'/');
     $raw='https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh';
