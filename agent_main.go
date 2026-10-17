@@ -164,11 +164,11 @@ func (a *Agent) loop() {
 
 func (a *Agent) poll() (*Command, error) {
 	hb := map[string]interface{}{
-		"agent_version":  agentVersion,
-		"hostname":       hostname(),
-		"uptime_seconds": uptimeSeconds(),
-		"load1":          load1(),
-		"memory":         memoryInfo(),
+		"agent_version":    agentVersion,
+		"hostname":         hostname(),
+		"uptime_seconds":   uptimeSeconds(),
+		"load1":            load1(),
+		"memory":           memoryInfo(),
 		"passwall_running": passwallRunning(),
 	}
 	raw, _, err := a.signedPOST(a.cfg.ServerURL+"/poll.php", hb)

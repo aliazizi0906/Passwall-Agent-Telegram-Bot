@@ -96,18 +96,32 @@ func saveIdempotentResultV5(c *Command, p ResultPayload) {
 		Action: c.Action, Success: p.Success, Result: rawResult, Error: p.Error, CompletedAt: time.Now().Unix(),
 	}
 	if len(st.Records) > 128 {
-		type kv struct{ K string; T int64 }
+		type kv struct {
+			K string
+			T int64
+		}
 		rows := make([]kv, 0, len(st.Records))
-		for k, v := range st.Records { rows = append(rows, kv{k, v.CompletedAt}) }
+		for k, v := range st.Records {
+			rows = append(rows, kv{k, v.CompletedAt})
+		}
 		sort.Slice(rows, func(i, j int) bool { return rows[i].T < rows[j].T })
-		for len(st.Records) > 128 { delete(st.Records, rows[0].K); rows = rows[1:] }
+		for len(st.Records) > 128 {
+			delete(st.Records, rows[0].K)
+			rows = rows[1:]
+		}
 	}
 	raw, err := json.MarshalIndent(st, "", "  ")
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 	path := idempotencyPathV5()
-	if os.MkdirAll(filepath.Dir(path), 0700) != nil { return }
+	if os.MkdirAll(filepath.Dir(path), 0700) != nil {
+		return
+	}
 	tmp := path + ".tmp"
-	if os.WriteFile(tmp, raw, 0600) == nil { _ = os.Rename(tmp, path) }
+	if os.WriteFile(tmp, raw, 0600) == nil {
+		_ = os.Rename(tmp, path)
+	}
 }
 
 func verifyEd25519SignatureV5(publicKeyB64 string, payload []byte, signatureB64 string) error {
@@ -144,17 +158,27 @@ type nodeHealthV5 struct {
 }
 
 func computeNodeScoreV5(samples []float64, attempts int, tcpOK bool) (relay, jitter, loss, score float64) {
-	if attempts < 1 { attempts = 1 }
+	if attempts < 1 {
+		attempts = 1
+	}
 	if len(samples) > 0 {
-		for _, v := range samples { relay += v }
+		for _, v := range samples {
+			relay += v
+		}
 		relay /= float64(len(samples))
-		for _, v := range samples { jitter += math.Abs(v-relay) }
+		for _, v := range samples {
+			jitter += math.Abs(v - relay)
+		}
 		jitter /= float64(len(samples))
 	}
 	loss = 1 - float64(len(samples))/float64(attempts)
 	score = relay + jitter*0.75 + loss*600
-	if len(samples) == 0 { score += 1500 }
-	if !tcpOK { score += 750 }
+	if len(samples) == 0 {
+		score += 1500
+	}
+	if !tcpOK {
+		score += 750
+	}
 	return
 }
 
@@ -169,7 +193,9 @@ func scoreNodeV5(conf *UCIConfig, id string) nodeHealthV5 {
 	for i := 0; i < attempts; i++ {
 		r := testRelay(id)
 		if ok, _ := r["ok"].(bool); ok {
-			if ms, ok := r["ms"].(float64); ok && ms > 0 { h.Samples = append(h.Samples, ms) }
+			if ms, ok := r["ms"].(float64); ok && ms > 0 {
+				h.Samples = append(h.Samples, ms)
+			}
 		}
 	}
 	o := conf.Options[id]
@@ -179,10 +205,11 @@ func scoreNodeV5(conf *UCIConfig, id string) nodeHealthV5 {
 	}
 	h.RelayMS, h.JitterMS, h.Loss, h.Score = computeNodeScoreV5(h.Samples, attempts, h.TCP)
 	h.OK = len(h.Samples) > 0 && h.Loss < 1
-	if !h.OK { h.Detail = "relay probes failed" }
+	if !h.OK {
+		h.Detail = "relay probes failed"
+	}
 	return h
 }
-
 
 func relayRankAllV5(conf *UCIConfig, excluded map[string]bool) []relayRank {
 	ids := []string{}
@@ -193,7 +220,7 @@ func relayRankAllV5(conf *UCIConfig, excluded map[string]bool) []relayRank {
 	}
 	sort.Strings(ids)
 	type scored struct {
-		r relayRank
+		r     relayRank
 		score float64
 	}
 	sem := make(chan struct{}, 3)
@@ -205,21 +232,29 @@ func relayRankAllV5(conf *UCIConfig, excluded map[string]bool) []relayRank {
 		go func() {
 			defer wg.Done()
 			sem <- struct{}{}
-			defer func(){ <-sem }()
+			defer func() { <-sem }()
 			h := scoreNodeV5(conf, id)
-			if !h.OK { return }
-			out <- scored{r: relayRank{ID:id, Name:displayNodeName(id, conf.Options[id]), MS:h.RelayMS}, score:h.Score}
+			if !h.OK {
+				return
+			}
+			out <- scored{r: relayRank{ID: id, Name: displayNodeName(id, conf.Options[id]), MS: h.RelayMS}, score: h.Score}
 		}()
 	}
 	wg.Wait()
 	close(out)
 	rows := []scored{}
-	for x := range out { rows = append(rows,x) }
-	sort.Slice(rows, func(i,j int) bool {
-		if rows[i].score == rows[j].score { return rows[i].r.Name < rows[j].r.Name }
+	for x := range out {
+		rows = append(rows, x)
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].score == rows[j].score {
+			return rows[i].r.Name < rows[j].r.Name
+		}
 		return rows[i].score < rows[j].score
 	})
-	result := make([]relayRank,0,len(rows))
-	for _, x := range rows { result=append(result,x.r) }
+	result := make([]relayRank, 0, len(rows))
+	for _, x := range rows {
+		result = append(result, x.r)
+	}
 	return result
 }
