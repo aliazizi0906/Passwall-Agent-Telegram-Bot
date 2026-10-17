@@ -116,8 +116,6 @@ Build رسمی برای معماری‌های `armv7`، `arm64`، `amd64`، `386
 
 ## Project status / وضعیت پروژه
 
-Current public release / نسخه عمومی فعلی: **v0.5.0**
-
-Development version / نسخه در حال توسعه: **v0.6.0**
+Current public release / نسخه عمومی فعلی: **v0.6.0**
 
 Repository / مخزن: https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot
