@@ -6,7 +6,7 @@
 
 | بخش | توضیح |
 |---|---|
-| [نصب](INSTALL.md) | آموزش کامل cPanel + OpenWrt |
+| [نصب](INSTALL.md) | Web Setup بدون Terminal روی cPanel + نصب OpenWrt |
 | [قابلیت‌ها](FEATURES.md) | معرفی کامل امکانات |
 | [Fleet و Automation](FLEET.md) | Multi-Device، RBAC، Audit، Monitoring و Scheduler در v0.6 |
 | [معماری](ARCHITECTURE.md) | اجزا و جریان درخواست‌ها |
@@ -36,3 +36,10 @@ PW Agent یک سیستم Self-hosted برای مدیریت OpenWrt و Passwall2 
 Passwall2 باید از قبل روی روتر نصب باشد.
 
 **مرحله بعد:** [نصب PW Agent](INSTALL.md)
+
+
+## مدل نصب روی cPanel
+
+در v0.6 هیچ نیازی به cPanel Terminal یا مسیر ثابت فایل‌سیستم نیست.
+
+محتویات `server/` را در هر فولدر Web-accessible آپلود کن و `setup.php` را باز کن. Web Setup آدرس واقعی Deployment را تشخیص می‌دهد، Schema و Config را می‌سازد، Telegram Webhook را ثبت می‌کند و Cron Command و Provisioning Command دقیق همان نصب را تحویل می‌دهد.
