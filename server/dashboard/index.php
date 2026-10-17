@@ -33,6 +33,7 @@ canvas{width:100%;height:150px}
 <button data-tab="groups">Groups</button>
 <button data-tab="monitor">Monitoring</button>
 <button data-tab="operations">Operations</button>
+<button data-tab="releases">Release Cache</button>
 <button data-tab="audit">Audit & Rollback</button>
 <button data-tab="alerts">Alerts</button>
 <button data-tab="maintenance">Maintenance</button>
@@ -43,6 +44,7 @@ canvas{width:100%;height:150px}
 <section id="groups" class="hidden"></section>
 <section id="monitor" class="hidden"></section>
 <section id="operations" class="hidden"></section>
+<section id="releases" class="hidden"></section>
 <section id="audit" class="hidden"></section>
 <section id="alerts" class="hidden"></section>
 <section id="maintenance" class="hidden"></section>
@@ -139,6 +141,16 @@ async function loadTab(name){
   const term=document.querySelector('#terminalBtn');if(term)term.onclick=()=>location.href='../terminal/';
   document.querySelector('#refreshCmds').onclick=()=>commands().catch(err);
   await commands();return;
+ }
+ if(name==='releases'){
+  if(!has('agent.update')){document.querySelector('#releases').innerHTML='<div class="card">Release Cache management requires the Agent Update permission.</div>';return}
+  const j=await api('release_status');
+  document.querySelector('#releases').innerHTML=\`<div class="card"><div class="row"><b>Signed Release Cache · v\${esc(j.version)}</b><span class="grow"></span><button id="syncAll">Sync all architectures</button></div><p class="muted">This replaces the old cPanel Terminal-only sync-release.php workflow. Files are downloaded from the official GitHub Release and SHA256-verified before they enter the protected backend cache.</p></div>\`+
+  j.releases.map(x=>\`<div class="card"><div class="row"><b class="grow">\${esc(x.arch)}</b><span class="pill \${x.available?'good':'warn'}">\${x.available?'cached':'missing'}</span><button class="syncArch" data-arch="\${esc(x.arch)}">Sync</button></div><div class="muted">\${x.available?bytes(x.size)+' · '+esc(x.updated_at||''):'No cached bundle for this version.'}</div><div class="muted">\${x.sha256?esc(x.sha256):''}</div></div>\`).join('');
+  async function sync(arch){const btns=document.querySelectorAll('#releases button');btns.forEach(b=>b.disabled=true);try{const x=await api('release_sync',{arch});alert('Synced: '+(x.results||[]).map(r=>r.arch).join(', ')+(x.errors?.length?' · some architectures failed':''));await loadTab('releases')}finally{btns.forEach(b=>b.disabled=false)}}
+  document.querySelectorAll('.syncArch').forEach(b=>b.onclick=()=>sync(b.dataset.arch).catch(err));
+  document.querySelector('#syncAll').onclick=()=>{if(confirm('Download and verify all six architecture bundles for v'+j.version+'?'))sync('all').catch(err)};
+  return;
  }
  if(name==='audit'){
   const j=await api('audit',{device_id:state.active});
