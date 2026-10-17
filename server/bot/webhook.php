@@ -59,8 +59,8 @@ try{
         }
         elseif($data==='groups'){
             if(!v060_has_permission($userId,'device.read'))throw new RuntimeException('Permission denied');
-            $rows=db()->query('SELECT g.*,COUNT(r.device_id) device_count FROM pw_device_groups g LEFT JOIN pw_device_registry r ON r.group_id=g.id GROUP BY g.id ORDER BY g.name')->fetchAll();
-            $txt="🗂 <b>Device Groups</b>\n\n";foreach($rows as $g)$txt.='• <b>'.h((string)$g['name']).'</b> — '.(int)$g['device_count']." device(s)\n";
+            $rows=v060_accessible_groups($userId);
+            $txt="🗂 <b>Device Groups</b>\n\n";foreach($rows as $g)$txt.='• <b>'.h((string)$g['name']).'</b> — '.(int)$g['accessible_device_count']." accessible device(s)\n";
             if(!$rows)$txt.='No groups yet.';
             $kb=[];if(v060_has_permission($userId,'group.manage'))$kb[]=[['text'=>'➕ Create Group','callback_data'=>'groupadd']];$kb=array_merge($kb,nav_row('fleet'));
             tg_edit($chatId,$messageId,$txt,$kb);
@@ -106,12 +106,29 @@ try{
             if(!v060_has_permission($userId,'monitor.read'))throw new RuntimeException('Monitoring permission required');
             $st=db()->prepare('SELECT * FROM pw_alert_rules WHERE device_id=? ORDER BY id DESC LIMIT 20');$st->execute([$device]);$rows=$st->fetchAll();
             $txt="🚨 <b>Alert Rules</b>\n".h(v060_device_label($device))."\n\n";foreach($rows as $a)$txt.='#'.(int)$a['id'].' '.h((string)$a['metric']).' '.h((string)$a['operator']).' '.h((string)$a['threshold']).' · '.(!empty($a['enabled'])?'ON':'OFF')."\n";if(!$rows)$txt.='No rules.';
-            $kb=[];if(v060_has_permission($userId,'alert.manage'))$kb=[[['text'=>'CPU > 90%','callback_data'=>'alertq|cpu'],['text'=>'RAM > 90%','callback_data'=>'alertq|ram']],[['text'=>'WAN Down','callback_data'=>'alertq|wan'],['text'=>'Passwall Down','callback_data'=>'alertq|pw']]];$kb=array_merge($kb,nav_row('home'));tg_edit($chatId,$messageId,$txt,$kb);
+            $kb=[];if(v060_has_permission($userId,'alert.manage'))$kb=[
+                [['text'=>'CPU > 90%','callback_data'=>'alertq|cpu'],['text'=>'RAM > 90%','callback_data'=>'alertq|ram']],
+                [['text'=>'Loss > 30%','callback_data'=>'alertq|loss'],['text'=>'Relay > 500ms','callback_data'=>'alertq|relay']],
+                [['text'=>'DNS Down','callback_data'=>'alertq|dns'],['text'=>'Internet Down','callback_data'=>'alertq|net']],
+                [['text'=>'WAN Down','callback_data'=>'alertq|wan'],['text'=>'Passwall Down','callback_data'=>'alertq|pw']],
+                [['text'=>'WAN IP Changed','callback_data'=>'alertq|ip'],['text'=>'Agent Reconnected','callback_data'=>'alertq|reconn']]
+            ];$kb=array_merge($kb,nav_row('home'));tg_edit($chatId,$messageId,$txt,$kb);
         }
         elseif(str_starts_with($data,'alertq|')){
             if($device==='')throw new RuntimeException('Select a device first');
-            $kind=substr($data,7);$map=['cpu'=>['cpu_percent','>',90.0],'ram'=>['memory_percent','>',90.0],'wan'=>['wan_down','==',1.0],'pw'=>['passwall_down','==',1.0]];if(!isset($map[$kind]))throw new RuntimeException('Invalid quick alert');
-            [$metric,$op,$threshold]=$map[$kind];$id=v060_add_alert($userId,$device,$metric,$op,$threshold,300,900,$chatId);tg_edit($chatId,$messageId,"🚨 Alert rule <b>#".$id."</b> created.",nav_row('alerts'));
+            $kind=substr($data,7);$map=[
+                'cpu'=>['cpu_percent','>',90.0,300],
+                'ram'=>['memory_percent','>',90.0,300],
+                'loss'=>['packet_loss','>',30.0,120],
+                'relay'=>['node_relay_ms','>',500.0,180],
+                'dns'=>['dns_down','==',1.0,120],
+                'net'=>['internet_down','==',1.0,120],
+                'wan'=>['wan_down','==',1.0,180],
+                'pw'=>['passwall_down','==',1.0,180],
+                'ip'=>['wan_ip_changed','==',1.0,0],
+                'reconn'=>['agent_reconnected','==',1.0,0]
+            ];if(!isset($map[$kind]))throw new RuntimeException('Invalid quick alert');
+            [$metric,$op,$threshold,$duration]=$map[$kind];$id=v060_add_alert($userId,$device,$metric,$op,$threshold,$duration,900,$chatId);tg_edit($chatId,$messageId,"🚨 Alert rule <b>#".$id."</b> created.",nav_row('alerts'));
         }
         elseif($data==='schedules'){
             if($device==='')throw new RuntimeException('Select a device first');
