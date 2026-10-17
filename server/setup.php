@@ -318,7 +318,7 @@ if(detect)detect.onclick=async()=>{
   if(!token){out.textContent='Enter the Bot token first.';return}
   detect.disabled=true;out.textContent='Checking Telegram…';
   try{
-    const fd=new FormData();fd.set('action','telegram_candidates');fd.set('csrf',<?=json_encode($csrf)?>);fd.set('bot_token',token);
+    const fd=new FormData();fd.set('action','telegram_candidates');fd.set('csrf',document.querySelector('input[name="csrf"]')?.value||'');fd.set('bot_token',token);
     const r=await fetch('setup.php',{method:'POST',body:fd,credentials:'same-origin'}),j=await r.json();
     if(!j.ok)throw new Error(j.error||'Telegram request failed');
     const users=j.users||[];
