@@ -33,6 +33,11 @@ jobs:
           test -n "$SIGNING_KEY"
           echo "$SIGNING_KEY" | base64 -d > /tmp/update-ed25519.pem
           chmod 600 /tmp/update-ed25519.pem
+          openssl pkey -in /tmp/update-ed25519.pem -pubout -outform DER | tail -c 32 | base64 -w0 > /tmp/update-public.b64
+          test "$(cat /tmp/update-public.b64)" = "$(tr -d '\\r\\n' < UPDATE_PUBLIC_KEY.b64)" || {
+            echo "Signing key does not match UPDATE_PUBLIC_KEY.b64" >&2
+            exit 1
+          }
 
       - name: Build and sign multi-architecture OpenWrt bundles
         shell: bash
