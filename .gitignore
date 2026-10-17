@@ -1,5 +1,10 @@
 server/config.php
 config.php
+server/releases/*.tar.gz
+server/releases/*.sig
+server/releases/*.sha256
+dist/
+pw-agent-*
 *.log
 *.tmp
 .DS_Store
