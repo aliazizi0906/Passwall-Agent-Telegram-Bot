@@ -308,7 +308,7 @@ function format_result(string $action, bool $ok, $result, string $error, array $
         $mem=$result['memory']??[];$sto=$result['storage']??[];$board=$result['board']??[];$release=is_array($board['release']??null)?$board['release']:[];
         $wan=$result['wan']??[];$wanIp='';
         foreach (($wan['ipv4-address']??[]) as $ip) { if(is_array($ip)&&!empty($ip['address'])){$wanIp=(string)$ip['address'];break;} }
-        $text="📊 <b>Gale System Status</b>\n\n";
+        $text="📊 <b>OpenWrt System Status</b>\n\n";
         $text.="CPU: <b>".number_format((float)($result['cpu_percent']??0),1)."%</b>\n";
         $text.="Load 1m: <code>".h((string)($result['load1']??0))."</code>\n";
         $text.="RAM: <b>".h(pct($mem['used_bytes']??0,$mem['total_bytes']??0))."</b> (".h(bytes_human($mem['used_bytes']??0))." / ".h(bytes_human($mem['total_bytes']??0)).")\n";
