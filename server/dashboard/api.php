@@ -55,6 +55,12 @@ try{
         response_json(['ok'=>true,'device'=>$created,'install_command'=>$cmd,'expires_minutes'=>30]);
     }
 
+    if($action==='device_provision'){
+        dash_device($uid,$device);
+        dash_need($uid,'device.manage');
+        response_json(['ok'=>true]+v060_issue_provision_token($uid,$device));
+    }
+
     if($action==='device_update'){
         dash_need($uid,'device.manage');dash_device($uid,$device);
         $name=trim((string)($in['display_name']??''));if($name===''||strlen($name)>128)throw new RuntimeException('Invalid display name');
