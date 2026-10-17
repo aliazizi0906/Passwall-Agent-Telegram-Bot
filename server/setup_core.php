@@ -175,14 +175,16 @@ function pw_setup_router_command(string $base,string $token): string {
 
 function pw_setup_cron_command(string $root): string {
     $script=$root.'/cron/monitor.php';
-    $phpCandidates=[
-        '/usr/local/bin/php',
-        '/usr/bin/php',
+    $matchingEa='/opt/cpanel/ea-php'.PHP_MAJOR_VERSION.PHP_MINOR_VERSION.'/root/usr/bin/php';
+    $phpCandidates=array_values(array_unique([
+        $matchingEa,
         '/opt/cpanel/ea-php84/root/usr/bin/php',
         '/opt/cpanel/ea-php83/root/usr/bin/php',
         '/opt/cpanel/ea-php82/root/usr/bin/php',
         '/opt/cpanel/ea-php81/root/usr/bin/php',
-    ];
+        '/usr/local/bin/php',
+        '/usr/bin/php',
+    ]));
     $php='php';
     foreach($phpCandidates as $candidate)if(is_file($candidate)&&is_executable($candidate)){$php=$candidate;break;}
     return '* * * * * '.escapeshellarg($php).' '.escapeshellarg($script).' >/dev/null 2>&1';
