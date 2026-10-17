@@ -133,8 +133,7 @@ func diffOptionHashesV6(before, after map[string]map[string]string) []string {
 }
 
 func (a *Agent) configHistoryKeyV6() [32]byte {
-	return sha256.Sum256([]byte(a.cfg.DeviceSecret + "
-config-history-v1"))
+	return sha256.Sum256([]byte(a.cfg.DeviceSecret + "\nconfig-history-v1"))
 }
 
 func (a *Agent) sealConfigSnapshotV6(s configSnapshotV6) (string, error) {
@@ -309,8 +308,7 @@ func defaultRouteInterfaceV6() string {
 	if err != nil {
 		return ""
 	}
-	lines := strings.Split(string(raw), "
-")
+	lines := strings.Split(string(raw), "\n")
 	for _, line := range lines[1:] {
 		f := strings.Fields(line)
 		if len(f) < 4 || f[1] != "00000000" {
