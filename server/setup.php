@@ -105,6 +105,7 @@ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&isset($_POST['install'])){
         $lock=@fopen($lockPath,'c');
         if($lock===false||!flock($lock,LOCK_EX))$errors[]='Could not acquire installer lock. Retry in a moment.';
         else{
+            $createdConfig=false;
             try{
                 if(is_file($configPath))throw new RuntimeException('Another setup request already created config.php.');
 
@@ -125,6 +126,7 @@ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&isset($_POST['install'])){
                 ];
                 $config=pw_setup_build_config($values,(string)$db['dsn'],(string)$db['user'],(string)$db['pass'],$deviceSecret,$webhookSecret,$instanceKey);
                 pw_setup_write_config($configPath,$config);
+                $createdConfig=true;
 
                 // Load the real application only after config.php exists.
                 require_once $root.'/lib.php';
@@ -168,11 +170,12 @@ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&isset($_POST['install'])){
                 $_SESSION['pw_setup_complete']=true;
                 $installed=true;
             }catch(Throwable $e){
-                if(is_file($configPath)&&$success===null){
-                    // A failed initial setup must not permanently lock the browser wizard.
-                    @unlink($configPath);
-                }
-                $errors[]='Setup failed: '.$e->getMessage();
+                // Once this request has written config.php, keep it in place.
+                // Database-backed device secrets may already be encrypted with
+                // its instance key; deleting/recreating config.php would make a
+                // retry unsafe. The error page tells the operator what failed.
+                if($createdConfig)$installed=true;
+                $errors[]='Setup failed: '.$e->getMessage().($createdConfig?' config.php was preserved to keep generated secrets consistent.':'');
             }finally{
                 flock($lock,LOCK_UN);
                 fclose($lock);
@@ -200,7 +203,7 @@ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&isset($_POST['install'])){
 <div class="card">
 <h2>Detected installation</h2>
 <div><span class="badge">PHP <?=setup_h((string)$req['php_version'])?></span>
-<span class="badge"><?=setup_h($root)?></span></div>
+<span class="badge"><?=is_writable($root)?'Directory writable':'Directory not writable'?></span></div>
 <p class="muted">The backend can live anywhere under your domain's document root. URLs and runtime paths are calculated from the directory where this file is uploaded.</p>
 <?php if(!$req['php_ok']): ?><p class="bad">PHP 8.1+ is required.</p><?php endif; ?>
 <?php if($req['missing_extensions']): ?><p class="bad">Missing extensions: <?=setup_h(implode(', ',$req['missing_extensions']))?></p><?php else: ?><p class="good">Required PHP extensions are available.</p><?php endif; ?>
@@ -259,9 +262,8 @@ Initial router: <code><?=setup_h($success['device_id'])?></code> — <?=setup_h(
 <input name="base_url" required value="<?=setup_h((string)$form['base_url'])?>" placeholder="https://example.com/any/sub/path">
 <div class="muted">This must point to the directory containing this setup.php. Auto-detected request: <?=setup_h($detectedBase?:'unavailable')?></div></div>
 <div><label>Timezone</label>
-<select name="timezone">
-<?php foreach(['UTC','Asia/Tehran','Europe/Berlin'] as $z): ?><option value="<?=setup_h($z)?>" <?=$form['timezone']===$z?'selected':''?>><?=setup_h($z)?></option><?php endforeach; ?>
-</select></div>
+<input name="timezone" list="timezones" value="<?=setup_h((string)$form['timezone'])?>" required>
+<datalist id="timezones"><option value="UTC"><option value="Asia/Tehran"><option value="Europe/Berlin"><option value="Europe/London"><option value="America/New_York"><option value="Asia/Dubai"></datalist></div>
 </div>
 </div>
 
