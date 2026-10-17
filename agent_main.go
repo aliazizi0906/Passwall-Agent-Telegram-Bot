@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-const agentVersion = "0.5.0"
+const agentVersion = "0.6.0"
 
 type Config struct {
 	ServerURL           string `json:"server_url"`
@@ -150,7 +150,7 @@ func (a *Agent) loop() {
 			}
 			continue
 		}
-		result, execErr := a.execute(cmd)
+		result, execErr := a.executeWithHistoryV6(cmd)
 		payload := ResultPayload{CommandID: cmd.ID, LeaseToken: cmd.LeaseToken, IdempotencyKey: cmd.IdempotencyKey, Success: execErr == nil, Result: result}
 		if execErr != nil {
 			payload.Error = execErr.Error()
@@ -168,8 +168,10 @@ func (a *Agent) poll() (*Command, error) {
 		"hostname":         hostname(),
 		"uptime_seconds":   uptimeSeconds(),
 		"load1":            load1(),
+		"cpu_percent":      cpuPercent(120 * time.Millisecond),
 		"memory":           memoryInfo(),
 		"passwall_running": passwallRunning(),
+		"wan":              heartbeatNetworkV6(),
 	}
 	raw, _, err := a.signedPOST(a.cfg.ServerURL+"/poll.php", hb)
 	if err != nil {
