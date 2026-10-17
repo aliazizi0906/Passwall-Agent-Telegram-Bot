@@ -2,105 +2,123 @@
 
 [صفحه مستندات](README.md) · [English](../en/MIGRATION.md)
 
-## ارتقا به v0.5.x از نصب قبلی
+## ارتقا از v0.5.x به v0.6.x
 
-نسخه v0.5 پروژه را از Deployment وابسته به یک Device مشخص به مدل نصب عمومی تبدیل می‌کند و Queue Hardening، رمزنگاری پارامترهای حساس، Signed Update، Monitoring و Multi-architecture Release را اضافه می‌کند.
+نسخه v0.6 پروتکل Outbound Agent در v0.5 را حفظ می‌کند و لایه Fleet را روی آن اضافه می‌کند. Device ID و Device Secret موجود در نصب v0.5 به‌صورت خودکار وارد Device Registry جدید می‌شوند.
 
-### ۱. حفظ Runtime Configuration
+### ۱. حفظ Runtime Files
 
-فایل زیر را Overwrite نکنید:
+فایل config.php و پوشه Runtime مربوط به Releaseها را حفظ کنید.
 
-```text
-server/config.php
-```
+config.php را با config.example.php جایگزین نکنید.
 
-اگر Releaseهای Runtime را قبلاً Sync کرده‌اید، آن‌ها را هم حفظ کنید.
+### ۲. Deploy کردن Backend نسخه v0.6
 
-### ۲. آپدیت Backend
+Source را Pull کنید و فایل‌های جدید server را با حفظ Runtime Files Deploy کنید.
 
-Source را Pull کرده و فایل‌های جدید `server/` را Deploy کنید، ولی `config.php` و Runtime Release Assets را Exclude کنید.
+~~~bash
+cd ~/Passwall-Agent-Telegram-Bot
+git pull --ff-only
 
-### ۳. تغییرات Database
+rsync -a \
+  --exclude='config.php' \
+  --exclude='releases/*.tar.gz' \
+  --exclude='releases/*.sig' \
+  --exclude='releases/*.sha256' \
+  ~/Passwall-Agent-Telegram-Bot/server/ \
+  ~/public_html/pwagent/
+~~~
 
-MySQL User در اولین اجرای v0.5 باید مجوزهای `ALTER` و `CREATE` داشته باشد تا `ensure_v050_schema()` بتواند Schema جدید را اعمال کند.
+### ۳. اعمال Schema نسخه v0.6
 
-یا می‌توانید:
+اولین Request در v0.6 تابع ensure_v060_schema() را اجرا می‌کند.
 
-```text
-server/schema.sql
-```
+MySQL User هنگام Migration باید مجوز CREATE و ALTER داشته باشد. در صورت نیاز می‌توان server/schema.sql را دستی Import کرد.
 
-را دستی Import کنید.
+Tableهای جدید:
 
-v0.5 فیلدهای Lease/Idempotency و Tableهای Metrics، Events، Alert State و Provisioning Token را اضافه می‌کند.
+- pw_device_registry
+- pw_device_groups
+- pw_users
+- pw_user_state
+- pw_audit_log
+- pw_config_changes
+- pw_alert_rules
+- pw_maintenance
+- pw_schedules
 
-### ۴. Sync کردن Signed Release
+Telegram Userهای قبلی وارد RBAC می‌شوند. اولین User موجود در allowed_user_ids نقش Owner و سایر Userها نقش Admin می‌گیرند.
 
-مثال برای ARMv7:
+Deviceهای قبلی نیز به Fleet Registry منتقل می‌شوند.
 
-```bash
+### ۴. Instance Key
+
+نصب جدید security.instance_key را خودکار تولید می‌کند.
+
+برای نصب‌های v0.5 که این مقدار را ندارند، v0.6 از Key Derivation سازگار با نسخه قبلی استفاده می‌کند و Migration بدون ویرایش فوری config.php انجام می‌شود.
+
+پس از ساخته‌شدن Device Secretهای Database-backed، Key را بدون Migration تغییر ندهید چون Secretهای رمزنگاری‌شده دیگر قابل باز شدن نخواهند بود.
+
+### ۵. آپدیت Agent
+
+Signed Package نسخه v0.6 را برای معماری روتر Sync کنید و سپس از مسیر Update عادی Agent یا Provisioning مجدد استفاده کنید.
+
+~~~bash
 php bin/sync-release.php --arch=armv7
-```
+~~~
 
-معماری‌های پشتیبانی‌شده:
+Agent v0.6 Telemetry پیشرفته و Snapshot رمزنگاری‌شده Config History برای Rollback را اضافه می‌کند.
 
-```text
-armv7
-arm64
-amd64
-386
-mips
-mipsle
-```
+### ۶. Cron الزامی است
 
-### ۵. ارتقای Agent روتر
+Cron یک‌دقیقه‌ای علاوه بر Monitoring، Alert Rule و Scheduled Action را هم اجرا می‌کند:
 
-از Release v0.5 استفاده کنید یا Provisioning Token جدید بسازید:
-
-```bash
-php bin/new-provision-token.php
-```
-
-سپس دستور تولیدشده را روی OpenWrt اجرا کنید.
-
-Public Key رسمی Ed25519 داخل Agent نسخه v0.5 Embed شده است و کاربر عادی نیازی به ساخت Signing Key ندارد.
-
-### ۶. اضافه کردن Cron مانیتورینگ
-
-```cron
+~~~cron
 * * * * * /usr/bin/php /absolute/path/to/cron/monitor.php >/dev/null 2>&1
-```
+~~~
+
+Maintenance Mode برای Device مربوطه Alertها را Mute و Scheduleهای Due را Pause می‌کند.
 
 ### ۷. اعتبارسنجی
 
 Backend:
 
-```bash
+~~~bash
 php bin/doctor.php
-```
+~~~
 
 Router:
 
-```sh
+~~~sh
 /usr/bin/pw-agent --version
 /usr/bin/pw-agent diagnose-json
 logread -e pw-agent
-```
+~~~
 
 Telegram:
 
-```text
+~~~text
 /start
-```
+~~~
 
-## مهاجرت Fork با Update Trust مستقل
+بررسی کنید Router قبلی در Fleet دیده شود و Dashboard Monitoring داده دریافت کند.
 
-Forkی که Release امضاشده مستقل می‌خواهد باید:
+## اضافه کردن Router جدید
 
-1. Ed25519 Key Pair جدید بسازد.
-2. `UPDATE_PUBLIC_KEY.b64` را جایگزین کند.
-3. Public Key Embed‌شده در Source Agent را تغییر دهد.
-4. Private Key متناظر را فقط در GitHub Actions Secret نگه دارد.
-5. Releaseهای خودش را Build و منتشر کند.
+برای Routerهای جدید config.php را دستی ویرایش نکنید.
 
-Private Signing Key را هیچ‌وقت Commit نکنید.
+در Telegram:
+
+~~~text
+/start → Fleet / Devices → Add Device
+~~~
+
+یا از Mini App Dashboard استفاده کنید.
+
+دستور تولیدشده فقط Provisioning Token یک‌بارمصرف دارد و Device Secret دائمی را نمایش نمی‌دهد.
+
+## نکته Rollback
+
+Config History فقط از زمانی ثبت می‌شود که Router Agent نسخه v0.6 را اجرا کند. Mutationهای v0.5 را نمی‌توان به‌صورت Retroactive بازسازی کرد.
+
+Rollback Snapshot با Device Secret روی Agent رمزنگاری می‌شود و Backend عمداً نمی‌تواند محتوای خام آن را بخواند.
