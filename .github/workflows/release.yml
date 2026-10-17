@@ -19,27 +19,12 @@ jobs:
           go-version: "1.23.x"
 
       - name: Test
-        run: go test ./...
-
-      - name: Build ARMv7
-        run: GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o pw-agent-armv7 .
-
-      - name: Build OpenWrt bundle
-        shell: bash
         run: |
-          set -euo pipefail
-          VERSION="${GITHUB_REF_NAME#v}"
-          STAGE="/tmp/pw-agent-release"
-          mkdir -p "$STAGE"
-          cp pw-agent-armv7 "$STAGE/"
-          cp openwrt/install-update.sh "$STAGE/"
-          cp openwrt/pw-agent.init "$STAGE/"
-          cp -a openwrt/luci "$STAGE/"
-          chmod 755 "$STAGE/pw-agent-armv7" "$STAGE/install-update.sh" "$STAGE/pw-agent.init"
-          tar -C "$STAGE" -czf "pw-agent-openwrt-${VERSION}.tar.gz" .
-          sha256sum "pw-agent-openwrt-${VERSION}.tar.gz" > "pw-agent-openwrt-${VERSION}.tar.gz.sha256"
+          test -z "$(gofmt -l *.go)"
+          go test ./...
+          go vet ./...
 
-      - name: Sign release with Ed25519
+      - name: Load Ed25519 signing key
         shell: bash
         env:
           SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_PRIVATE_KEY_PEM_B64 }}
@@ -47,9 +32,45 @@ jobs:
           set -euo pipefail
           test -n "$SIGNING_KEY"
           echo "$SIGNING_KEY" | base64 -d > /tmp/update-ed25519.pem
-          VERSION="${GITHUB_REF_NAME#v}"
-          openssl pkeyutl -sign -rawin -inkey /tmp/update-ed25519.pem             -in "pw-agent-openwrt-${VERSION}.tar.gz"             -out "pw-agent-openwrt-${VERSION}.tar.gz.sig"
-          base64 -w0 "pw-agent-openwrt-${VERSION}.tar.gz.sig" > "pw-agent-openwrt-${VERSION}.tar.gz.sig.b64"
+          chmod 600 /tmp/update-ed25519.pem
+
+      - name: Build and sign multi-architecture OpenWrt bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+
+          build_bundle() {
+            label="$1"; goarch="$2"; goarm="${3:-}"; gomips="${4:-}"
+            stage="/tmp/pw-agent-$label"
+            rm -rf "$stage"
+            mkdir -p "$stage"
+
+            env_args=(GOOS=linux GOARCH="$goarch" CGO_ENABLED=0)
+            [ -z "$goarm" ] || env_args+=(GOARM="$goarm")
+            [ -z "$gomips" ] || env_args+=(GOMIPS="$gomips")
+
+            env "${env_args[@]}" go build -trimpath -ldflags="-s -w" -o "$stage/pw-agent" .
+            cp openwrt/install.sh "$stage/"
+            cp openwrt/install-update.sh "$stage/"
+            cp openwrt/pw-agent.init "$stage/"
+            cp openwrt/config.example.json "$stage/"
+            cp -a openwrt/luci "$stage/"
+            chmod 755 "$stage/pw-agent" "$stage/install.sh" "$stage/install-update.sh" "$stage/pw-agent.init"
+
+            asset="dist/pw-agent-openwrt-$label.tar.gz"
+            tar -C "$stage" -czf "$asset" .
+            sha256sum "$asset" > "$asset.sha256"
+            openssl pkeyutl -sign -rawin -inkey /tmp/update-ed25519.pem -in "$asset" -out "$asset.sig"
+          }
+
+          build_bundle armv7 arm 7
+          build_bundle arm64 arm64
+          build_bundle amd64 amd64
+          build_bundle 386 386
+          build_bundle mips mips "" softfloat
+          build_bundle mipsle mipsle "" softfloat
+
           rm -f /tmp/update-ed25519.pem
 
       - name: Publish GitHub release
@@ -58,5 +79,4 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          VERSION="${GITHUB_REF_NAME#v}"
-          gh release create "$GITHUB_REF_NAME"             "pw-agent-openwrt-${VERSION}.tar.gz"             "pw-agent-openwrt-${VERSION}.tar.gz.sha256"             "pw-agent-openwrt-${VERSION}.tar.gz.sig"             "pw-agent-openwrt-${VERSION}.tar.gz.sig.b64"             --generate-notes
+          gh release create "$GITHUB_REF_NAME" dist/* --generate-notes --title "PW Agent $GITHUB_REF_NAME"
