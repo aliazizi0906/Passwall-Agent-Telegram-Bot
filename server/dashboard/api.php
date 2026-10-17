@@ -102,6 +102,31 @@ try{
         response_json(['ok'=>true]);
     }
 
+
+    if($action==='command'){
+        dash_device($uid,$device);
+        $commandAction=(string)($in['command_action']??'');
+        if(!v060_dashboard_command_allowed($commandAction))throw new RuntimeException('Dashboard action is not allowed');
+        $params=dash_json($in['params']??[]);
+        $chat=$commandAction==='system.backup.create'?$uid:null;
+        $id=queue_command($device,$commandAction,$params,$chat,$uid,null,'dashboard');
+        db()->prepare("UPDATE pw_audit_log SET source='dashboard' WHERE command_id=?")->execute([$id]);
+        response_json(['ok'=>true,'command_id'=>$id]);
+    }
+    if($action==='command_status'){
+        dash_device($uid,$device);
+        $id=(int)($in['command_id']??0);if($id<=0)throw new RuntimeException('Invalid command ID');
+        $st=db()->prepare('SELECT id,action,status,result_json,error_text,created_at,finished_at FROM pw_commands WHERE id=? AND device_id=? AND user_id=?');$st->execute([$id,$device,$uid]);$row=$st->fetch();
+        if(!$row)throw new RuntimeException('Command not found');
+        $result=json_decode((string)($row['result_json']??''),true);
+        response_json(['ok'=>true,'command'=>['id'=>(int)$row['id'],'action'=>$row['action'],'status'=>$row['status'],'result'=>is_array($result)?$result:null,'error'=>$row['error_text'],'created_at'=>$row['created_at'],'finished_at'=>$row['finished_at']]]);
+    }
+    if($action==='commands'){
+        dash_device($uid,$device);
+        $st=db()->prepare('SELECT id,action,status,created_at,finished_at,error_text FROM pw_commands WHERE device_id=? AND user_id=? ORDER BY id DESC LIMIT 50');$st->execute([$device,$uid]);
+        response_json(['ok'=>true,'commands'=>$st->fetchAll()]);
+    }
+
     if($action==='audit'){
         dash_device($uid,$device);dash_need($uid,'audit.read');
         response_json(['ok'=>true,'audit'=>v060_audit_recent($uid,$device,50),'changes'=>v060_config_changes($uid,$device,30)]);
