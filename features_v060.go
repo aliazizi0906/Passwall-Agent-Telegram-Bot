@@ -37,7 +37,7 @@ func configPackagesForActionV6(action string) []string {
 		return []string{"firewall"}
 	case strings.HasPrefix(action, "passwall2."):
 		switch action {
-		case "passwall2.restart", "passwall2.failover.run":
+		case "passwall2.restart", "passwall2.failover.configure":
 			return nil
 		default:
 			return []string{"passwall2"}
