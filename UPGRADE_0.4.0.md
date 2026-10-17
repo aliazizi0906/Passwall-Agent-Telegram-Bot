@@ -1,9 +1,11 @@
-# v0.4.0 upgrade checklist
+# Legacy v0.4.0 upgrade checklist (archived)
+
+> Do not use this document for a new installation. Use the root README for v0.5+ public installation. This file is retained only for historical reference.
 
 1. Keep the existing cPanel `server/config.php`.
 2. Upload/overwrite all other v0.4.0 `server/` files, including `server/releases/` and hidden `.htaccess` files.
 3. Verify `health.php` reports `0.4.0`.
-4. Copy or clone the complete repository to Gale.
+4. Copy or clone the complete repository to the OpenWrt router.
 5. From the repository root, run:
 
    ```sh
