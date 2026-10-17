@@ -1,0 +1,7 @@
+server/config.php
+config.php
+*.log
+*.tmp
+.DS_Store
+.idea/
+.vscode/
