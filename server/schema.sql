@@ -192,6 +192,7 @@ CREATE TABLE IF NOT EXISTS pw_schedules (
   created_by BIGINT NULL,
   last_run_at DATETIME NULL,
   last_command_id BIGINT UNSIGNED NULL,
+  last_error TEXT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_schedule_due (enabled,next_run_at),
   INDEX idx_schedule_device (device_id)
