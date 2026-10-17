@@ -51,7 +51,8 @@ canvas{width:100%;height:150px}
 </main>
 <script>
 const tg=window.Telegram?.WebApp; tg?.ready(); tg?.expand();
-const initData=tg?.initData||''; let state={summary:null,active:'',role:'viewer'};
+const initData=tg?.initData||''; let state={summary:null,active:'',role:'viewer',permissions:[]};
+const has=p=>state.permissions.includes('*')||state.permissions.includes(p);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function api(action,data={}){const r=await fetch('api.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({init_data:initData,action,...data})});const j=await r.json().catch(()=>({ok:false,error:'Invalid server response'}));if(!j.ok)throw new Error(j.error||'Request failed');return j}
 function err(e){const x=document.querySelector('#error');x.textContent=e.message||e;x.classList.remove('hidden')}
@@ -60,7 +61,7 @@ function bytes(n){n=Number(n||0);if(n>=1073741824)return (n/1073741824).toFixed(
 function tab(name){document.querySelectorAll('main>section').forEach(x=>x.classList.add('hidden'));document.querySelector('#'+name).classList.remove('hidden');document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('primary',x.dataset.tab===name));loadTab(name).catch(err)}
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
 async function refresh(){
- const j=await api('summary');state.summary=j.fleet;state.active=j.active_device_id;state.role=j.role;
+ const j=await api('summary');state.summary=j.fleet;state.active=j.active_device_id;state.role=j.role;state.permissions=j.permissions||[];
  document.querySelector('#identity').textContent='Role: '+state.role+' · Active: '+(state.active||'none');
  document.querySelector('#stats').innerHTML=[
   ['Routers',j.fleet.total],['Online',j.fleet.online],['Offline',j.fleet.offline]
@@ -69,7 +70,7 @@ async function refresh(){
 }
 async function renderDevices(){
  const rows=state.summary?.devices||[];
- document.querySelector('#devices').innerHTML=`<div class="card"><div class="row"><b>Fleet</b><span class="grow"></span>${['owner','admin'].includes(state.role)?'<button id="groupsBtn">Groups</button><button id="editDev">Edit active</button><button id="addDev">+ Add device</button>':''}</div></div>`+
+ document.querySelector('#devices').innerHTML=`<div class="card"><div class="row"><b>Fleet</b><span class="grow"></span>${has('device.manage')?'<button id="groupsBtn">Groups</button><button id="editDev">Edit active</button><button id="addDev">+ Add device</button>':''}</div></div>`+
  rows.map(d=>`<div class="card device ${d.device_id===state.active?'active':''}" data-id="${esc(d.device_id)}"><div class="row"><b>${d.online?'🟢':'🔴'} ${esc(d.display_name)}</b><span class="grow"></span>${d.group_name?'<span class="pill">'+esc(d.group_name)+'</span>':''}${d.maintenance?'<span class="pill warn">Maintenance</span>':''}</div><div class="muted">${esc(d.hostname||d.device_id)} · ${esc(d.location||'No location')} · Agent ${esc(d.agent_version||'-')} · ${fmtTime(d.last_seen)}</div><div>${(JSON.parse(d.tags_json||'[]')).map(t=>'<span class="pill">'+esc(t)+'</span>').join('')}</div></div>`).join('');
  document.querySelectorAll('.device').forEach(x=>x.onclick=async()=>{await api('select_device',{device_id:x.dataset.id});await refresh();});
  const add=document.querySelector('#addDev');if(add)add.onclick=async()=>{const name=prompt('Device name');if(!name)return;const j=await api('device_create',{name});prompt('Run this command on the new OpenWrt router within 30 minutes:',j.install_command);await refresh()};
@@ -81,7 +82,7 @@ async function loadTab(name){
  if(!state.active){document.querySelector('#'+name).innerHTML='<div class="card">No active device.</div>';return}
  if(name==='groups'){
   const j=await api('groups');
-  const canManage=['owner','admin'].includes(state.role);
+  const canManage=has('group.manage');
   document.querySelector('#groups').innerHTML=`<div class="card"><div class="row"><b>Device Groups</b><span class="grow"></span>${canManage?'<button id="newGroup">+ Group</button>':''}</div><p class="muted">Bulk mutations require explicit confirmation and still pass RBAC on every router.</p></div>`+
   (j.groups||[]).map(g=>`<div class="card"><div class="row"><b class="grow">${esc(g.name)}</b><span class="pill">${Number(g.accessible_device_count||0)} accessible</span></div><div class="muted">${esc(g.description||'')}</div><div class="row"><button class="gop" data-g="${g.id}" data-a="system.status">Status</button><button class="gop" data-g="${g.id}" data-a="agent.diagnose">Diagnostics</button><button class="gop" data-g="${g.id}" data-a="agent.update.check">Update check</button><button class="gop" data-g="${g.id}" data-a="passwall2.status">Passwall</button><button class="gop" data-g="${g.id}" data-a="passwall2.restart" data-mut="1">Restart Passwall</button><button class="gop danger" data-g="${g.id}" data-a="agent.update.apply" data-mut="1">Install Agent update</button></div><pre id="groupOut-${g.id}">Devices: ${esc((g.device_ids||[]).join(', ')||'none')}</pre></div>`).join('') || '<div class="card">No groups are visible in your scope.</div>';
   const ng=document.querySelector('#newGroup');if(ng)ng.onclick=async()=>{const name=prompt('Group name');if(!name)return;const description=prompt('Description','')||'';await api('group_create',{name,description});loadTab('groups')};
@@ -103,7 +104,7 @@ async function loadTab(name){
  }
  if(name==='audit'){
   const j=await api('audit',{device_id:state.active});
-  document.querySelector('#audit').innerHTML='<div class="card"><b>Recent audit</b><div style="overflow:auto"><table><tr><th>Time</th><th>User</th><th>Action</th><th>Status</th></tr>'+j.audit.map(a=>`<tr><td>${esc(a.created_at)}</td><td>${esc(a.telegram_user_id||a.source)}</td><td>${esc(a.action)}</td><td>${esc(a.status)}</td></tr>`).join('')+'</table></div></div><div class="card"><b>Configuration changes</b>'+j.changes.map(c=>{let diff=[];try{diff=JSON.parse(c.diff_json||'[]')}catch(e){}return `<div class="card"><b>#${c.id} ${esc(c.action)}</b><div class="muted">${esc(c.created_at)}</div><pre>${esc(diff.join('\n')||'No UCI option change detected')}</pre>${['owner','admin'].includes(state.role)?`<button class="danger rb" data-id="${c.id}">Rollback</button>`:''}</div>`}).join('')+'</div>';
+  document.querySelector('#audit').innerHTML='<div class="card"><b>Recent audit</b><div style="overflow:auto"><table><tr><th>Time</th><th>User</th><th>Action</th><th>Status</th></tr>'+j.audit.map(a=>`<tr><td>${esc(a.created_at)}</td><td>${esc(a.telegram_user_id||a.source)}</td><td>${esc(a.action)}</td><td>${esc(a.status)}</td></tr>`).join('')+'</table></div></div><div class="card"><b>Configuration changes</b>'+j.changes.map(c=>{let diff=[];try{diff=JSON.parse(c.diff_json||'[]')}catch(e){}return `<div class="card"><b>#${c.id} ${esc(c.action)}</b><div class="muted">${esc(c.created_at)}</div><pre>${esc(diff.join('\n')||'No UCI option change detected')}</pre>${has('rollback')?`<button class="danger rb" data-id="${c.id}">Rollback</button>`:''}</div>`}).join('')+'</div>';
   document.querySelectorAll('.rb').forEach(b=>b.onclick=async()=>{if(!confirm('Rollback this configuration change?'))return;await api('rollback',{device_id:state.active,change_id:Number(b.dataset.id)});alert('Rollback command queued')});return;
  }
  if(name==='alerts'){
@@ -120,9 +121,9 @@ async function loadTab(name){
   document.querySelectorAll('.st').forEach(b=>b.onclick=async()=>{await api('schedule_toggle',{device_id:state.active,id:Number(b.dataset.id),enabled:Number(b.dataset.on)});loadTab('schedules')});const ns=document.querySelector('#newSchedule');if(ns)ns.onclick=async()=>{const action=prompt('Action','passwall2.restart');if(!action)return;const mins=Number(prompt('Run every N minutes','360'));await api('schedule_create',{device_id:state.active,name:action,command_action:action,params:action==='passwall2.subscription.update'?{id:'all'}:{},schedule_type:'interval',schedule_spec:{every_minutes:mins}});loadTab('schedules')};return;
  }
  if(name==='access'){
-  if(!['owner','admin'].includes(state.role)){document.querySelector('#access').innerHTML='<div class="card">RBAC visibility requires Admin or Owner.</div>';return}
+  if(!has('rbac.read')){document.querySelector('#access').innerHTML='<div class="card">RBAC visibility is not available for this role.</div>';return}
   const j=await api('users');
-  const canEdit=state.role==='owner';
+  const canEdit=has('rbac.manage');
   document.querySelector('#access').innerHTML='<div class="card"><div class="row"><b>RBAC users</b><span class="grow"></span>'+(!canEdit?'<span class="pill">read-only</span>':'')+'</div>'+j.users.map(u=>{let scope=[];try{scope=JSON.parse(u.device_scope_json||'[]')}catch(e){}return `<div class="card"><div class="row"><b class="grow">${esc(u.telegram_user_id)}</b><span class="pill">${esc(u.role)}</span><span class="pill">${Number(u.enabled)?'enabled':'disabled'}</span>${canEdit?`<button class="editUser" data-id="${u.telegram_user_id}" data-role="${esc(u.role)}" data-on="${Number(u.enabled)?1:0}" data-scope="${esc(scope.join(','))}">Edit</button>`:''}</div><div class="muted">Scope: ${esc(scope.join(', ')||'none')}</div></div>`}).join('')+(canEdit?'<button id="newUser">+ User</button>':'')+'</div>';
   if(canEdit){
     async function editUser(id,role='viewer',enabled=1,scope='*'){const r=prompt('Role: owner, admin, operator, viewer',role);if(!r)return;const sc=prompt('Device scope: *, device IDs, prefix-* or group:ID',scope);if(sc===null)return;const on=confirm('Enable this user? OK = enabled, Cancel = disabled');await api('user_upsert',{telegram_user_id:Number(id),role:r,enabled:on,device_scope:sc.split(',').map(x=>x.trim()).filter(Boolean)});loadTab('access')}
