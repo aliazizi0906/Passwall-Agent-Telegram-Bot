@@ -58,6 +58,8 @@ async function api(action,data={}){const r=await fetch('api.php',{method:'POST',
 function err(e){const x=document.querySelector('#error');x.textContent=e.message||e;x.classList.remove('hidden')}
 function fmtTime(s){return s?new Date(s.replace(' ','T')+'Z').toLocaleString():'Never'}
 function bytes(n){n=Number(n||0);if(n>=1073741824)return (n/1073741824).toFixed(2)+' GiB';if(n>=1048576)return (n/1048576).toFixed(1)+' MiB';if(n>=1024)return (n/1024).toFixed(1)+' KiB';return n+' B'}
+function healthState(v){if(v===null||v===undefined||v==='')return ['UNKNOWN','warn'];return Number(v)?['UP','good']:['DOWN','bad']}
+function num(v,d=1,suffix=''){return v===null||v===undefined||v===''?'—':Number(v).toFixed(d)+suffix}
 function tab(name){document.querySelectorAll('main>section').forEach(x=>x.classList.add('hidden'));document.querySelector('#'+name).classList.remove('hidden');document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('primary',x.dataset.tab===name));loadTab(name).catch(err)}
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
 async function refresh(){
