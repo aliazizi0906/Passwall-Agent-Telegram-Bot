@@ -2,89 +2,120 @@
 
 [صفحه مستندات](README.md) · [English](../en/MIGRATION.md)
 
-## ارتقا به v0.5.x از نصب قبلی
+## ارتقا از v0.5.x به v0.6.x
 
-نسخه v0.5 پروژه را از Deployment وابسته به یک Device مشخص به مدل نصب عمومی تبدیل می‌کند و Queue Hardening، رمزنگاری پارامترهای حساس، Signed Update، Monitoring و Multi-architecture Release را اضافه می‌کند.
+نسخه v0.6 پروتکل Outbound Agent نسخه v0.5 را حفظ می‌کند و Fleet Management، RBAC، Audit، Config History/Rollback، Monitoring پیشرفته، Maintenance و Scheduler را اضافه می‌کند.
 
-### ۱. حفظ Runtime Configuration
+Migration روی cPanel **بدون SSH و بدون Terminal** قابل انجام است.
 
-فایل زیر را Overwrite نکنید:
+## ۱. Runtime Fileها را نگه دار
 
-```text
-server/config.php
-```
-
-اگر Releaseهای Runtime را قبلاً Sync کرده‌اید، آن‌ها را هم حفظ کنید.
-
-### ۲. آپدیت Backend
-
-Source را Pull کرده و فایل‌های جدید `server/` را Deploy کنید، ولی `config.php` و Runtime Release Assets را Exclude کنید.
-
-### ۳. تغییرات Database
-
-MySQL User در اولین اجرای v0.5 باید مجوزهای `ALTER` و `CREATE` داشته باشد تا `ensure_v050_schema()` بتواند Schema جدید را اعمال کند.
-
-یا می‌توانید:
+این موارد را حفظ کن:
 
 ```text
-server/schema.sql
+config.php
+releases/
 ```
 
-را دستی Import کنید.
+`config.php` را با `config.example.php` جایگزین نکن.
 
-v0.5 فیلدهای Lease/Idempotency و Tableهای Metrics، Events، Alert State و Provisioning Token را اضافه می‌کند.
+محل فیزیکی نصب مهم نیست؛ v0.6 از همان فولدری که Backend فعلی Deploy شده اجرا می‌شود.
 
-### ۴. Sync کردن Signed Release
+## ۲. Deploy نسخه v0.6 با File Manager
 
-مثال برای ARMv7:
+ZIP آخر Repository را از GitHub دانلود کن، داخل یک فولدر موقت Extract کن و محتویات `server/` را روی فولدر فعلی Backend کپی کن.
 
-```bash
-php bin/sync-release.php --arch=armv7
-```
+فولدر مقصد را قبل از Copy پاک نکن.
 
-معماری‌های پشتیبانی‌شده:
+نمونه مسیرهای معتبر:
 
 ```text
-armv7
-arm64
-amd64
-386
-mips
-mipsle
+public_html/pw
+public_html/tools/openwrt
+public_html/network/control
+Document Root یک Subdomain
 ```
 
-### ۵. ارتقای Agent روتر
+هیچ مسیر اجباری مثل `/home/USER/public_html/pwagent` وجود ندارد.
 
-از Release v0.5 استفاده کنید یا Provisioning Token جدید بسازید:
+## ۳. Migration دیتابیس
 
-```bash
-php bin/new-provision-token.php
+در Browser باز کن:
+
+```text
+https://YOUR-BACKEND-URL/health.php
 ```
 
-سپس دستور تولیدشده را روی OpenWrt اجرا کنید.
+اولین Request نسخه v0.6 تابع `ensure_v060_schema()` را اجرا می‌کند.
 
-Public Key رسمی Ed25519 داخل Agent نسخه v0.5 Embed شده است و کاربر عادی نیازی به ساخت Signing Key ندارد.
+MySQL User هنگام Migration باید Permissionهای CREATE و ALTER داشته باشد.
 
-### ۶. اضافه کردن Cron مانیتورینگ
+v0.6 مواردی مثل این‌ها را به Database اضافه می‌کند:
 
-```cron
-* * * * * /usr/bin/php /absolute/path/to/cron/monitor.php >/dev/null 2>&1
+- Fleet Device Registry
+- Device Groupها
+- RBAC Userها و Active Device State
+- Audit Log
+- Metadata مربوط به Config History رمزنگاری‌شده
+- Alert Ruleها
+- Maintenance State
+- Scheduled Actionها
+- Metricهای Monitoring جدید
+
+Deviceهای موجود در `config.php` وارد Fleet Registry می‌شوند.
+
+Telegram Userهای قبلی نیز وارد RBAC می‌شوند؛ اولین Allowed User نقش Owner و بقیه نقش Admin می‌گیرند.
+
+## ۴. رفتار Instance Key
+
+نصب تازه با Web Setup در v0.6 مقدار `security.instance_key` را خودکار می‌سازد.
+
+اگر نصب v0.5 این فیلد را نداشته باشد، v0.6 برای Migration از Key Derivation پایدار و سازگار با نسخه قبل استفاده می‌کند و نیازی به ویرایش دستی فوری `config.php` نیست.
+
+بعد از رمزنگاری Device Secretهای Database-backed، Effective Instance Key را خودسرانه تغییر نده.
+
+## ۵. Sync کردن Agent v0.6 بدون Terminal
+
+بعد از Migration Backend وارد:
+
+```text
+Telegram → Dashboard → Release Cache
 ```
 
-### ۷. اعتبارسنجی
+شو و Architecture Router را Sync کن یا همه Architectureها را یکجا Sync کن.
 
-Backend:
+Backend قبل از ذخیره Package، SHA256 را Verify می‌کند.
 
-```bash
-php bin/doctor.php
+## ۶. Upgrade کردن Agent Router
+
+بعد از آماده‌شدن Release Cache، از Update Flow عادی Telegram/Dashboard استفاده کن.
+
+اگر Router نیاز به Reinstall داشت:
+
+```text
+Dashboard → Devices → Provision / Reinstall
 ```
 
-Router:
+را بزن تا Command جدید با Token یک‌بارمصرف ۳۰ دقیقه‌ای ساخته شود؛ بدون نیاز به cPanel Terminal.
 
-```sh
-/usr/bin/pw-agent --version
-/usr/bin/pw-agent diagnose-json
-logread -e pw-agent
+## ۷. Cron
+
+Cron یک‌دقیقه‌ای فعلی در v0.6 این موارد را اجرا می‌کند:
+
+- Offline/Recovery Monitoring
+- Alert Ruleها
+- Scheduled Actionها
+
+اگر قبلاً Backend را جابه‌جا کرده‌ای و Cron Path قدیمی شده، در **cPanel → Cron Jobs** مسیر فعلی را اصلاح کن.
+
+در نصب تازه، Web Setup مسیر Absolute واقعی را خودش تشخیص می‌دهد و Cron Command دقیق را چاپ می‌کند.
+
+## ۸. اعتبارسنجی
+
+Browser:
+
+```text
+https://YOUR-BACKEND-URL/health.php
 ```
 
 Telegram:
@@ -93,14 +124,40 @@ Telegram:
 /start
 ```
 
-## مهاجرت Fork با Update Trust مستقل
+در Dashboard این بخش‌ها را بررسی کن:
 
-Forkی که Release امضاشده مستقل می‌خواهد باید:
+```text
+Devices
+Monitoring
+Audit & Rollback
+Release Cache
+```
 
-1. Ed25519 Key Pair جدید بسازد.
-2. `UPDATE_PUBLIC_KEY.b64` را جایگزین کند.
-3. Public Key Embed‌شده در Source Agent را تغییر دهد.
-4. Private Key متناظر را فقط در GitHub Actions Secret نگه دارد.
-5. Releaseهای خودش را Build و منتشر کند.
+روی Router:
 
-Private Signing Key را هیچ‌وقت Commit نکنید.
+```sh
+/usr/bin/pw-agent --version
+/usr/bin/pw-agent diagnose-json
+logread -e pw-agent
+```
+
+## سازگاری Config History
+
+Config History فقط از زمانی ثبت می‌شود که Agent v0.6 روی Router اجرا شود. Mutationهای قدیمی v0.5 Snapshot قابل Rollback ندارند.
+
+Rollback Snapshot با History Key مخصوص همان Router در مسیر:
+
+```text
+/etc/pw-agent/history.key
+```
+
+رمزنگاری می‌شود و Backend در عملیات عادی این Key را دریافت نمی‌کند.
+
+## روش CLI اختیاری
+
+اگر SSH/Terminal در دسترس بود، Scriptهای CLI همچنان قابل استفاده‌اند ولی اجباری نیستند:
+
+```bash
+php bin/doctor.php
+php bin/sync-release.php --all
+```

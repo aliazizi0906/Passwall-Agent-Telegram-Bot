@@ -47,7 +47,7 @@ func isMutationActionV5(action string) bool {
 		"passwall2.subscription.add", "passwall2.subscription.update", "passwall2.subscription.delete",
 		"passwall2.nodes.prune_dead", "passwall2.nodes.delete_many", "passwall2.nodes.delete_all",
 		"system.service.restart", "network.wan.reconnect", "firewall.redirect.toggle",
-		"agent.update.apply", "terminal.exec":
+		"agent.update.apply", "terminal.exec", "config.rollback_snapshot":
 		return true
 	default:
 		return false

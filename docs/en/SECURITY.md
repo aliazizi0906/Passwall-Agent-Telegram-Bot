@@ -87,3 +87,35 @@ The Agent connects to local Dropbear on the router. The feature is a bounded com
 - rotate Bot tokens if exposed;
 - do not paste Device Secrets into issues or public chats;
 - review mutation operations before using them on production routers.
+
+
+## v0.6 Fleet secrets and RBAC
+
+New devices are stored in the database-backed Fleet Registry. Their Device Secrets are encrypted at rest with AES-256-GCM using an instance key generated during a fresh setup.
+
+For upgrades from v0.5 where `security.instance_key` does not yet exist, v0.6 derives a stable migration key from existing instance configuration. Do not later change the effective instance key without a dedicated migration because database-encrypted Device Secrets depend on it.
+
+RBAC roles are:
+
+- Owner
+- Admin
+- Operator
+- Viewer
+
+Permissions are evaluated before commands enter the queue. Operator and Viewer accounts may also be restricted by Device ID scope.
+
+The last enabled Owner cannot be demoted or disabled through the Dashboard.
+
+## Config History confidentiality
+
+Rollback snapshots are encrypted by the Agent with AES-GCM using a random 32-byte router-only history key stored at `/etc/pw-agent/history.key` with restrictive permissions.
+
+The backend stores only the encrypted snapshot and does not receive this key during normal config-history operation. Audit/config diffs expose UCI option names and change type, not their values. A privileged full-router backup can contain local PW Agent files, so such backups must be treated as sensitive.
+
+Rollback payloads are additionally treated as sensitive queue parameters and are scrubbed after command completion.
+
+## Dashboard authentication
+
+The Fleet Dashboard is a Telegram Mini App. Each API request validates Telegram `initData`, its signature and authentication age, then applies RBAC and Device Scope checks.
+
+Opening the Dashboard URL directly in a normal browser does not grant API access.

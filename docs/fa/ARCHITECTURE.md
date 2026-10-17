@@ -124,3 +124,47 @@ Extract -> install-update.sh -> Restart Agent
 ```
 
 جزئیات بیشتر در [امنیت](SECURITY.md).
+
+
+## لایه Fleet در v0.6
+
+در v0.6 هویت Router و Access Control به Tableهای Platform در MySQL منتقل شده‌اند.
+
+```text
+Telegram / Mini App
+        |
+        v
+RBAC + Active Device Context
+        |
+        v
+Fleet Device Registry
+        |
+        +--> Device Metadata / Groups / Tags
+        +--> Device Secret رمزنگاری‌شده
+        +--> Audit / Config History
+        +--> Metrics / Alerts / Maintenance / Schedules
+        |
+        v
+Command Queue
+        |
+        v
+OpenWrt Agent انتخاب‌شده
+```
+
+Deviceهای v0.5 هنگام Migration وارد Registry می‌شوند. Router جدید با Zero-Touch Provisioning ساخته می‌شود و نیازی به ویرایش دستی `config.php` ندارد.
+
+### مرز اعتماد Config History
+
+برای Mutationهای UCI پشتیبانی‌شده، Router قبل از تغییر Snapshot می‌گیرد، آن را با Key مشتق‌شده از Device Secret رمزنگاری می‌کند و فقط Ciphertext به همراه Diff سطح Key را به Backend می‌فرستد.
+
+Backend Snapshot را برای Rollback نگه می‌دارد اما عمداً قادر به خواندن Raw Configuration آن نیست.
+
+### مسیر Automation
+
+Cron یک‌دقیقه‌ای Server این موارد را اجرا می‌کند:
+
+- Monitoring و Offline/Recovery
+- Alert Ruleهای Threshold
+- Scheduled Actionهای Due
+
+Maintenance Mode قبل از ارسال Alert یا اجرای Schedule برای Device بررسی می‌شود.

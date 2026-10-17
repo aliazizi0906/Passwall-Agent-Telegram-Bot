@@ -22,7 +22,17 @@ return [
         'offline_after_seconds' => 300,
     ],
 
-    // Use server/bin/setup.php instead of editing these values manually.
+    // Generated automatically by bin/setup.php. Required for encrypting
+    // database-backed device secrets in multi-device deployments.
+    'security' => [
+        'instance_key' => 'BASE64_RANDOM_32_BYTE_KEY',
+    ],
+
+    'scheduling' => [
+        'timezone' => 'UTC',
+    ],
+
+    // Prefer browser setup.php on cPanel. server/bin/setup.php remains an optional CLI alternative.
     'devices' => [
         'router-01' => [
             'secret' => 'CHANGE_ME_64_RANDOM_HEX',

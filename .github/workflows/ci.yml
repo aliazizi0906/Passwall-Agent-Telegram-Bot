@@ -42,6 +42,9 @@ jobs:
       - name: PHP lint
         run: find server -name '*.php' -print0 | xargs -0 -n1 php -l
 
+      - name: Web Setup tests
+        run: php server/tests/setup_core_test.php
+
       - name: Shell syntax
         run: |
           sh -n openwrt/install.sh
@@ -50,6 +53,9 @@ jobs:
 
       - name: JSON validation
         run: find openwrt -name '*.json' -print0 | xargs -0 -n1 jq -e . >/dev/null
+
+      - name: Dashboard JavaScript
+        run: python3 scripts/check_dashboard_js.py
 
       - name: Markdown links
         run: python3 scripts/check_markdown_links.py

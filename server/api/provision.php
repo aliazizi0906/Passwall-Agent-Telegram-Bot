@@ -17,7 +17,7 @@ try{
         $pdo->rollBack();response_json(['ok'=>false,'error'=>'provisioning token is invalid, expired, or already used'],null,403);
     }
     $device=(string)$row['device_id'];
-    $secret=(string)(cfg()['devices'][$device]['secret']??'');
+    try{$secret=v060_device_secret($device);}catch(Throwable $e){$pdo->rollBack();response_json(['ok'=>false,'error'=>'device credentials are not configured'],null,500);}
     if($secret===''){$pdo->rollBack();response_json(['ok'=>false,'error'=>'device credentials are not configured'],null,500);}
     $u=$pdo->prepare('UPDATE pw_provision_tokens SET used_at=NOW() WHERE id=? AND used_at IS NULL');
     $u->execute([(int)$row['id']]);

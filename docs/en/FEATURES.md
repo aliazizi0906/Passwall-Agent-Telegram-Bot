@@ -112,3 +112,9 @@ v0.5 adds:
 - encrypted storage for sensitive queued parameters
 
 See [Architecture](ARCHITECTURE.md) and [Security](SECURITY.md) for details.
+
+## Fleet Management (v0.6)
+
+v0.6 adds multi-device Fleet Management, database-backed device registry, Device Groups/Tags/Location, Zero-Touch Provisioning from Telegram/Dashboard, RBAC with per-device scope, Audit Log, encrypted Config History with Rollback, advanced Monitoring/Alert Rules, Maintenance Mode, Scheduled Actions and a Fleet Mini App Dashboard.
+
+See [Fleet Management & Automation](FLEET.md) for details.

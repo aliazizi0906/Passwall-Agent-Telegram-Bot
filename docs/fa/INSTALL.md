@@ -2,22 +2,18 @@
 
 [صفحه مستندات](README.md) · [English](../en/INSTALL.md)
 
-## منو
+نسخه v0.6 طوری طراحی شده که روی هاست cPanel **بدون SSH و بدون cPanel Terminal** نصب شود.
 
-- [پیش‌نیازها](#پیشنیازها)
-- [۱. بررسی OpenWrt](#۱-بررسی-openwrt)
-- [۲. آماده‌سازی cPanel](#۲-آمادهسازی-cpanel)
-- [۳. ساخت دیتابیس MySQL](#۳-ساخت-دیتابیس-mysql)
-- [۴. ساخت Telegram Bot](#۴-ساخت-telegram-bot)
-- [۵. دریافت پروژه از GitHub](#۵-دریافت-پروژه-از-github)
-- [۶. استقرار Backend](#۶-استقرار-backend)
-- [۷. اجرای Setup](#۷-اجرای-setup)
-- [۸. بررسی Backend](#۸-بررسی-backend)
-- [۹. نصب Agent روی OpenWrt](#۹-نصب-agent-روی-openwrt)
-- [۱۰. بررسی Agent](#۱۰-بررسی-agent)
-- [۱۱. فعال‌سازی Cron مانیتورینگ](#۱۱-فعالسازی-cron-مانیتورینگ)
-- [۱۲. تست Telegram](#۱۲-تست-telegram)
-- [آپدیت‌های بعدی](#آپدیتهای-بعدی)
+مسیر Backend کاملاً Path-independent است. محتویات فولدر `server/` را می‌توانی در هر مسیر Web-accessible آپلود کنی؛ مثلاً:
+
+```text
+public_html/pw
+public_html/tools/router
+public_html/network/pw-agent
+Document Root یک Subdomain
+```
+
+هیچ مسیر ثابتی مثل `/home/USER/public_html/pwagent` در پروژه اجباری یا Hardcode نشده است.
 
 ## پیش‌نیازها
 
@@ -25,302 +21,328 @@
 
 - PHP 8.1 یا جدیدتر
 - MySQL یا MariaDB
-- افزونه‌های PHP: `pdo_mysql`، `curl` و `openssl`
+- Extensionهای PHP: `pdo_mysql`، `curl` و `openssl`
 - HTTPS
-- دسترسی cPanel Terminal یا SSH
-- دسترسی Cron Jobs برای Monitoring
-- Git در محیط Shell
+- cPanel File Manager
+- cPanel MySQL Databases
+- cPanel Cron Jobs
 
-### روتر
+**Terminal، SSH و Git روی cPanel اختیاری هستند.**
+
+### Router
 
 - OpenWrt
 - نصب بودن Passwall2
-- دسترسی اینترنت
+- اینترنت
 - `wget` یا `curl`
 - `sha256sum`
 - `tar`
 
-برای روتر نیازی به IP Public نیست.
+Router نیازی به IP Public یا Static ندارد.
 
-## ۱. بررسی OpenWrt
+## ۱. ساخت Database از داخل cPanel
 
-با SSH وارد روتر شوید:
+وارد:
 
-```sh
-uname -m
-test -f /etc/config/passwall2 && echo "Passwall2: OK" || echo "Passwall2: NOT FOUND"
-command -v wget || command -v curl
-command -v sha256sum
-command -v tar
-```
+**cPanel → MySQL Databases**
 
-| خروجی `uname -m` | معماری PW Agent |
-|---|---|
-| `armv7l` | `armv7` |
-| `aarch64` | `arm64` |
-| `x86_64` | `amd64` |
-| `i386` / `i686` | `386` |
-| `mips` | `mips` |
-| `mipsel` | `mipsle` |
+شو و:
 
-## ۲. آماده‌سازی cPanel
+1. Database بساز.
+2. Database User با Password قوی بساز.
+3. User را به Database اضافه کن.
+4. **ALL PRIVILEGES** را فعال کن.
 
-یک Domain یا Subdomain اختصاصی بسازید:
+این اطلاعات را نگه دار:
 
 ```text
-pw.example.com
+MySQL Host
+MySQL Port
+Database Name
+Database Username
+Database Password
 ```
 
-Document Root نمونه:
+در اغلب cPanelها Host برابر `localhost` و Port برابر `3306` است.
 
-```text
-/home/CPANEL_USER/public_html/pwagent
-```
+## ۲. ساخت Telegram Bot
 
-SSL را فعال کنید.
-
-نسخه PHP و Extensionها را بررسی کنید:
-
-```bash
-php -v
-php -m | grep -Ei 'pdo_mysql|curl|openssl'
-```
-
-در بعضی سرورهای cPanel باید از PHP مشخص استفاده شود:
-
-```bash
-/opt/cpanel/ea-php83/root/usr/bin/php -v
-```
-
-اگر PHP پیش‌فرض CLI قدیمی است، در مراحل بعد همان Binary را جایگزین `php` کنید.
-
-## ۳. ساخت دیتابیس MySQL
-
-در cPanel → **MySQL Databases**:
-
-1. Database بسازید.
-2. Database User با Password قوی بسازید.
-3. User را به Database متصل کنید.
-4. **ALL PRIVILEGES** را فعال کنید.
-
-نمونه:
-
-```text
-Database: cpuser_pwagent
-User:     cpuser_pwagent
-Host:     localhost
-Port:     3306
-```
-
-## ۴. ساخت Telegram Bot
-
-در Telegram وارد `@BotFather` شوید:
+در Telegram وارد `@BotFather` شو و اجرا کن:
 
 ```text
 /newbot
 ```
 
-Bot را بسازید و Token را نگه دارید. قبل از Setup حداقل یک پیام مثل `/start` برای Bot ارسال کنید.
+Bot Token را نگه دار.
 
-برای به‌دست آوردن Telegram Numeric User ID، قبل از ثبت Webhook اجرا کنید:
-
-```bash
-BOT_TOKEN='YOUR_BOT_TOKEN'
-curl -s "https://api.telegram.org/bot${BOT_TOKEN}/getUpdates"
-```
-
-در خروجی به دنبال:
-
-```json
-"from": {
-  "id": 123456789
-}
-```
-
-باشید. همین عدد Admin ID است.
-
-## ۵. دریافت پروژه از GitHub
-
-```bash
-cd ~
-git clone https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot.git
-cd ~/Passwall-Agent-Telegram-Bot
-git status
-```
-
-## ۶. استقرار Backend
-
-```bash
-mkdir -p ~/public_html/pwagent
-cp -a ~/Passwall-Agent-Telegram-Bot/server/. ~/public_html/pwagent/
-```
-
-وجود `.` انتهای Source باعث می‌شود فایل‌های مخفی مثل `.htaccess` هم کپی شوند.
-
-اگر Document Root شما مسیر دیگری است، مقصد را تغییر دهید.
-
-## ۷. اجرای Setup
-
-```bash
-cd ~/public_html/pwagent
-php bin/setup.php
-```
-
-Setup موارد زیر را درخواست می‌کند:
-
-- Public HTTPS Base URL
-- MySQL Host و Port
-- Database Name
-- Database Username و Password
-- Telegram Bot Token
-- Telegram Numeric Admin ID
-- Router Device ID
-- معماری روتر
-
-نمونه:
-
-```text
-https://pw.example.com
-```
-
-اگر محتوای `server/` مستقیماً داخل Document Root قرار گرفته، `/server` یا `/api` را به URL اضافه نکنید.
-
-Setup به‌صورت خودکار Schema را می‌سازد/به‌روزرسانی می‌کند، Secretها را تولید می‌کند، `config.php` را می‌سازد، Telegram Webhook را ثبت می‌کند، Signed Update Bundle را دانلود می‌کند، Provisioning Token یک‌بارمصرف ۳۰ دقیقه‌ای می‌سازد و دستور نصب OpenWrt را چاپ می‌کند.
-
-`config.php` را Commit یا Public نکنید.
-
-## ۸. بررسی Backend
-
-```bash
-php bin/doctor.php
-```
-
-در مرورگر نیز باز کنید:
-
-```text
-https://pw.example.com/health.php
-```
-
-خروجی مورد انتظار:
-
-```json
-{
-  "ok": true,
-  "version": "0.5.0"
-}
-```
-
-## ۹. نصب Agent روی OpenWrt
-
-دستور دقیق تولیدشده توسط Setup را روی OpenWrt اجرا کنید. نمونه:
-
-```sh
-PW_SERVER_BASE='https://pw.example.com' \
-PW_PROVISION_TOKEN='ONE_TIME_TOKEN' \
-sh -c "$(wget -qO- 'https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh')"
-```
-
-Installer معماری CPU را تشخیص می‌دهد، Release مناسب را دانلود می‌کند، SHA256 را بررسی می‌کند، Token را مصرف می‌کند، Device ID/Secret را می‌گیرد، `/etc/pw-agent/config.json` را می‌سازد، Agent و LuCI Integration را نصب می‌کند و Service را Start می‌کند.
-
-Device Secret دائمی داخل دستور نصب قرار نمی‌گیرد.
-
-اگر Token منقضی یا مصرف شد:
-
-```bash
-php bin/new-provision-token.php
-```
-
-برای گرفتن Token جدید Setup را با `--force` اجرا نکنید.
-
-## ۱۰. بررسی Agent
-
-```sh
-/usr/bin/pw-agent --version
-pgrep -af pw-agent
-logread -e pw-agent
-/usr/bin/pw-agent diagnose-json
-```
-
-در حالت سالم باید:
-
-```json
-"ok": true
-```
-
-دیده شود.
-
-کانفیگ Agent:
-
-```text
-/etc/pw-agent/config.json
-```
-
-این فایل Secret دارد؛ آن را کامل در محیط عمومی منتشر نکنید.
-
-در LuCI نیز می‌توانید **Services → PW Agent** را باز کنید.
-
-## ۱۱. فعال‌سازی Cron مانیتورینگ
-
-مسیر PHP:
-
-```bash
-which php
-```
-
-Cron نمونه:
-
-```cron
-* * * * * /usr/bin/php /home/CPANEL_USER/public_html/pwagent/cron/monitor.php >/dev/null 2>&1
-```
-
-مسیرها را مطابق هاست خودتان تغییر دهید.
-
-## ۱۲. تست Telegram
-
-برای Bot ارسال کنید:
+سپس Bot جدیدت را باز کن و برایش بفرست:
 
 ```text
 /start
 ```
 
-ابتدا Status، Diagnostics، Monitoring، وضعیت Passwall2 و Node List را تست کنید. بعد از سالم بودن ارتباط Agent، عملیات تغییردهنده را امتحان کنید.
+برای پیدا کردن Telegram Numeric ID دیگر نیازی به curl یا Terminal نیست؛ خود Web Setup می‌تواند Updateهای اخیر Bot را بخواند و IDها را نشان دهد.
 
-## آپدیت‌های بعدی
+## ۳. آپلود Backend با cPanel File Manager
 
-```bash
-cd ~/Passwall-Agent-Telegram-Bot
-git pull --ff-only
+ZIP پروژه را از GitHub روی کامپیوترت دانلود و Extract کن.
+
+داخل پروژه وارد فولدر:
+
+```text
+server/
 ```
 
-Backend را بدون overwrite کردن Runtime Config و Releaseها Deploy کنید:
+شو و **محتویات داخل `server/`** را در هر مسیر دلخواه زیر Document Root دامنه آپلود کن.
 
-```bash
-rsync -a \
-  --exclude='config.php' \
-  --exclude='releases/*.tar.gz' \
-  --exclude='releases/*.sig' \
-  --exclude='releases/*.sha256' \
-  ~/Passwall-Agent-Telegram-Bot/server/ \
-  ~/public_html/pwagent/
+مثال:
+
+```text
+public_html/pw
+public_html/apps/openwrt
+public_html/network/control
 ```
 
-سپس:
+یا می‌توانی از Document Root یک Subdomain استفاده کنی.
+
+همان فولدر انتخابی، Base URL پروژه می‌شود.
+
+مثلاً:
+
+```text
+public_html/pw
+→ https://example.com/pw
+
+public_html/network/control
+→ https://example.com/network/control
+```
+
+حتماً فایل‌های مخفی مثل `.htaccess` هم آپلود شوند.
+
+## ۴. باز کردن Web Setup
+
+URL همان فولدر را در Browser باز کن:
+
+```text
+https://example.com/your/chosen/path/
+```
+
+اگر `config.php` وجود نداشته باشد، `index.php` به‌صورت خودکار به:
+
+```text
+setup.php
+```
+
+Redirect می‌کند.
+
+می‌توانی مستقیم هم باز کنی:
+
+```text
+https://example.com/your/chosen/path/setup.php
+```
+
+Setup مسیر URL را بر اساس محل واقعی فایل تشخیص می‌دهد و هیچ Username یا مسیر ثابتی برای cPanel فرض نمی‌کند.
+
+## ۵. تکمیل فرم Web Setup
+
+Wizard در Browser این موارد را بررسی می‌کند:
+
+- نسخه PHP
+- Extensionهای موردنیاز
+- Writable بودن فولدر
+- اتصال MySQL
+- معتبر بودن Telegram Bot
+
+موارد زیر را وارد می‌کنی:
+
+- Public HTTPS Base URL
+- MySQL Host / Port / Database / User / Password
+- Telegram Bot Token
+- Telegram Numeric Owner ID
+- Device ID اولیه
+- Display Name روتر
+- معماری Router
+- Timezone مربوط به Scheduler
+
+### پیدا کردن Telegram ID بدون Terminal
+
+بعد از وارد کردن Bot Token روی:
+
+**Detect my Telegram ID**
+
+بزن.
+
+Setup از سمت Server به Telegram وصل می‌شود و Userهایی که اخیراً به Bot پیام داده‌اند را نشان می‌دهد. روی ID خودت کلیک کن تا فیلد Owner پر شود.
+
+## ۶. Web Setup چه کارهایی انجام می‌دهد؟
+
+با زدن **Install PW Agent**:
+
+1. Schema دیتابیس ساخته/Upgrade می‌شود.
+2. Device Secret، Webhook Secret و Instance Key ساخته می‌شوند.
+3. `config.php` به‌شکل Atomic ایجاد می‌شود.
+4. Fleet Device Registry ساخته می‌شود.
+5. Owner اولیه در RBAC ثبت می‌شود.
+6. Telegram Webhook ثبت می‌شود.
+7. Provisioning Token یک‌بارمصرف ۳۰ دقیقه‌ای ساخته می‌شود.
+8. در صورت انتخاب، Signed Agent Release برای معماری Router دانلود و SHA256 آن Verify می‌شود.
+9. دستور دقیق نصب روی OpenWrt تولید می‌شود.
+10. دستور Cron بر اساس **مسیر واقعی همان فولدر روی هاست** تولید می‌شود.
+
+بعد از ساخته‌شدن `config.php`، Web Setup قفل می‌شود و از راه دور نمی‌توان تنظیمات نصب را Overwrite کرد.
+
+## ۷. ساخت Cron بدون Terminal
+
+صفحه موفقیت Setup یک Cron Command دقیق بر اساس مسیر واقعی فایل‌ها نمایش می‌دهد.
+
+در cPanel وارد:
+
+**cPanel → Cron Jobs**
+
+شو، **Once Per Minute** را انتخاب کن و همان Command تولیدشده را Paste کن.
+
+شکل کلی آن مثلاً این است:
+
+```cron
+* * * * * '/usr/local/bin/php' '/actual/path/chosen/by/you/cron/monitor.php' >/dev/null 2>&1
+```
+
+مسیر نمونه‌ای مثل `/home/USER/...` را از مستندات کپی نکن؛ Command تولیدشده توسط Setup خودت را استفاده کن.
+
+Cron این بخش‌ها را اجرا می‌کند:
+
+- Offline/Recovery Monitoring
+- Alert Ruleها
+- Scheduled Actionها
+
+## ۸. نصب Agent روی OpenWrt
+
+دستور Router که Web Setup تولید کرده را Copy کن و روی OpenWrt اجرا کن.
+
+شکل کلی:
+
+```sh
+PW_SERVER_BASE='https://example.com/your/chosen/path' \
+PW_PROVISION_TOKEN='ONE_TIME_TOKEN' \
+PW_AGENT_VERSION='v0.6.0' \
+sh -c "$(wget -qO- 'https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh')"
+```
+
+Token فقط یک بار قابل استفاده است و بعد از ۳۰ دقیقه Expire می‌شود. Command تولیدشده به نسخه Agent همان Backend Pin می‌شود؛ بنابراین اگر GitHub `latest` قدیمی‌تر باشد، نسخه اشتباه به‌صورت Silent نصب نخواهد شد.
+
+Installer:
+
+- معماری CPU را تشخیص می‌دهد.
+- Release رسمی مناسب را از GitHub می‌گیرد.
+- SHA256 را Verify می‌کند.
+- Provisioning Token را مصرف می‌کند.
+- Device ID و Device Secret را دریافت می‌کند.
+- `/etc/pw-agent/config.json` را می‌سازد.
+- Agent و LuCI را نصب می‌کند.
+- Service را Start می‌کند.
+
+Device Secret دائمی داخل دستور نصب قرار نمی‌گیرد.
+
+## ۹. اعتبارسنجی
+
+در Browser باز کن:
+
+```text
+https://example.com/your/chosen/path/health.php
+```
+
+انتظار:
+
+```json
+{
+  "ok": true,
+  "version": "0.6.0"
+}
+```
+
+روی OpenWrt:
+
+```sh
+/usr/bin/pw-agent --version
+/usr/bin/pw-agent diagnose-json
+pgrep -af pw-agent
+logread -e pw-agent
+```
+
+بعد در Telegram برای Bot بفرست:
+
+```text
+/start
+```
+
+## ۱۰. Release Cache بدون Terminal cPanel
+
+از مسیر:
+
+```text
+Telegram → Dashboard → Release Cache
+```
+
+Owner/Admin دارای Permission مربوط به Agent Update می‌تواند:
+
+- Cache معماری‌ها را ببیند.
+- یک معماری را Sync کند.
+- هر شش معماری را یکجا Sync کند.
+
+Dashboard فایل‌های Release رسمی GitHub را Download می‌کند و قبل از ذخیره در Backend Cache، SHA256 را Verify می‌کند.
+
+بنابراین دیگر برای این کار نیازی به:
+
+```text
+php bin/sync-release.php
+```
+
+در cPanel Terminal نیست.
+
+## ۱۱. اضافه کردن Routerهای بیشتر
+
+در Telegram:
+
+```text
+/start
+→ Fleet / Devices
+→ Add Device
+```
+
+یا:
+
+```text
+Dashboard → Devices → Add device
+```
+
+PW Agent یک Device Secret جدید و رمزنگاری‌شده و یک Provisioning Command یک‌بارمصرف می‌سازد.
+
+نیازی به ویرایش دستی `config.php` نیست.
+
+## ۱۲. آپدیت Backend بدون Terminal
+
+با cPanel File Manager:
+
+1. ZIP نسخه جدید Repository را دانلود کن.
+2. آن را در یک فولدر موقت Extract کن.
+3. محتویات `server/` نسخه جدید را روی فولدر فعلی Backend کپی کن.
+4. فولدر مقصد را قبل از Copy پاک نکن.
+5. `config.php` Runtime فعلی را نگه دار.
+6. یک بار `health.php` را باز کن تا Migrationهای Lazy اجرا شوند.
+7. از **Dashboard → Release Cache** Bundleهای Agent موردنیاز را Sync کن.
+
+Repository فایل Runtime `config.php` تو را ندارد، بنابراین Copy عادی Source آن را جایگزین نمی‌کند.
+
+برای جزئیات بیشتر: [آپدیت](UPDATES.md) و [Migration](MIGRATION.md).
+
+## روش CLI اختیاری
+
+اگر هاست SSH/Terminal داشت، Scriptهای قبلی همچنان قابل استفاده‌اند:
 
 ```bash
-cd ~/public_html/pwagent
+php bin/setup.php
 php bin/doctor.php
-```
-
-Sync یک معماری:
-
-```bash
-php bin/sync-release.php --arch=armv7
-```
-
-یا همه معماری‌ها:
-
-```bash
 php bin/sync-release.php --all
 ```
 
-جزئیات بیشتر: [به‌روزرسانی](UPDATES.md)
+ولی این‌ها اختیاری‌اند و نصب cPanel از طریق Web Setup هیچ وابستگی‌ای به Terminal ندارد.

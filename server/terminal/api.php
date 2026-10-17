@@ -6,14 +6,16 @@ if(!(cfg()['telegram']['terminal_enabled'] ?? true))response_json(['ok'=>false,'
 $in=json_decode_assoc(raw_body());$init=(string)($in['init_data']??'');
 $user=tg_validate_webapp_init_data($init);
 $uid=(int)($user['id']??0);if($uid<=0)response_json(['ok'=>false,'error'=>'Telegram user validation failed'],null,403);
-$allowed=array_map('intval',cfg()['telegram']['allowed_user_ids']??[]);if(!in_array($uid,$allowed,true))response_json(['ok'=>false,'error'=>'Unauthorized user'],null,403);
+ensure_v060_schema();if(!v060_user_allowed($uid)||!v060_has_permission($uid,'terminal.execute'))response_json(['ok'=>false,'error'=>'Terminal permission denied'],null,403);
 $username=trim((string)($in['username']??''));$password=(string)($in['password']??'');$command=(string)($in['command']??'');$cwd=(string)($in['cwd']??'/root');
 if(!preg_match('/^[A-Za-z0-9._-]{1,32}$/',$username))response_json(['ok'=>false,'error'=>'Invalid username']);
 if($password===''||strlen($password)>256)response_json(['ok'=>false,'error'=>'Password is required']);
 if(trim($command)===''||strlen($command)>4096)response_json(['ok'=>false,'error'=>'Command must be 1-4096 bytes']);
 if(!str_starts_with($cwd,'/')||strlen($cwd)>512)$cwd='/root';
-$device=(string)(cfg()['telegram']['default_device_id']??'');
-$secret=(string)(cfg()['devices'][$device]['secret']??'');if($secret==='')response_json(['ok'=>false,'error'=>'Device secret is not configured'],null,500);
+$requestedDevice=trim((string)($in['device_id']??''));
+$device=$requestedDevice!==''?$requestedDevice:v060_active_device($uid);
+if($device===''||!v060_can_device($uid,$device))response_json(['ok'=>false,'error'=>'Device access denied'],null,403);
+try{$secret=v060_device_secret($device);}catch(Throwable $e){response_json(['ok'=>false,'error'=>'Device secret is not configured'],null,500);}
 if(!function_exists('openssl_encrypt'))response_json(['ok'=>false,'error'=>'PHP OpenSSL extension is required for terminal credential protection'],null,500);
 $plain=json_encode(['username'=>$username,'password'=>$password,'command'=>$command,'cwd'=>$cwd],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 $key=hash('sha256',$secret,true);$nonce=random_bytes(12);$tag='';

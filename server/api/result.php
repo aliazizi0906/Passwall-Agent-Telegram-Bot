@@ -6,6 +6,11 @@ $raw=raw_body();$auth=authenticate_device($raw);$device=$auth['device_id'];$secr
 $id=(int)($body['command_id']??0);if($id<=0)response_json(['ok'=>false,'error'=>'invalid command_id'],$secret,400);
 $leaseToken=(string)($body['lease_token']??'');$idem=(string)($body['idempotency_key']??'');
 $success=!empty($body['success']);$result=$body['result']??null;$error=(string)($body['error']??'');
+$change=null;
+if(is_array($result)&&isset($result['_v6_change'])&&is_array($result['_v6_change'])){
+    $change=$result['_v6_change'];
+    unset($result['_v6_change']);
+}
 
 $pdo=db();$pdo->beginTransaction();
 try{
@@ -19,7 +24,7 @@ try{
 
     $storedResult=$result;
     if((string)$row['action']==='system.backup.create' && is_array($storedResult)) unset($storedResult['data_b64']);
-    $sensitiveActions=['system.backup.restore','wifi.set_password','passwall2.node.add_link','passwall2.node.add_manual','passwall2.subscription.add','terminal.exec'];
+    $sensitiveActions=['system.backup.restore','wifi.set_password','passwall2.node.add_link','passwall2.node.add_manual','passwall2.subscription.add','terminal.exec','config.rollback_snapshot'];
     $scrubParams=in_array((string)$row['action'],$sensitiveActions,true);
 
     $u=$pdo->prepare('UPDATE pw_commands SET status=?,finished_at=NOW(),result_json=?,error_text=?,params_json=?,lease_token=NULL,expires_at=NULL WHERE id=?');
@@ -31,6 +36,10 @@ try{
         $id,
     ]);
     $pdo->commit();
+    try{
+        v060_audit_command_result($id,$success,$result,$error);
+        if($success&&is_array($change))v060_store_config_change($id,$device,isset($row['user_id'])?(int)$row['user_id']:null,(string)$row['action'],$change);
+    }catch(Throwable $auditError){error_log('v0.6 audit/history persistence: '.$auditError->getMessage());}
 }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();response_json(['ok'=>false,'error'=>'result persistence failed'],$secret,500);}
 
 if(!empty($row['chat_id'])){

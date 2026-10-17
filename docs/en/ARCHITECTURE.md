@@ -126,3 +126,47 @@ extract -> install-update.sh -> restart Agent
 ```
 
 See [Security](SECURITY.md) for the trust model.
+
+
+## v0.6 Fleet layer
+
+v0.6 moves router identity and access control into MySQL-backed platform tables.
+
+```text
+Telegram / Mini App
+        |
+        v
+RBAC + Active Device Context
+        |
+        v
+Fleet Device Registry
+        |
+        +--> Device metadata / Groups / Tags
+        +--> encrypted Device Secrets
+        +--> Audit / Config History
+        +--> Metrics / Alerts / Maintenance / Schedules
+        |
+        v
+Command Queue
+        |
+        v
+Selected OpenWrt Agent
+```
+
+Existing v0.5 devices are seeded into the registry during migration. New routers are created through Zero-Touch Provisioning and do not require editing `config.php`.
+
+### Config-history trust boundary
+
+For supported UCI mutations the router captures the pre-change configuration, encrypts it with a key derived from its Device Secret, and returns only ciphertext plus a redacted key-level diff to the backend.
+
+The backend can store and return that snapshot for Rollback, but it cannot read the raw configuration snapshot by design.
+
+### Automation path
+
+The one-minute server cron drives:
+
+- offline/recovery monitoring;
+- threshold Alert Rules;
+- due Scheduled Actions.
+
+Maintenance Mode is checked before alerts or schedules are executed for a device.

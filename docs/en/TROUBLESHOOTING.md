@@ -2,124 +2,188 @@
 
 [Documentation Home](README.md) · [فارسی](../fa/TROUBLESHOOTING.md)
 
-## Backend doctor
+## Web Setup does not open
 
-Start with:
+Open the exact directory where the contents of `server/` were uploaded.
 
-```bash
-cd /path/to/deployed/backend
-php bin/doctor.php
-```
-
-This checks PHP, required extensions, HTTPS configuration, database connectivity/schema, default device configuration, Telegram API/webhook and signed update bundle availability.
-
-## Health endpoint
-
-Open:
+Examples:
 
 ```text
-https://YOUR-DOMAIN/health.php
+https://example.com/pw/
+https://example.com/tools/router/
+https://router.example.com/
 ```
 
-Expected:
+If `config.php` does not exist, `index.php` redirects to `setup.php`.
 
-```json
-{"ok":true,"version":"0.5.0",...}
-```
+The backend does not require a fixed cPanel path.
 
-A 500 response normally means the backend could not initialize the database/schema.
+If the page returns HTTP 500 before setup, check from cPanel that:
 
-## PHP CLI is too old
+- PHP is 8.1 or newer;
+- `pdo_mysql`, `curl` and `openssl` are enabled;
+- `.htaccess` was uploaded;
+- the selected PHP version applies to this directory.
 
-Check:
+## Web Setup says the directory is not writable
 
-```bash
-php -v
-```
+Use cPanel File Manager permissions/ownership for the directory containing `setup.php`.
 
-On cPanel, try an EA-PHP binary such as:
+PW Agent needs to create `config.php` and runtime files in protected subdirectories.
 
-```bash
-/opt/cpanel/ea-php83/root/usr/bin/php -v
-```
+Do not make the entire web directory world-writable.
 
-Use that full path for setup, doctor and cron if required.
+## Base URL is wrong
 
-## Missing PHP extension
+Web Setup detects a URL suggestion from the current request, but you must confirm the public HTTPS address.
 
-Check:
-
-```bash
-php -m | grep -Ei 'pdo_mysql|curl|openssl'
-```
-
-All three are required.
-
-## Telegram webhook problems
-
-Run doctor first.
-
-If the Bot token was rotated, update `config.php` and register the webhook again through setup/reconfiguration.
-
-The webhook URL must match:
+For a nested installation:
 
 ```text
-https://YOUR-DOMAIN/bot/webhook.php
+public_html/network/control
+```
+
+the Base URL should be:
+
+```text
+https://example.com/network/control
+```
+
+Do not append `/api`, `/server`, `/bot` or `/setup.php` unless `server/` itself was intentionally uploaded under that URL path.
+
+## Telegram ID detection returns no users
+
+Before clicking **Detect my Telegram ID**:
+
+1. open the newly-created Bot;
+2. send `/start`;
+3. return to Web Setup and retry.
+
+If an old webhook is already registered for the Bot, `getUpdates` may not contain new messages. For a fresh installation, use a fresh Bot or remove the old webhook first.
+
+## Setup is locked
+
+Once `config.php` exists, `setup.php` intentionally becomes read-only/locked so a remote visitor cannot overwrite your installation.
+
+Do not rerun setup to add routers.
+
+Use:
+
+```text
+Telegram → Fleet / Devices → Add Device
+```
+
+or:
+
+```text
+Dashboard → Devices → Add device
 ```
 
 ## Provisioning token expired
 
-Do not recreate the whole installation.
+Select the existing device in:
 
-Generate a new one:
-
-```bash
-php bin/new-provision-token.php
+```text
+Dashboard → Devices
 ```
 
-Tokens are single-use and expire after 30 minutes.
+and use:
 
-## Release download failed during setup
-
-Confirm that the requested architecture exists in the current GitHub Release.
-
-Then retry:
-
-```bash
-php bin/sync-release.php --arch=armv7
+```text
+Provision / Reinstall
 ```
 
-Use the architecture that matches the router.
+PW Agent revokes previous unused tokens and generates a new one-time 30-minute command.
 
-## Agent service problems
+No cPanel Terminal is required.
+
+## Release is missing from the backend
+
+Open:
+
+```text
+Dashboard → Release Cache
+```
+
+and sync the required architecture, or use **Sync all architectures**.
+
+If sync fails, verify that the matching `vX.Y.Z` GitHub Release actually contains:
+
+```text
+pw-agent-openwrt-ARCH.tar.gz
+pw-agent-openwrt-ARCH.tar.gz.sha256
+pw-agent-openwrt-ARCH.tar.gz.sig
+```
+
+## Health endpoint returns 500
+
+Open:
+
+```text
+https://YOUR-BACKEND-URL/health.php
+```
+
+A 500 normally means database/schema initialization failed.
+
+Check in Web Setup/cPanel:
+
+- MySQL hostname and port;
+- database name;
+- database username/password;
+- ALL PRIVILEGES for the database user;
+- CREATE and ALTER privileges during migration.
+
+## Cron/Alerts/Schedules do not run
+
+Use **cPanel → Cron Jobs**.
+
+For fresh installs, copy the exact command shown by Web Setup. It uses the actual filesystem path and detected PHP CLI path.
+
+The task must run once per minute.
+
+Maintenance Mode intentionally suppresses alerts and pauses due schedules for that device.
+
+## Dashboard says Unauthorized
+
+The Dashboard must be opened through the Telegram Mini App button so valid Telegram `initData` is present.
+
+Also verify:
+
+- the Telegram user is enabled in RBAC;
+- the role grants the requested permission;
+- Device Scope includes the active router.
+
+## Device is missing from Fleet
+
+Open `health.php` once so schema migration/seed logic runs.
+
+Then send `/start` again.
+
+Existing v0.5 devices configured in `config.php` are seeded into the v0.6 Fleet Registry automatically.
+
+## Router Agent is offline
 
 On OpenWrt:
 
 ```sh
 pgrep -af pw-agent
 logread -e pw-agent
+/usr/bin/pw-agent diagnose-json
 /etc/init.d/pw-agent restart
 ```
 
-## Agent connection diagnostics
-
-```sh
-/usr/bin/pw-agent diagnose-json
-```
-
 Check:
 
-- server URL
+- Server URL
 - Device ID
 - HMAC authentication
-- response signature
-- round-trip latency
+- signed response validation
+- HTTPS reachability
+- router/server clocks
 
-With LuCI installed, use **Services → PW Agent**.
+## Wrong router architecture
 
-## Wrong architecture
-
-Check:
+On OpenWrt:
 
 ```sh
 uname -m
@@ -140,27 +204,37 @@ The remote installer normally detects this automatically.
 
 ## Passwall2 not found
 
-Confirm:
+On OpenWrt:
 
 ```sh
 test -f /etc/config/passwall2 && echo OK || echo NOT_FOUND
 ```
 
-PW Agent requires Passwall2 for Passwall-specific features.
+Passwall-specific operations require Passwall2 to be installed.
 
-## Telegram responds but router data is stale
+## Rollback is unavailable
 
-Check Agent logs and `diagnose-json`. Then confirm the router can reach the backend over HTTPS and that the server clock/router clock are reasonable.
+Config History starts only after the router runs Agent v0.6. Older v0.5 changes do not have rollback snapshots.
 
-## Monitoring does not alert
+For a v0.6 change, confirm that the original command completed successfully and appears in Config History.
 
-Verify cron manually:
+Rollback snapshots are encrypted with the router-only key:
 
-```bash
-php cron/monitor.php
+```text
+/etc/pw-agent/history.key
 ```
 
-Then confirm the cPanel Cron Job uses the correct absolute PHP and backend paths.
+A snapshot copied to another router cannot be decrypted there.
+
+## Optional CLI diagnostics
+
+If the hosting account has Terminal, you may additionally run:
+
+```bash
+php bin/doctor.php
+```
+
+It is optional and not required for normal cPanel installation.
 
 ## Safe information to share in bug reports
 
@@ -169,9 +243,9 @@ Usually safe:
 - Agent version
 - OpenWrt version
 - architecture
-- sanitized error messages
+- sanitized errors
 - `diagnose-json` with secrets removed
-- relevant log lines with tokens/credentials removed
+- relevant logs with credentials removed
 
 Never share:
 
@@ -181,3 +255,4 @@ Never share:
 - private Ed25519 signing key
 - full `config.php`
 - full `/etc/pw-agent/config.json`
+- `/etc/pw-agent/history.key`

@@ -112,3 +112,9 @@ Public Key رسمی داخل Agent Embed شده و در `UPDATE_PUBLIC_KEY.b64` 
 - رمزنگاری پارامترهای حساس Queue در Database
 
 برای جزئیات [معماری](ARCHITECTURE.md) و [امنیت](SECURITY.md) را ببینید.
+
+## Fleet Management در v0.6
+
+نسخه v0.6 قابلیت‌های Multi-Device Fleet، Device Registry مبتنی بر Database، Group/Tag/Location، Zero-Touch Provisioning از Telegram و Dashboard، RBAC با Device Scope، Audit Log، Config History رمزنگاری‌شده همراه Rollback، Monitoring و Alert Rule پیشرفته، Maintenance Mode، Scheduled Actions و Mini App Dashboard را اضافه می‌کند.
+
+جزئیات: [مدیریت Fleet و Automation](FLEET.md)

@@ -694,7 +694,7 @@ func (a *Agent) agentUpdateCheckV4() (map[string]interface{}, error) {
 }
 
 func (a *Agent) agentUpdateApplyV4() (map[string]interface{}, error) {
-	raw, _, err := a.signedPOST(a.cfg.ServerURL+"/update_download.php", map[string]interface{}{"current_version": agentVersion, "arch": "armv7l"})
+	raw, _, err := a.signedPOST(a.cfg.ServerURL+"/update_download.php", map[string]interface{}{"current_version": agentVersion, "arch": agentArchV5()})
 	if err != nil {
 		return nil, err
 	}

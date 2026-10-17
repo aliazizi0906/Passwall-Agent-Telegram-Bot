@@ -47,8 +47,25 @@ CREATE TABLE IF NOT EXISTS pw_metrics (
   captured_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   uptime_seconds BIGINT NULL,
   load1 DOUBLE NULL,
+  cpu_percent DOUBLE NULL,
   memory_json LONGTEXT NULL,
+  memory_used_percent DOUBLE NULL,
   passwall_running TINYINT(1) NULL,
+  wan_up TINYINT(1) NULL,
+  wan_ip VARCHAR(64) NULL,
+  rx_bytes BIGINT UNSIGNED NULL,
+  tx_bytes BIGINT UNSIGNED NULL,
+  packet_loss DOUBLE NULL,
+  dns_ok TINYINT(1) NULL,
+  dns_ms DOUBLE NULL,
+  internet_ok TINYINT(1) NULL,
+  internet_tcp_ms DOUBLE NULL,
+  active_node_id VARCHAR(96) NULL,
+  active_node_name VARCHAR(192) NULL,
+  node_relay_ok TINYINT(1) NULL,
+  node_relay_ms DOUBLE NULL,
+  wan_ip_changed TINYINT(1) NOT NULL DEFAULT 0,
+  agent_reconnected TINYINT(1) NOT NULL DEFAULT 0,
   INDEX idx_metric_device_time (device_id,captured_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -77,4 +94,117 @@ CREATE TABLE IF NOT EXISTS pw_provision_tokens (
   used_at DATETIME NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_provision_expiry (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE IF NOT EXISTS pw_device_groups (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(96) NOT NULL UNIQUE,
+  description VARCHAR(255) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pw_device_registry (
+  device_id VARCHAR(64) PRIMARY KEY,
+  display_name VARCHAR(128) NOT NULL,
+  secret_sealed TEXT NOT NULL,
+  enabled TINYINT(1) NOT NULL DEFAULT 1,
+  group_id BIGINT UNSIGNED NULL,
+  location VARCHAR(128) NULL,
+  tags_json LONGTEXT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_registry_group (group_id),
+  INDEX idx_registry_enabled (enabled)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pw_users (
+  telegram_user_id BIGINT PRIMARY KEY,
+  role ENUM('owner','admin','operator','viewer') NOT NULL DEFAULT 'viewer',
+  enabled TINYINT(1) NOT NULL DEFAULT 1,
+  device_scope_json LONGTEXT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pw_user_state (
+  telegram_user_id BIGINT PRIMARY KEY,
+  active_device_id VARCHAR(64) NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pw_audit_log (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  command_id BIGINT UNSIGNED NULL,
+  device_id VARCHAR(64) NOT NULL,
+  telegram_user_id BIGINT NULL,
+  source VARCHAR(32) NOT NULL DEFAULT 'telegram',
+  action VARCHAR(96) NOT NULL,
+  status VARCHAR(24) NOT NULL,
+  params_redacted_json LONGTEXT NOT NULL,
+  result_summary_json LONGTEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  finished_at DATETIME NULL,
+  UNIQUE KEY ux_audit_command (command_id),
+  INDEX idx_audit_device_time (device_id,created_at),
+  INDEX idx_audit_user_time (telegram_user_id,created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pw_config_changes (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  command_id BIGINT UNSIGNED NOT NULL UNIQUE,
+  device_id VARCHAR(64) NOT NULL,
+  telegram_user_id BIGINT NULL,
+  action VARCHAR(96) NOT NULL,
+  packages_json LONGTEXT NOT NULL,
+  diff_json LONGTEXT NOT NULL,
+  before_sealed LONGTEXT NOT NULL,
+  before_hashes_json LONGTEXT NOT NULL,
+  after_hashes_json LONGTEXT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_change_device_time (device_id,created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pw_alert_rules (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  device_id VARCHAR(64) NOT NULL,
+  metric VARCHAR(48) NOT NULL,
+  operator VARCHAR(4) NOT NULL,
+  threshold DOUBLE NOT NULL,
+  duration_seconds INT UNSIGNED NOT NULL DEFAULT 0,
+  cooldown_seconds INT UNSIGNED NOT NULL DEFAULT 900,
+  notify_chat_id BIGINT NOT NULL,
+  enabled TINYINT(1) NOT NULL DEFAULT 1,
+  breach_since DATETIME NULL,
+  last_triggered_at DATETIME NULL,
+  created_by BIGINT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_alert_device_enabled (device_id,enabled)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pw_maintenance (
+  device_id VARCHAR(64) PRIMARY KEY,
+  until_at DATETIME NOT NULL,
+  reason VARCHAR(255) NULL,
+  created_by BIGINT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pw_schedules (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  device_id VARCHAR(64) NOT NULL,
+  name VARCHAR(128) NOT NULL,
+  action VARCHAR(96) NOT NULL,
+  params_json LONGTEXT NOT NULL,
+  schedule_type ENUM('one_time','interval','daily','weekly') NOT NULL,
+  schedule_spec_json LONGTEXT NOT NULL,
+  next_run_at DATETIME NOT NULL,
+  enabled TINYINT(1) NOT NULL DEFAULT 1,
+  created_by BIGINT NULL,
+  last_run_at DATETIME NULL,
+  last_command_id BIGINT UNSIGNED NULL,
+  last_error TEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_schedule_due (enabled,next_run_at),
+  INDEX idx_schedule_device (device_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

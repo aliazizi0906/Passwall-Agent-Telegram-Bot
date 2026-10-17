@@ -12,9 +12,13 @@ try{
     check_row('PHP >= 8.1',version_compare(PHP_VERSION,'8.1.0','>='),PHP_VERSION);
     foreach(['pdo_mysql','curl','openssl'] as $ext)check_row('PHP extension '.$ext,extension_loaded($ext));
     check_row('HTTPS base_url',str_starts_with((string)(cfg()['base_url']??''),'https://'),(string)(cfg()['base_url']??''));
-    try{db()->query('SELECT 1');ensure_v050_schema();check_row('Database',true);}catch(Throwable $e){check_row('Database',false,$e->getMessage());}
+    try{db()->query('SELECT 1');ensure_v060_schema();check_row('Database / v0.6 schema',true);}catch(Throwable $e){check_row('Database / v0.6 schema',false,$e->getMessage());}
     $device=(string)(cfg()['telegram']['default_device_id']??'');
-    check_row('Default device configured',$device!==''&&isset((cfg()['devices']??[])[$device]),$device);
+    check_row('Default device configured',$device!==''&&v060_device_enabled($device),$device);
+    $fleetCount=(int)db()->query('SELECT COUNT(*) FROM pw_device_registry WHERE enabled=1')->fetchColumn();
+    check_row('Fleet registry',$fleetCount>0,$fleetCount.' enabled device(s)');
+    $ownerCount=(int)db()->query("SELECT COUNT(*) FROM pw_users WHERE enabled=1 AND role='owner'")->fetchColumn();
+    check_row('RBAC owner',$ownerCount>0,$ownerCount.' owner(s)');
     try{
         $me=tg_call('getMe',[]);
         $username=(string)($me['result']['username']??'');

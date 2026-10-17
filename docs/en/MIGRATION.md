@@ -2,81 +2,135 @@
 
 [Documentation Home](README.md) · [فارسی](../fa/MIGRATION.md)
 
-## Upgrade to v0.5.x from an existing installation
+## Upgrade from v0.5.x to v0.6.x
 
-v0.5 changes the project from a device-specific deployment into a reusable public installation model and adds queue hardening, encrypted sensitive parameters, signed updates, monitoring and multi-architecture releases.
+v0.6 keeps the outbound Agent protocol from v0.5 and adds Fleet Management, RBAC, Audit, Config History/Rollback, advanced Monitoring, Maintenance and Scheduling.
 
-### 1. Preserve runtime configuration
+The migration can be completed from cPanel **without SSH or Terminal**.
 
-Do not overwrite your existing:
+## 1. Preserve runtime files
 
-```text
-server/config.php
-```
-
-Also preserve runtime release files if you already synchronized them.
-
-### 2. Update backend files
-
-Update the source checkout and deploy the new `server/` files while excluding `config.php` and release runtime assets.
-
-### 3. Apply schema changes
-
-The configured MySQL account should have `ALTER` and `CREATE` privileges for the first v0.5 request so `ensure_v050_schema()` can apply required changes.
-
-Alternatively, import:
+Keep the existing:
 
 ```text
-server/schema.sql
+config.php
+releases/
 ```
 
-manually.
+Do not replace `config.php` with `config.example.php`.
 
-v0.5 adds command lease/idempotency fields and tables for metrics, events, alert state and provisioning tokens.
+The physical installation directory does not matter. v0.6 continues to run from the directory in which the backend is already deployed.
 
-### 4. Synchronize the signed release
+## 2. Deploy v0.6 using File Manager
 
-Example for ARMv7:
+Download the current repository ZIP from GitHub, extract it into a temporary directory and copy the contents of its `server/` directory over the existing backend directory.
 
-```bash
-php bin/sync-release.php --arch=armv7
-```
+Do not delete the destination directory first.
 
-Supported values:
+Examples of valid existing installations:
 
 ```text
-armv7
-arm64
-amd64
-386
-mips
-mipsle
+public_html/pw
+public_html/tools/openwrt
+public_html/network/control
+a subdomain document root
 ```
 
-### 5. Upgrade/reinstall the router Agent
+No fixed `/home/USER/public_html/pwagent` path is required.
 
-Use the v0.5 release or generate a new provisioning token:
+## 3. Apply schema migration
 
-```bash
-php bin/new-provision-token.php
+Open:
+
+```text
+https://YOUR-BACKEND-URL/health.php
 ```
 
-Then execute the generated install command on OpenWrt.
+The first v0.6 request runs `ensure_v060_schema()`.
 
-The official Ed25519 update public key is embedded in the v0.5 Agent. Normal users do not need to generate signing keys.
+The configured MySQL user needs CREATE and ALTER privileges while the migration runs.
 
-### 6. Add monitoring cron
+v0.6 adds platform data such as:
 
-```cron
-* * * * * /usr/bin/php /absolute/path/to/cron/monitor.php >/dev/null 2>&1
+- Fleet Device Registry
+- Device Groups
+- RBAC Users and active-device state
+- Audit Log
+- encrypted Config History metadata
+- Alert Rules
+- Maintenance state
+- Scheduled Actions
+- additional Monitoring metrics
+
+Existing devices in `config.php` are seeded into the Fleet Registry.
+
+Existing configured Telegram users are seeded into RBAC. The first configured allowed user becomes Owner and additional configured users become Admin.
+
+## 4. Instance-key behavior
+
+Fresh v0.6 Web Setup installations generate `security.instance_key`.
+
+For an existing v0.5 installation that does not have that field, v0.6 uses a stable backward-compatible derivation so migration can happen without manually editing `config.php`.
+
+Once database-backed Device Secrets have been encrypted, do not arbitrarily change the effective instance key.
+
+## 5. Sync v0.6 Agent packages without Terminal
+
+After the backend migration, open:
+
+```text
+Telegram → Dashboard → Release Cache
 ```
 
-### 7. Validate
+Sync the architecture used by the router, or sync all architectures.
 
-Backend:
+The backend verifies SHA256 before storing each package.
 
-```bash
-php bin/doctor.php
+## 6. Upgrade the router Agent
+
+After the v0.6 package is available in the Release Cache, use the normal Agent update flow from Telegram/Dashboard.
+
+If a router must be reinstalled instead, select it in:
+
+```text
+Dashboard → Devices → Provision / Reinstall
+```
+
+A new single-use 30-minute provisioning command is generated without cPanel Terminal.
+
+## 7. Cron
+
+The existing one-minute Cron Job now drives:
+
+- Offline/Recovery monitoring
+- Alert Rules
+- Scheduled Actions
+
+If the old Cron path is wrong because the backend directory moved, open `setup.php` only on a clean install or use cPanel File Manager to determine the current directory and update **cPanel → Cron Jobs** accordingly.
+
+New Web Setup installations print the exact absolute Cron command automatically.
+
+## 8. Validate
+
+Browser:
+
+```text
+https://YOUR-BACKEND-URL/health.php
+```
+
+Telegram:
+
+```text
+/start
+```
+
+Dashboard checks:
+
+```text
+Devices
+Monitoring
+Audit & Rollback
+Release Cache
 ```
 
 Router:
@@ -87,20 +141,23 @@ Router:
 logread -e pw-agent
 ```
 
-Telegram:
+## Config History compatibility
+
+Config History begins only after the router runs Agent v0.6. Older v0.5 mutations do not have rollback snapshots.
+
+Rollback snapshots are encrypted by the Agent with the router-only key at:
 
 ```text
-/start
+/etc/pw-agent/history.key
 ```
 
-## Migrating a fork with independent update trust
+The backend stores ciphertext and does not receive this key during normal Config History operation.
 
-A fork that wants to publish independently signed Agent releases should:
+## Optional CLI migration
 
-1. generate a new Ed25519 key pair;
-2. replace `UPDATE_PUBLIC_KEY.b64`;
-3. update the embedded official public key in the Agent source;
-4. store the matching private key only in its GitHub Actions secret;
-5. rebuild and publish its own releases.
+If SSH/Terminal exists, the CLI workflow remains available, but it is optional:
 
-Never commit the private signing key.
+```bash
+php bin/doctor.php
+php bin/sync-release.php --all
+```

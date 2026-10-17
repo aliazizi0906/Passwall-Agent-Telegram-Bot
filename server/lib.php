@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/hardening_v050.php';
+require_once __DIR__ . '/platform_v060.php';
 
 function cfg(): array {
     static $cfg;
@@ -12,7 +13,7 @@ function cfg(): array {
     return $cfg;
 }
 
-function app_version(): string { return '0.5.0'; }
+function app_version(): string { return '0.6.0'; }
 
 function tg_validate_webapp_init_data(string $initData, int $maxAgeSeconds = 600): array {
     if ($initData === '' || strlen($initData) > 16384) throw new RuntimeException('Missing or invalid Telegram Mini App authentication data');
@@ -126,20 +127,24 @@ function authenticate_device(string $raw): array {
     $device = header_value('X-PW-Device');
     $ts = header_value('X-PW-Timestamp');
     $sig = strtolower(header_value('X-PW-Signature'));
-    $devices = cfg()['devices'] ?? [];
-    if ($device === '' || $ts === '' || $sig === '' || !isset($devices[$device])) response_json(['ok'=>false,'error'=>'unauthorized'], null, 401);
-    $dcfg = $devices[$device];
-    if (empty($dcfg['enabled']) || empty($dcfg['secret'])) response_json(['ok'=>false,'error'=>'device disabled'], null, 403);
+    if ($device === '' || $ts === '' || $sig === '') response_json(['ok'=>false,'error'=>'unauthorized'], null, 401);
+    try {
+        ensure_v060_schema();
+        if (!v060_device_enabled($device)) response_json(['ok'=>false,'error'=>'device disabled'], null, 403);
+        $secret = v060_device_secret($device);
+    } catch (Throwable $e) {
+        response_json(['ok'=>false,'error'=>'unauthorized'], null, 401);
+    }
     if (!ctype_digit($ts) || abs(time()-(int)$ts)>120) response_json(['ok'=>false,'error'=>'stale timestamp'], null, 401);
-    $secret = (string)$dcfg['secret'];
     $expected = hash_hmac('sha256', $device."\n".$ts."\n".$raw, $secret);
     if (!hash_equals($expected,$sig)) response_json(['ok'=>false,'error'=>'bad signature'], null, 401);
     return ['device_id'=>$device,'secret'=>$secret];
 }
 
 function queue_command(string $deviceId, string $action, array $params, ?int $chatId, ?int $userId, ?int $messageId = null, ?string $view = null): int {
-    if (!isset((cfg()['devices'] ?? [])[$deviceId])) throw new RuntimeException('Unknown device');
-    ensure_v050_schema();
+    ensure_v060_schema();
+    if (!v060_device_enabled($deviceId)) throw new RuntimeException('Unknown or disabled device');
+    v060_authorize_command($userId,$deviceId,$action);
     if ($messageId !== null && $messageId > 0) $params['__message_id'] = $messageId;
     if ($view !== null && $view !== '') $params['__view'] = $view;
     $paramsJson = ($params === []) ? '{}' : json_encode($params, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
@@ -148,7 +153,9 @@ function queue_command(string $deviceId, string $action, array $params, ?int $ch
     $idempotencyKey = bin2hex(random_bytes(16));
     $st = db()->prepare('INSERT INTO pw_commands (device_id,action,params_json,chat_id,user_id,idempotency_key,max_attempts) VALUES (?,?,?,?,?,?,3)');
     $st->execute([$deviceId,$action,$storedParams,$chatId,$userId,$idempotencyKey]);
-    return (int)db()->lastInsertId();
+    $id=(int)db()->lastInsertId();
+    v060_audit_command_queued($id,$deviceId,$userId,$action,$params,$userId?'telegram':'system');
+    return $id;
 }
 
 function tg_call(string $method, array $payload): array {
@@ -225,7 +232,9 @@ function nav_row(string $back='home'): array { return [[['text'=>'⬅️ Back','
 function append_nav(array $kb,string $back='home'): array { return array_merge($kb,nav_row($back)); }
 
 function main_keyboard(): array {
+    $base=rtrim((string)(cfg()['base_url']??''),'/');
     $kb=[
+        [['text'=>'🛰 Fleet','callback_data'=>'fleet'],['text'=>'🌐 Dashboard','web_app'=>['url'=>$base.'/dashboard/']]],
         [['text'=>'📊 Status','callback_data'=>'status'],['text'=>'🧱 Passwall2','callback_data'=>'pw']],
         [['text'=>'🌐 Nodes','callback_data'=>'nodes'],['text'=>'🧭 Shunt','callback_data'=>'shunt']],
         [['text'=>'🔌 Network','callback_data'=>'network'],['text'=>'📶 Wi-Fi','callback_data'=>'wifimenu']],
@@ -233,7 +242,6 @@ function main_keyboard(): array {
         [['text'=>'🧪 Diagnostics','callback_data'=>'diag'],['text'=>'💾 Backup','callback_data'=>'backup']],
         [['text'=>'📈 Monitoring','callback_data'=>'monitoring']],
     ];
-    $base=rtrim((string)(cfg()['base_url']??''),'/');
     if((cfg()['telegram']['terminal_enabled'] ?? true) && str_starts_with($base,'https://')) {
         $kb[]=[['text'=>'⌨️ SSH Console','web_app'=>['url'=>$base.'/terminal/']]];
     }
