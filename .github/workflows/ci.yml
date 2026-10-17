@@ -46,6 +46,7 @@ jobs:
         run: |
           sh -n openwrt/install.sh
           sh -n openwrt/install-update.sh
+          sh -n openwrt/install-remote.sh
 
       - name: JSON validation
         run: find openwrt -name '*.json' -print0 | xargs -0 -n1 jq -e . >/dev/null
