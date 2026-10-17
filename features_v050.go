@@ -182,3 +182,44 @@ func scoreNodeV5(conf *UCIConfig, id string) nodeHealthV5 {
 	if !h.OK { h.Detail = "relay probes failed" }
 	return h
 }
+
+
+func relayRankAllV5(conf *UCIConfig, excluded map[string]bool) []relayRank {
+	ids := []string{}
+	for id, typ := range conf.SectionType {
+		if typ == "nodes" && isNormalProxyNodeV4(conf, id) && !excluded[id] {
+			ids = append(ids, id)
+		}
+	}
+	sort.Strings(ids)
+	type scored struct {
+		r relayRank
+		score float64
+	}
+	sem := make(chan struct{}, 3)
+	out := make(chan scored, len(ids))
+	var wg sync.WaitGroup
+	for _, id := range ids {
+		id := id
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func(){ <-sem }()
+			h := scoreNodeV5(conf, id)
+			if !h.OK { return }
+			out <- scored{r: relayRank{ID:id, Name:displayNodeName(id, conf.Options[id]), MS:h.RelayMS}, score:h.Score}
+		}()
+	}
+	wg.Wait()
+	close(out)
+	rows := []scored{}
+	for x := range out { rows = append(rows,x) }
+	sort.Slice(rows, func(i,j int) bool {
+		if rows[i].score == rows[j].score { return rows[i].r.Name < rows[j].r.Name }
+		return rows[i].score < rows[j].score
+	})
+	result := make([]relayRank,0,len(rows))
+	for _, x := range rows { result=append(result,x.r) }
+	return result
+}
