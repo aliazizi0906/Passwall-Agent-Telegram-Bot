@@ -523,7 +523,6 @@ function v060_fleet_keyboard(int $uid,string $active=''): array {
 }
 function v060_home_keyboard(int $uid,string $deviceId): array {
     $kb=main_keyboard();
-    array_unshift($kb,[['text'=>'🛰 Fleet / Devices','callback_data'=>'fleet'],['text'=>'🌐 Dashboard','web_app'=>['url'=>rtrim((string)cfg()['base_url'],'/').'/dashboard/']]]);
     $kb[]=[['text'=>'🧾 History','callback_data'=>'history'],['text'=>'🛠 Maintenance','callback_data'=>'maint']];
     $kb[]=[['text'=>'⏱ Schedules','callback_data'=>'schedules'],['text'=>'🚨 Alerts','callback_data'=>'alerts']];
     if(v060_has_permission($uid,'rbac.read'))$kb[]=[['text'=>'👥 Access / RBAC','callback_data'=>'access']];
