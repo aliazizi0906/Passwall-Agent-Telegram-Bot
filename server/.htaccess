@@ -1,4 +1,8 @@
 Options -Indexes
-<FilesMatch "^(config|config\.example|lib)\.php$|\.sql$">
+<FilesMatch "^(config|config\.example|lib|hardening_v050|platform_v060|setup_core|release_tools)\.php$|\.sql$|\.lock$">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "^\.">
     Require all denied
 </FilesMatch>
