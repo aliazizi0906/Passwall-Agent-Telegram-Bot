@@ -8,6 +8,7 @@
 |---|---|
 | [Install](INSTALL.md) | Full cPanel + OpenWrt installation |
 | [Features](FEATURES.md) | Complete feature overview |
+| [Fleet & Automation](FLEET.md) | v0.6 multi-device, RBAC, audit, monitoring and schedules |
 | [Architecture](ARCHITECTURE.md) | Components and request flow |
 | [Security](SECURITY.md) | Authentication, encryption and update trust |
 | [Updates](UPDATES.md) | User updates and maintainer releases |
