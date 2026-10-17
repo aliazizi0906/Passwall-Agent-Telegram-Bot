@@ -81,15 +81,19 @@ You do **not** need curl or Terminal to discover your Telegram numeric ID. The W
 
 ## 3. Upload the backend using cPanel File Manager
 
-Download the repository ZIP from GitHub on your computer and extract it.
-
-Inside the repository, open:
+The easiest method is to download this Release asset:
 
 ```text
-server/
+pw-agent-cpanel-v0.6.0.zip
 ```
 
-Upload the **contents of `server/`** to any directory you want under your domain document root.
+from the project's **v0.6.0 GitHub Release**.
+
+Create any directory you want under the domain document root, upload this ZIP there, and use **cPanel File Manager → Extract**. The ZIP contains the backend files at its root, including `setup.php` and the required `.htaccess` files.
+
+Alternatively, download the full repository ZIP, extract it locally, open `server/`, and upload the **contents of `server/`**.
+
+Upload/extract the backend into any directory you want under your domain document root.
 
 Examples:
 
