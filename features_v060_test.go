@@ -76,8 +76,7 @@ func TestDiffOptionHashesV6DoesNotExposeValues(t *testing.T) {
 	diff := diffOptionHashesV6(before, after)
 	joined := ""
 	for _, x := range diff {
-		joined += x + "
-"
+		joined += x + "\n"
 	}
 	for _, want := range []string{"changed: wireless.radio0.channel", "changed: wireless.default_radio0.key", "added: wireless.default_radio0.ssid"} {
 		if !containsV6(joined, want) {
