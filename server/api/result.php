@@ -4,6 +4,7 @@ require dirname(__DIR__) . '/lib.php';
 
 $raw=raw_body();$auth=authenticate_device($raw);$device=$auth['device_id'];$secret=$auth['secret'];$body=json_decode_assoc($raw);
 $id=(int)($body['command_id']??0);if($id<=0)response_json(['ok'=>false,'error'=>'invalid command_id'],$secret,400);
+$leaseToken=(string)($body['lease_token']??'');$idem=(string)($body['idempotency_key']??'');
 $success=!empty($body['success']);$result=$body['result']??null;$error=(string)($body['error']??'');
 
 $pdo=db();$pdo->beginTransaction();
@@ -11,14 +12,17 @@ try{
     $q=$pdo->prepare('SELECT * FROM pw_commands WHERE id=? AND device_id=? FOR UPDATE');$q->execute([$id,$device]);$row=$q->fetch();
     if(!$row){$pdo->rollBack();response_json(['ok'=>false,'error'=>'command not found'],$secret,404);}
     if(in_array($row['status'],['done','failed'],true)){$pdo->commit();response_json(['ok'=>true,'duplicate'=>true],$secret);}
-    $params=json_decode((string)$row['params_json'],true);if(!is_array($params))$params=[];
+    if((string)$row['status']!=='leased'||$leaseToken===''||!hash_equals((string)($row['lease_token']??''),$leaseToken)){$pdo->rollBack();response_json(['ok'=>false,'error'=>'stale or invalid lease'],$secret,409);}
+    if($idem!==''&&!hash_equals((string)($row['idempotency_key']??''),$idem)){$pdo->rollBack();response_json(['ok'=>false,'error'=>'idempotency key mismatch'],$secret,409);}
+    $plainParams=v050_open_params($device,(string)$row['action'],(string)$row['params_json']);
+    $params=json_decode($plainParams,true);if(!is_array($params))$params=[];
 
     $storedResult=$result;
     if((string)$row['action']==='system.backup.create' && is_array($storedResult)) unset($storedResult['data_b64']);
     $sensitiveActions=['system.backup.restore','wifi.set_password','passwall2.node.add_link','passwall2.node.add_manual','passwall2.subscription.add','terminal.exec'];
     $scrubParams=in_array((string)$row['action'],$sensitiveActions,true);
 
-    $u=$pdo->prepare('UPDATE pw_commands SET status=?,finished_at=NOW(),result_json=?,error_text=?,params_json=? WHERE id=?');
+    $u=$pdo->prepare('UPDATE pw_commands SET status=?,finished_at=NOW(),result_json=?,error_text=?,params_json=?,lease_token=NULL,expires_at=NULL WHERE id=?');
     $u->execute([
         $success?'done':'failed',
         json_encode($storedResult,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),
