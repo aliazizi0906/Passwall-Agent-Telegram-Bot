@@ -89,3 +89,35 @@ Agent به Dropbear محلی روتر متصل می‌شود. این قابلی�
 - در صورت افشای Bot Token آن را Rotate کنید.
 - Device Secret را در Issue یا Chat عمومی ارسال نکنید.
 - Mutationها را ابتدا روی محیط کنترل‌شده تست کنید.
+
+
+## Fleet Secret و RBAC در v0.6
+
+Deviceهای جدید در Fleet Registry مبتنی بر Database ذخیره می‌شوند. Device Secret آن‌ها در حالت At-Rest با AES-256-GCM و Instance Key تولیدشده هنگام Setup رمزنگاری می‌شود.
+
+برای Upgrade از v0.5 که هنوز `security.instance_key` ندارد، v0.6 یک Migration Key پایدار از Configuration موجود مشتق می‌کند. بعد از ایجاد Device Secretهای Database-backed، Effective Instance Key را بدون Migration اختصاصی تغییر ندهید.
+
+Roleهای RBAC:
+
+- Owner
+- Admin
+- Operator
+- Viewer
+
+Permission قبل از ورود Command به Queue بررسی می‌شود. برای Operator و Viewer می‌توان Device Scope محدود تعریف کرد.
+
+آخرین Owner فعال از داخل Dashboard قابل Disable یا Demote نیست.
+
+## محرمانگی Config History
+
+Rollback Snapshot توسط Agent و با AES-GCM و Key مشتق‌شده از Device Secret رمزنگاری می‌شود.
+
+Backend فقط Snapshot رمزنگاری‌شده را نگه می‌دارد. Diffهای Audit/Config History فقط نام UCI Option و نوع تغییر را نمایش می‌دهند، نه Value آن را.
+
+Rollback Payload در Queue نیز Sensitive محسوب می‌شود و بعد از اتمام Command پاک می‌شود.
+
+## احراز هویت Dashboard
+
+Fleet Dashboard یک Telegram Mini App است. هر API Request، Telegram `initData`، Signature و Auth Age را Verify می‌کند و بعد RBAC و Device Scope را اعمال می‌کند.
+
+باز کردن URL Dashboard در Browser عادی به‌تنهایی دسترسی API ایجاد نمی‌کند.
