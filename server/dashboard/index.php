@@ -120,10 +120,25 @@ async function loadTab(name){
   draw(m);return;
  }
  if(name==='operations'){
-  document.querySelector('#operations').innerHTML=`<div class="card"><b>Router Operations</b><p class="muted">All actions use the same RBAC, queue idempotency and audit pipeline as Telegram.</p><div class="row"><button data-op="system.status">System status</button><button data-op="passwall2.status">Passwall2 status</button><button data-op="passwall2.nodes.list">Nodes</button><button data-op="passwall2.nodes.relay_ranking">Relay ranking</button><button data-op="passwall2.failover.list">Failover</button><button data-op="passwall2.restart">Restart Passwall</button><button data-op="system.backup.create">Send backup to Telegram</button><button data-op="agent.update.check">Check update</button><button data-op="agent.update.apply">Install update</button><button id="terminalBtn">SSH Console</button></div><pre id="opOut">Select an operation.</pre></div><div class="card"><div class="row"><b>Recent commands</b><span class="grow"></span><button id="refreshCmds">Refresh</button></div><div id="cmdList"></div></div>`;
-  async function commands(){const j=await api('commands',{device_id:state.active});document.querySelector('#cmdList').innerHTML='<table><tr><th>ID</th><th>Action</th><th>Status</th><th>Created</th></tr>'+j.commands.map(c=>`<tr><td>${c.id}</td><td>${esc(c.action)}</td><td>${esc(c.status)}</td><td>${esc(c.created_at)}</td></tr>`).join('')+'</table>'}
-  async function run(action){let params={};if(action==='passwall2.failover.run'){const shunt=prompt('Shunt ID');if(!shunt)return;params={shunt_id:shunt}}const j=await api('command',{device_id:state.active,command_action:action,params});const out=document.querySelector('#opOut');out.textContent='Queued command #'+j.command_id+'…';for(let i=0;i<45;i++){await new Promise(r=>setTimeout(r,500));const q=await api('command_status',{device_id:state.active,command_id:j.command_id});if(['done','failed'].includes(q.command.status)){out.textContent=JSON.stringify(q.command,null,2);await commands();return}}out.textContent='Command is still running. Check Recent commands.'}
-  document.querySelectorAll('#operations [data-op]').forEach(b=>b.onclick=()=>run(b.dataset.op).catch(err));document.querySelector('#terminalBtn').onclick=()=>location.href='../terminal/';document.querySelector('#refreshCmds').onclick=()=>commands().catch(err);await commands();return;
+  const ops=[
+    ['system.status','System status','system.read'],
+    ['agent.diagnose','Agent diagnostics','system.read'],
+    ['passwall2.status','Passwall2 status','passwall.read'],
+    ['passwall2.nodes.list','Nodes','passwall.read'],
+    ['passwall2.nodes.relay_ranking','Relay ranking','passwall.read'],
+    ['passwall2.failover.list','Failover','passwall.read'],
+    ['passwall2.restart','Restart Passwall','passwall.modify'],
+    ['system.backup.create','Send backup to Telegram','backup.create'],
+    ['agent.update.check','Check update','system.read'],
+    ['agent.update.apply','Install update','agent.update']
+  ].filter(x=>has(x[2]));
+  document.querySelector('#operations').innerHTML=\`<div class="card"><b>Router Operations</b><p class="muted">All actions use the same RBAC, queue idempotency and audit pipeline as Telegram.</p><div class="row">\${ops.map(x=>\`<button data-op="\${x[0]}">\${x[1]}</button>\`).join('')}\${has('terminal.execute')?'<button id="terminalBtn">SSH Console</button>':''}</div><pre id="opOut">Select an operation.</pre></div><div class="card"><div class="row"><b>Recent commands</b><span class="grow"></span><button id="refreshCmds">Refresh</button></div><div id="cmdList"></div></div>\`;
+  async function commands(){const j=await api('commands',{device_id:state.active});document.querySelector('#cmdList').innerHTML='<table><tr><th>ID</th><th>Action</th><th>Status</th><th>Created</th></tr>'+j.commands.map(c=>\`<tr><td>\${c.id}</td><td>\${esc(c.action)}</td><td>\${esc(c.status)}</td><td>\${esc(c.created_at)}</td></tr>\`).join('')+'</table>'}
+  async function run(action){let params={};if(action==='passwall2.failover.run'){const shunt=prompt('Shunt ID');if(!shunt)return;params={shunt_id:shunt}}const mutation=['passwall2.restart','agent.update.apply'].includes(action);if(mutation&&!confirm('Run '+action+' on '+state.active+'?'))return;const j=await api('command',{device_id:state.active,command_action:action,params});const out=document.querySelector('#opOut');out.textContent='Queued command #'+j.command_id+'…';for(let i=0;i<45;i++){await new Promise(r=>setTimeout(r,500));const q=await api('command_status',{device_id:state.active,command_id:j.command_id});if(['done','failed'].includes(q.command.status)){out.textContent=JSON.stringify(q.command,null,2);await commands();return}}out.textContent='Command is still running. Check Recent commands.'}
+  document.querySelectorAll('#operations [data-op]').forEach(b=>b.onclick=()=>run(b.dataset.op).catch(err));
+  const term=document.querySelector('#terminalBtn');if(term)term.onclick=()=>location.href='../terminal/';
+  document.querySelector('#refreshCmds').onclick=()=>commands().catch(err);
+  await commands();return;
  }
  if(name==='audit'){
   const j=await api('audit',{device_id:state.active});
