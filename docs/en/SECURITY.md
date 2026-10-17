@@ -108,9 +108,9 @@ The last enabled Owner cannot be demoted or disabled through the Dashboard.
 
 ## Config History confidentiality
 
-Rollback snapshots are encrypted by the Agent with AES-GCM using a key derived from the router Device Secret.
+Rollback snapshots are encrypted by the Agent with AES-GCM using a random 32-byte router-only history key stored at `/etc/pw-agent/history.key` with restrictive permissions.
 
-The backend stores only the encrypted snapshot. Audit/config diffs expose UCI option names and change type, not their values.
+The backend stores only the encrypted snapshot and does not receive this key during normal config-history operation. Audit/config diffs expose UCI option names and change type, not their values. A privileged full-router backup can contain local PW Agent files, so such backups must be treated as sensitive.
 
 Rollback payloads are additionally treated as sensitive queue parameters and are scrubbed after command completion.
 
