@@ -539,8 +539,8 @@ function v060_monitoring_overview(int $uid,string $deviceId): array {
 }
 
 function v060_fleet_summary(int $uid): array {
-    $rows=v060_accessible_devices($uid);$now=time();$online=0;$offline=0;
-    foreach($rows as &$r){$last=!empty($r['last_seen'])?strtotime((string)$r['last_seen']):0;$r['online']=$last&&$now-$last<=180;if($r['online'])$online++;else$offline++;$r['maintenance']=v060_is_maintenance((string)$r['device_id']);}
+    $rows=v060_accessible_devices($uid);$now=time();$online=0;$offline=0;$threshold=max(120,(int)(cfg()['monitoring']['offline_after_seconds']??300));
+    foreach($rows as &$r){$last=!empty($r['last_seen'])?strtotime((string)$r['last_seen']):0;$r['online']=$last&&$now-$last<=$threshold;if($r['online'])$online++;else$offline++;$r['maintenance']=v060_is_maintenance((string)$r['device_id']);}
     return ['total'=>count($rows),'online'=>$online,'offline'=>$offline,'devices'=>$rows];
 }
 function v060_device_token(string $deviceId): string { return substr(hash('sha256',$deviceId),0,16); }
@@ -569,6 +569,6 @@ function v060_home_keyboard(int $uid,string $deviceId): array {
 }
 function v060_home_text(int $uid,string $deviceId): string {
     $label=$deviceId!==''?v060_device_label($deviceId):'No device';$role=(string)(v060_user($uid)['role']??'viewer');
-    $row=$deviceId!==''?v060_device_row($deviceId):null;$online=$row&&!empty($row['last_seen'])&&time()-strtotime((string)$row['last_seen'])<=180;
+    $row=$deviceId!==''?v060_device_row($deviceId):null;$threshold=max(120,(int)(cfg()['monitoring']['offline_after_seconds']??300));$online=$row&&!empty($row['last_seen'])&&time()-strtotime((string)$row['last_seen'])<=$threshold;
     return "🏠 <b>PW Agent v0.6</b>\nActive: <b>".h($label)."</b> ".($online?'🟢':'🔴')."\nRole: <code>".h($role)."</code>";
 }
