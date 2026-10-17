@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/hardening_v050.php';
 
 function cfg(): array {
     static $cfg;
@@ -11,7 +12,7 @@ function cfg(): array {
     return $cfg;
 }
 
-function app_version(): string { return '0.4.0'; }
+function app_version(): string { return '0.5.0'; }
 
 function tg_validate_webapp_init_data(string $initData, int $maxAgeSeconds = 600): array {
     if ($initData === '' || strlen($initData) > 16384) throw new RuntimeException('Missing or invalid Telegram Mini App authentication data');
@@ -138,12 +139,15 @@ function authenticate_device(string $raw): array {
 
 function queue_command(string $deviceId, string $action, array $params, ?int $chatId, ?int $userId, ?int $messageId = null, ?string $view = null): int {
     if (!isset((cfg()['devices'] ?? [])[$deviceId])) throw new RuntimeException('Unknown device');
+    ensure_v050_schema();
     if ($messageId !== null && $messageId > 0) $params['__message_id'] = $messageId;
     if ($view !== null && $view !== '') $params['__view'] = $view;
     $paramsJson = ($params === []) ? '{}' : json_encode($params, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
     if ($paramsJson === false) throw new RuntimeException('Could not encode command parameters');
-    $st = db()->prepare('INSERT INTO pw_commands (device_id,action,params_json,chat_id,user_id) VALUES (?,?,?,?,?)');
-    $st->execute([$deviceId,$action,$paramsJson,$chatId,$userId]);
+    $storedParams = v050_seal_params($deviceId,$action,$paramsJson);
+    $idempotencyKey = bin2hex(random_bytes(16));
+    $st = db()->prepare('INSERT INTO pw_commands (device_id,action,params_json,chat_id,user_id,idempotency_key,max_attempts) VALUES (?,?,?,?,?,?,3)');
+    $st->execute([$deviceId,$action,$storedParams,$chatId,$userId,$idempotencyKey]);
     return (int)db()->lastInsertId();
 }
 
