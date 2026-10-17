@@ -365,6 +365,14 @@ function v060_set_maintenance(int $uid,string $deviceId,int $minutes,string $rea
     v060_audit_event($deviceId,$uid,'telegram','maintenance.set','done',['minutes'=>$minutes,'reason'=>$reason]);
 }
 
+
+function v060_notification_chats(string $deviceId): array {
+    ensure_v060_schema();$rows=db()->query("SELECT telegram_user_id,role,device_scope_json FROM pw_users WHERE enabled=1 AND role IN ('owner','admin')")->fetchAll();$out=[];
+    foreach($rows as $u){$uid=(int)$u['telegram_user_id'];if($uid>0&&v060_can_device($uid,$deviceId))$out[]=$uid;}
+    if(!$out){$fallback=(int)(cfg()['telegram']['alert_chat_id']??0);if($fallback>0)$out[]=$fallback;}
+    return array_values(array_unique($out));
+}
+
 function v060_record_metric(string $deviceId,array $body): void {
     ensure_v060_schema();$pdo=db();
     $q=$pdo->prepare("SELECT id FROM pw_metrics WHERE device_id=? AND captured_at > (NOW()-INTERVAL 50 SECOND) LIMIT 1");$q->execute([$deviceId]);if($q->fetch())return;
