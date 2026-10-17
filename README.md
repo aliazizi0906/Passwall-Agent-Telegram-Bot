@@ -1,8 +1,26 @@
-# Gale OpenWrt Telegram Remote v0.4.0
+# Gale OpenWrt Telegram Remote v0.5.0
 
 Target: Google WiFi (Gale), ARMv7, OpenWrt 25.12.x, Passwall2.
 
 PW Agent lets a private Telegram bot manage and monitor OpenWrt without a public/static IP. The router creates only outbound HTTPS connections to the cPanel backend.
+
+
+## v0.5.0 hardening
+
+v0.5 focuses on reliability, security, observability and release engineering:
+
+- Expiring command leases, retry budgets and per-command idempotency keys.
+- Durable Agent-side idempotency journal for mutation-result replay after delivery failures.
+- AES-256-GCM encryption for sensitive command parameters while stored in MySQL.
+- Ed25519-signed update bundles in addition to SHA256 verification.
+- Smart Failover health scoring using repeated relay probes, loss/jitter and TCP reachability.
+- Server-side metrics and event history with offline/recovery alerts.
+- Telegram Monitoring summary for 24-hour heartbeat coverage, load, uptime and failover count.
+- GitHub Actions CI for Go tests/vet, ARMv7 builds, PHP lint, shell and JSON validation.
+- Tag-driven signed release workflow.
+- Automated Go tests for idempotency, update signatures and health scoring.
+
+See [MIGRATION_0.5.0.md](MIGRATION_0.5.0.md) before upgrading.
 
 ## v0.4.0 highlights
 
