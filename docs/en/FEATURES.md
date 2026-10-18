@@ -118,3 +118,9 @@ See [Architecture](ARCHITECTURE.md) and [Security](SECURITY.md) for details.
 v0.6 adds multi-device Fleet Management, database-backed device registry, Device Groups/Tags/Location, Zero-Touch Provisioning from Telegram/Dashboard, RBAC with per-device scope, Audit Log, encrypted Config History with Rollback, advanced Monitoring/Alert Rules, Maintenance Mode, Scheduled Actions and a Fleet Mini App Dashboard.
 
 See [Fleet Management & Automation](FLEET.md) for details.
+
+## Platform Hardening and Operations (v0.7)
+
+v0.7 adds two-phase Device Secret rotation, Instance Key rotation with crash-resumable re-encryption, signed browser-based cPanel backend updates, encrypted server-side Backup Vault with retention, Owner approval workflows for sensitive operations, safe declarative configuration profiles with drift checks, serial canary Agent rollouts, downloadable diagnostic bundles and backend health checks.
+
+Official router distribution now covers both package-manager generations: signed APK v3 packages/indexes for OpenWrt 25.12+ and a signed OPKG/IPK feed for OpenWrt 24.10 and older.

@@ -8,7 +8,7 @@ $in=json_decode_assoc(raw_body());
 $init=(string)($in['init_data']??'');
 try{$tgUser=tg_validate_webapp_init_data($init);}catch(Throwable $e){response_json(['ok'=>false,'error'=>$e->getMessage()],null,403);}
 $uid=(int)($tgUser['id']??0);
-ensure_v060_schema();
+ensure_v070_schema();
 if($uid<=0||!v060_user_allowed($uid))response_json(['ok'=>false,'error'=>'Unauthorized user'],null,403);
 
 $action=(string)($in['action']??'summary');
@@ -95,17 +95,22 @@ try{
         $devices=v060_group_devices($uid,$groupId);
         if(!$devices)throw new RuntimeException('No accessible devices in this group');
         if(count($devices)>50)throw new RuntimeException('Bulk operation is limited to 50 devices');
-        $queued=[];$errors=[];
+        $queued=[];$approvals=[];$errors=[];
         foreach($devices as $d){
             $did=(string)$d['device_id'];
             try{
+                if(v070_requires_approval($commandAction)){
+                    $approvalId=v070_request_approval($uid,$did,$commandAction,[]);
+                    $approvals[]=['device_id'=>$did,'approval_id'=>$approvalId];
+                    continue;
+                }
                 $cid=queue_command($did,$commandAction,[],null,$uid,null,'dashboard-group');
                 db()->prepare("UPDATE pw_audit_log SET source='dashboard-group' WHERE command_id=?")->execute([$cid]);
                 $queued[]=['device_id'=>$did,'command_id'=>$cid];
             }catch(Throwable $e){$errors[]=['device_id'=>$did,'error'=>$e->getMessage()];}
         }
-        if(!$queued&&$errors)throw new RuntimeException('Bulk operation could not queue any command');
-        response_json(['ok'=>true,'queued'=>$queued,'errors'=>$errors]);
+        if(!$queued&&!$approvals&&$errors)throw new RuntimeException('Bulk operation could not be created');
+        response_json(['ok'=>true,'queued'=>$queued,'approvals'=>$approvals,'errors'=>$errors]);
     }
 
     if($action==='users'){
@@ -175,6 +180,10 @@ try{
         $commandAction=(string)($in['command_action']??'');
         if(!v060_dashboard_command_allowed($commandAction))throw new RuntimeException('Dashboard action is not allowed');
         $params=dash_json($in['params']??[]);
+        if(v070_requires_approval($commandAction)){
+            $approvalId=v070_request_approval($uid,$device,$commandAction,$params);
+            response_json(['ok'=>true,'approval_id'=>$approvalId,'status'=>'pending']);
+        }
         $chat=$commandAction==='system.backup.create'?$uid:null;
         $id=queue_command($device,$commandAction,$params,$chat,$uid,null,'dashboard');
         db()->prepare("UPDATE pw_audit_log SET source='dashboard' WHERE command_id=?")->execute([$id]);
@@ -218,7 +227,18 @@ try{
     if($action==='alert_toggle'){
         dash_device($uid,$device);dash_need($uid,'alert.manage');
         $id=(int)($in['id']??0);$enabled=!empty($in['enabled']);
-        $st=db()->prepare('UPDATE pw_alert_rules SET enabled=? WHERE id=? AND device_id=?');$st->execute([$enabled?1:0,$id,$device]);
+        $st=db()->prepare('UPDATE pw_alert_rules SET enabled=?,breach_since=IF(?,breach_since,NULL),incident_open=IF(?,incident_open,0),acknowledged_at=IF(?,acknowledged_at,NULL),acknowledged_by=IF(?,acknowledged_by,NULL),snoozed_until=IF(?,snoozed_until,NULL) WHERE id=? AND device_id=?');
+        $on=$enabled?1:0;$st->execute([$on,$on,$on,$on,$on,$on,$id,$device]);
+        response_json(['ok'=>true]);
+    }
+    if($action==='alert_ack'){
+        dash_device($uid,$device);dash_need($uid,'alert.manage');
+        v070_ack_alert($uid,$device,(int)($in['id']??0));
+        response_json(['ok'=>true]);
+    }
+    if($action==='alert_snooze'){
+        dash_device($uid,$device);dash_need($uid,'alert.manage');
+        v070_snooze_alert($uid,$device,(int)($in['id']??0),(int)($in['minutes']??60));
         response_json(['ok'=>true]);
     }
     if($action==='alert_delete'){
@@ -253,6 +273,114 @@ try{
         dash_device($uid,$device);dash_need($uid,'schedule.manage');
         db()->prepare('DELETE FROM pw_schedules WHERE id=? AND device_id=?')->execute([(int)($in['id']??0),$device]);
         response_json(['ok'=>true]);
+    }
+
+    if($action==='secret_rotate'){
+        dash_device($uid,$device);dash_need($uid,'rbac.manage');
+        response_json(v070_start_secret_rotation($uid,$device));
+    }
+    if($action==='instance_key_rotate'){
+        dash_need($uid,'rbac.manage');
+        response_json(v070_rotate_instance_key($uid));
+    }
+
+    if($action==='profiles'){
+        dash_need($uid,'system.read');
+        $rows=v070_profiles();$out=[];
+        foreach($rows as $row){$rules=json_decode((string)$row['rules_json'],true);$row['rules']=is_array($rules)?$rules:[];unset($row['rules_json']);$out[]=$row;}
+        response_json(['ok'=>true,'profiles'=>$out]);
+    }
+    if($action==='profile_create'){
+        dash_need($uid,'system.modify');
+        $rules=dash_json($in['rules']??[]);
+        $id=v070_create_profile($uid,(string)($in['name']??''),(string)($in['description']??''),$rules);
+        response_json(['ok'=>true,'id'=>$id]);
+    }
+    if($action==='profile_command'){
+        dash_device($uid,$device);$profileId=(int)($in['profile_id']??0);$mode=(string)($in['mode']??'check');
+        if(!in_array($mode,['check','apply'],true))throw new RuntimeException('Invalid profile operation');
+        if($mode==='apply'){
+            dash_need($uid,'system.modify');if(empty($in['confirmed']))throw new RuntimeException('Explicit confirmation is required to request profile application');
+            $approvalId=v070_request_approval($uid,$device,'system.profile.apply',['rules'=>v070_profile_for_device($uid,$device,$profileId)['rules'],'profile_id'=>$profileId]);
+            response_json(['ok'=>true,'approval_id'=>$approvalId,'status'=>'pending']);
+        }
+        dash_need($uid,'system.read');
+        $profile=v070_profile_for_device($uid,$device,$profileId);
+        $actionName=$mode==='apply'?'system.profile.apply':'system.profile.check';
+        $cid=queue_command($device,$actionName,['rules'=>$profile['rules'],'profile_id'=>$profileId,'profile_name'=>$profile['name']],null,$uid,null,'profile-'.$mode);
+        db()->prepare("UPDATE pw_audit_log SET source='profile-operation' WHERE command_id=?")->execute([$cid]);
+        response_json(['ok'=>true,'command_id'=>$cid,'mode'=>$mode,'profile'=>$profile['name']]);
+    }
+
+    if($action==='approval_list'){
+        dash_need($uid,'device.read');
+        $ownerCount=(int)db()->query("SELECT COUNT(*) FROM pw_users WHERE enabled=1 AND role='owner'")->fetchColumn();
+        response_json(['ok'=>true,'approvals'=>v070_approval_list($uid),'can_approve'=>v060_has_permission($uid,'rbac.manage'),'current_user_id'=>$uid,'single_owner_self_approval'=>$ownerCount===1]);
+    }
+    if($action==='approval_request'){
+        dash_device($uid,$device);$requested=(string)($in['command_action']??'');$params=dash_json($in['params']??[]);
+        if($requested==='system.backup.restore'){
+            $backupId=(int)($in['backup_id']??0);$backup=v070_open_backup($uid,$device,$backupId);
+            $params=['data_b64'=>base64_encode($backup['bytes']),'filename'=>(string)$backup['row']['filename'],'sha256'=>(string)$backup['row']['sha256']];
+        }elseif($requested==='system.profile.apply'){
+            $profile=v070_profile_for_device($uid,$device,(int)($in['profile_id']??0));$params=['rules'=>$profile['rules'],'profile_id'=>$profile['id'],'profile_name'=>$profile['name']];
+        }
+        $id=v070_request_approval($uid,$device,$requested,$params);
+        response_json(['ok'=>true,'approval_id'=>$id,'status'=>'pending','expires_hours'=>24]);
+    }
+    if($action==='approval_decide'){
+        $id=(int)($in['id']??0);$approve=!empty($in['approve']);$note=substr(trim((string)($in['note']??'')),0,255);
+        response_json(['ok'=>true]+v070_decide_approval($uid,$id,$approve,$note,!empty($in['confirm_self_approval'])));
+    }
+
+    if($action==='backup_vault_status'){
+        dash_need($uid,'backup.create');
+        $days=v070_backup_retention_days();
+        response_json(['ok'=>true,'enabled'=>v070_backup_vault_enabled(),'retention_days'=>$days]);
+    }
+    if($action==='backup_vault_configure'){
+        dash_need($uid,'rbac.manage');
+        $enabled=!empty($in['enabled']);$days=max(1,min(365,(int)($in['retention_days']??30)));
+        $st=db()->prepare('INSERT INTO pw_platform_settings(setting_key,setting_value,updated_by) VALUES(?,?,?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value),updated_by=VALUES(updated_by),updated_at=NOW()');
+        $st->execute(['backup_vault_enabled',$enabled?'1':'0',$uid]);$st->execute(['backup_retention_days',(string)$days,$uid]);
+        v060_audit_event($device?:'fleet',$uid,'dashboard','backup.vault.configure','done',[],['enabled'=>$enabled,'retention_days'=>$days]);
+        response_json(['ok'=>true,'enabled'=>$enabled,'retention_days'=>$days]);
+    }
+    if($action==='backup_list'){
+        dash_device($uid,$device);dash_need($uid,'backup.create');
+        response_json(['ok'=>true,'enabled'=>v070_backup_vault_enabled(),'backups'=>v070_backup_list($uid,$device)]);
+    }
+    if($action==='backup_restore_request'){
+        dash_device($uid,$device);dash_need($uid,'backup.restore');
+        $backup=v070_open_backup($uid,$device,(int)($in['backup_id']??0));
+        $approvalId=v070_request_approval($uid,$device,'system.backup.restore',['data_b64'=>base64_encode($backup['bytes']),'filename'=>(string)$backup['row']['filename'],'sha256'=>(string)$backup['row']['sha256']]);
+        response_json(['ok'=>true,'approval_id'=>$approvalId,'status'=>'pending']);
+    }
+    if($action==='backup_delete'){
+        dash_device($uid,$device);dash_need($uid,'rbac.manage');
+        $id=(int)($in['backup_id']??0);$st=db()->prepare('DELETE FROM pw_backup_vault WHERE id=? AND device_id=?');$st->execute([$id,$device]);
+        if($st->rowCount()!==1)throw new RuntimeException('Backup not found');
+        v060_audit_event($device,$uid,'dashboard','backup.delete','done',['backup_id'=>$id]);response_json(['ok'=>true]);
+    }
+
+    if($action==='platform_health'){
+        dash_need($uid,'system.read');
+        response_json(['ok'=>true,'health'=>v070_platform_health()]);
+    }
+    if($action==='rollouts'){
+        dash_need($uid,'agent.update');
+        $rows=v070_rollouts_for_user($uid,50);
+        $out=[];foreach($rows as $row){$ids=json_decode((string)$row['device_ids_json'],true);$row['device_ids']=is_array($ids)?$ids:[];unset($row['device_ids_json']);$out[]=$row;}
+        response_json(['ok'=>true,'rollouts'=>$out,'version'=>app_version()]);
+    }
+    if($action==='rollout_create'){
+        dash_need($uid,'agent.update');
+        $ids=dash_json($in['device_ids']??[]);$id=v070_create_rollout($uid,$ids);
+        response_json(['ok'=>true,'id'=>$id,'status'=>'running','version'=>app_version(),'strategy'=>'single-device-canary']);
+    }
+    if($action==='rollout_control'){
+        dash_need($uid,'agent.update');$id=(int)($in['id']??0);$mode=(string)($in['mode']??'pause');
+        $status=v070_control_rollout($uid,$id,$mode);response_json(['ok'=>true,'status'=>$status]);
     }
 
     response_json(['ok'=>false,'error'=>'Unknown dashboard action'],null,404);

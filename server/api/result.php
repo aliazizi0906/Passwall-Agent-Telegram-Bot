@@ -7,6 +7,7 @@ $id=(int)($body['command_id']??0);if($id<=0)response_json(['ok'=>false,'error'=>
 $leaseToken=(string)($body['lease_token']??'');$idem=(string)($body['idempotency_key']??'');
 $success=!empty($body['success']);$result=$body['result']??null;$error=(string)($body['error']??'');
 $change=null;
+$rotateAck=!empty($auth['rotation_pending']);
 if(is_array($result)&&isset($result['_v6_change'])&&is_array($result['_v6_change'])){
     $change=$result['_v6_change'];
     unset($result['_v6_change']);
@@ -16,15 +17,29 @@ $pdo=db();$pdo->beginTransaction();
 try{
     $q=$pdo->prepare('SELECT * FROM pw_commands WHERE id=? AND device_id=? FOR UPDATE');$q->execute([$id,$device]);$row=$q->fetch();
     if(!$row){$pdo->rollBack();response_json(['ok'=>false,'error'=>'command not found'],$secret,404);}
-    if(in_array($row['status'],['done','failed'],true)){$pdo->commit();response_json(['ok'=>true,'duplicate'=>true],$secret);}
+    if(in_array($row['status'],['done','failed'],true)){$pdo->commit();response_json(['ok'=>true,'duplicate'=>true,'rotate_secret'=>$rotateAck],$secret);}
     if((string)$row['status']!=='leased'||$leaseToken===''||!hash_equals((string)($row['lease_token']??''),$leaseToken)){$pdo->rollBack();response_json(['ok'=>false,'error'=>'stale or invalid lease'],$secret,409);}
     if($idem!==''&&!hash_equals((string)($row['idempotency_key']??''),$idem)){$pdo->rollBack();response_json(['ok'=>false,'error'=>'idempotency key mismatch'],$secret,409);}
     $plainParams=v050_open_params($device,(string)$row['action'],(string)$row['params_json']);
     $params=json_decode($plainParams,true);if(!is_array($params))$params=[];
 
     $storedResult=$result;
-    if((string)$row['action']==='system.backup.create' && is_array($storedResult)) unset($storedResult['data_b64']);
-    $sensitiveActions=['system.backup.restore','wifi.set_password','passwall2.node.add_link','passwall2.node.add_manual','passwall2.subscription.add','terminal.exec','config.rollback_snapshot'];
+    if((string)$row['action']==='agent.secret.rotate' && $success){
+        $newSecret=(string)($params['new_secret']??'');
+        v070_finalize_secret_rotation($device,$newSecret);
+        $rotateAck=true;
+        if(is_array($storedResult))$storedResult=['staged'=>true,'rotation'=>'server_switched','recovery_window_hours'=>24];
+    }elseif((string)$row['action']==='agent.secret.rotate' && !$success){
+        $pdo->prepare('UPDATE pw_device_registry SET pending_secret_sealed=NULL,pending_secret_expires_at=NULL WHERE device_id=?')->execute([$device]);
+    }
+    if((string)$row['action']==='system.backup.create' && $success && is_array($storedResult) && !empty($storedResult['data_b64'])){
+        $backupBytes=base64_decode((string)$storedResult['data_b64'],true);
+        if($backupBytes===false||strlen($backupBytes)>5242880)throw new RuntimeException('Backup payload is invalid or exceeds 5 MiB');
+        $vaultId=v070_store_backup($device,isset($row['user_id'])?(int)$row['user_id']:null,(string)($storedResult['filename']??'openwrt-backup.tar.gz'),$backupBytes);
+        unset($storedResult['data_b64']);
+        if($vaultId!==null)$storedResult['backup_vault_id']=$vaultId;
+    }
+    $sensitiveActions=['system.backup.restore','wifi.set_password','passwall2.node.add_link','passwall2.node.add_manual','passwall2.subscription.add','terminal.exec','config.rollback_snapshot','agent.secret.rotate'];
     $scrubParams=in_array((string)$row['action'],$sensitiveActions,true);
 
     $u=$pdo->prepare('UPDATE pw_commands SET status=?,finished_at=NOW(),result_json=?,error_text=?,params_json=?,lease_token=NULL,expires_at=NULL WHERE id=?');
@@ -37,9 +52,11 @@ try{
     ]);
     $pdo->commit();
     try{
-        v060_audit_command_result($id,$success,$result,$error);
+        // Audit only the sanitized representation; the original backup result
+        // may contain the full base64 archive and must not be copied to audit.
+        v060_audit_command_result($id,$success,$storedResult,$error);
         if($success&&is_array($change))v060_store_config_change($id,$device,isset($row['user_id'])?(int)$row['user_id']:null,(string)$row['action'],$change);
-    }catch(Throwable $auditError){error_log('v0.6 audit/history persistence: '.$auditError->getMessage());}
+    }catch(Throwable $auditError){error_log('audit/history persistence: '.$auditError->getMessage());}
 }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();response_json(['ok'=>false,'error'=>'result persistence failed'],$secret,500);}
 
 if(!empty($row['chat_id'])){
@@ -61,4 +78,4 @@ if(!empty($row['chat_id'])){
     }catch(Throwable $e){error_log('Telegram result delivery error: '.$e->getMessage());}
 }
 
-response_json(['ok'=>true],$secret);
+response_json(['ok'=>true,'rotate_secret'=>$rotateAck],$secret);

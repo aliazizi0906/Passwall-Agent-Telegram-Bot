@@ -7,6 +7,8 @@
 | بخش | توضیح |
 |---|---|
 | [نصب](INSTALL.md) | Web Setup بدون Terminal روی cPanel + نصب OpenWrt |
+| [APK در OpenWrt 25](APK.md) | Package و Feed امضاشده APK v3 برای OpenWrt 25.12+ |
+| [OPKG قدیمی](OPKG.md) | Feed امضاشده IPK/opkg برای OpenWrt 24.10 و قدیمی‌تر |
 | [قابلیت‌ها](FEATURES.md) | معرفی کامل امکانات |
 | [Fleet و Automation](FLEET.md) | Multi-Device، RBAC، Audit، Monitoring و Scheduler در v0.6 |
 | [معماری](ARCHITECTURE.md) | اجزا و جریان درخواست‌ها |
@@ -40,6 +42,6 @@ Passwall2 باید از قبل روی روتر نصب باشد.
 
 ## مدل نصب روی cPanel
 
-در v0.6 هیچ نیازی به cPanel Terminal یا مسیر ثابت فایل‌سیستم نیست.
+در v0.7 هیچ نیازی به cPanel Terminal یا مسیر ثابت فایل‌سیستم نیست.
 
 محتویات `server/` را در هر فولدر Web-accessible آپلود کن و `setup.php` را باز کن. Web Setup آدرس واقعی Deployment را تشخیص می‌دهد، Schema و Config را می‌سازد، Telegram Webhook را ثبت می‌کند و Cron Command و Provisioning Command دقیق همان نصب را تحویل می‌دهد.

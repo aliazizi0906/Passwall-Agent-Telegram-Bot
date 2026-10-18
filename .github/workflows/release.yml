@@ -7,12 +7,13 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release tag, for example v0.5.0"
+        description: "Release tag, for example v0.7.0"
         required: true
         type: string
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   release:
@@ -23,6 +24,19 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.23.x"
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: curl, pdo_mysql, sodium, zip
+          coverage: none
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install packaging dependency
+        run: python3 -m pip install 'cryptography==46.0.3'
 
       - name: Resolve and validate release version
         shell: bash
@@ -45,12 +59,20 @@ jobs:
             exit 1
           }
           echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
 
       - name: Test
         run: |
           test -z "$(gofmt -l *.go)"
           go test ./...
           go vet ./...
+          find server -name '*.php' -print0 | xargs -0 -n1 php -l
+          php server/tests/setup_core_test.php
+          php server/tests/platform_v070_test.php
+          php server/tests/web_update_test.php
+          python3 -m unittest discover -s packaging -p 'test_*.py' -v
+          python3 scripts/check_dashboard_js.py
+          python3 scripts/check_markdown_links.py
 
       - name: Load and validate Ed25519 signing key
         shell: bash
@@ -66,6 +88,7 @@ jobs:
           chmod 600 /tmp/update-ed25519.pem
           openssl pkey -in /tmp/update-ed25519.pem -pubout -outform DER \
             | tail -c 32 | base64 -w0 > /tmp/update-public.b64
+          openssl pkey -in /tmp/update-ed25519.pem -pubout -out /tmp/update-public.pem
           PUBLISHED_KEY="$(tr -d '\r\n' < UPDATE_PUBLIC_KEY.b64)"
           [ "$(cat /tmp/update-public.b64)" = "$PUBLISHED_KEY" ] || {
             echo "Signing key does not match UPDATE_PUBLIC_KEY.b64" >&2
@@ -124,7 +147,57 @@ jobs:
           build_bundle mips mips "" softfloat
           build_bundle mipsle mipsle "" softfloat
 
+          # The PHP backend is a separately versioned, signed release asset so
+          # the browser-only cPanel updater never trusts an unsigned ZIP or a
+          # checksum downloaded independently from the payload.
+          server_stage="/tmp/pw-agent-server-$RELEASE_VERSION"
+          rm -rf "$server_stage"
+          mkdir -p "$server_stage"
+          rsync -a --delete \
+            --exclude '/config.php' \
+            --exclude '/tests/' \
+            --exclude '/releases/*' \
+            --exclude '/cache/*' \
+            --exclude '/uploads/*' \
+            server/ "$server_stage/"
+          mkdir -p "$server_stage/releases"
+          cp server/releases/.htaccess "$server_stage/releases/.htaccess"
+          (
+            cd "$server_stage"
+            zip -X -qr "$GITHUB_WORKSPACE/dist/pw-agent-server-v$RELEASE_VERSION.zip" .
+          )
+          cp "dist/pw-agent-server-v$RELEASE_VERSION.zip" "dist/pw-agent-cpanel-v$RELEASE_VERSION.zip"
+          (
+            cd dist
+            sha256sum "pw-agent-cpanel-v$RELEASE_VERSION.zip" > "pw-agent-cpanel-v$RELEASE_VERSION.zip.sha256"
+          )
+          openssl pkeyutl -sign -rawin \
+            -inkey /tmp/update-ed25519.pem \
+            -in "dist/pw-agent-cpanel-v$RELEASE_VERSION.zip" \
+            -out "dist/pw-agent-cpanel-v$RELEASE_VERSION.zip.sig"
+
+          SERVER_ARCHIVE="pw-agent-server-v$RELEASE_VERSION.zip"
+          SERVER_SIZE="$(stat -c '%s' "dist/$SERVER_ARCHIVE")"
+          SERVER_SHA256="$(sha256sum "dist/$SERVER_ARCHIVE" | awk '{print $1}')"
+          SERVER_MANIFEST="dist/pw-agent-server-v$RELEASE_VERSION.manifest.json"
+          jq -cn \
+            --arg version "$RELEASE_VERSION" \
+            --arg asset "$SERVER_ARCHIVE" \
+            --arg sha256 "$SERVER_SHA256" \
+            --argjson size "$SERVER_SIZE" \
+            '{schema:1,version:$version,asset:$asset,size:$size,sha256:$sha256,php_min_version:"8.1.0",required_extensions:["curl","pdo_mysql","openssl","sodium","zip"],db_migrations:"additive"}' \
+            > "$SERVER_MANIFEST"
+          openssl pkeyutl -sign -rawin \
+            -inkey /tmp/update-ed25519.pem \
+            -in "$SERVER_MANIFEST" \
+            -out "$SERVER_MANIFEST.sig"
+          openssl pkeyutl -verify -rawin -pubin \
+            -inkey /tmp/update-public.pem \
+            -in "$SERVER_MANIFEST" \
+            -sigfile "$SERVER_MANIFEST.sig"
+
           rm -f /tmp/update-ed25519.pem
+          rm -f /tmp/update-public.pem
 
       - name: Publish GitHub release
         env:
@@ -140,3 +213,12 @@ jobs:
             --target "$GITHUB_SHA" \
             --generate-notes \
             --title "PW Agent $RELEASE_TAG"
+
+      - name: Start signed OpenWrt package feeds
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run package-feed.yml --ref main -f version="$RELEASE_TAG"
+          gh workflow run apk-feed.yml --ref main -f version="$RELEASE_TAG"

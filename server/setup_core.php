@@ -6,7 +6,7 @@ declare(strict_types=1);
  * from both the CLI installer and the browser-based cPanel installer.
  */
 
-function pw_setup_version(): string { return '0.6.0'; }
+function pw_setup_version(): string { return '0.7.0'; }
 
 function pw_setup_valid_device_id(string $v): bool {
     return (bool)preg_match('/^[A-Za-z0-9_-]{1,64}$/',$v);
@@ -21,7 +21,10 @@ function pw_setup_normalize_arch(string $arch): string {
 }
 
 function pw_setup_requirements(): array {
-    $required=['pdo_mysql','curl','openssl'];
+    // The browser-only signed backend updater needs sodium for Ed25519 and
+    // ZipArchive for safe extraction. Fail during setup instead of silently
+    // installing a backend that cannot use its advertised update path.
+    $required=['pdo_mysql','curl','openssl','sodium','zip'];
     $missing=[];
     foreach($required as $ext)if(!extension_loaded($ext))$missing[]=$ext;
     return [

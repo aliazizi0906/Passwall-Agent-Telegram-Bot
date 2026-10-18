@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS pw_devices (
   last_seen DATETIME NULL,
   last_ip VARCHAR(64) NULL,
   agent_version VARCHAR(32) NULL,
+  architecture VARCHAR(32) NULL,
   hostname VARCHAR(128) NULL,
   meta_json LONGTEXT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -177,6 +178,12 @@ CREATE TABLE IF NOT EXISTS pw_alert_rules (
   enabled TINYINT(1) NOT NULL DEFAULT 1,
   breach_since DATETIME NULL,
   last_triggered_at DATETIME NULL,
+  incident_open TINYINT(1) NOT NULL DEFAULT 0,
+  acknowledged_at DATETIME NULL,
+  acknowledged_by BIGINT NULL,
+  snoozed_until DATETIME NULL,
+  resolved_at DATETIME NULL,
+  last_value DOUBLE NULL,
   created_by BIGINT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_alert_device_enabled (device_id,enabled)
@@ -207,4 +214,70 @@ CREATE TABLE IF NOT EXISTS pw_schedules (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_schedule_due (enabled,next_run_at),
   INDEX idx_schedule_device (device_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pw_config_profiles (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(96) NOT NULL,
+  description VARCHAR(255) NULL,
+  rules_json LONGTEXT NOT NULL,
+  created_by BIGINT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY ux_profile_name (name),
+  INDEX idx_profile_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pw_approvals (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  device_id VARCHAR(64) NOT NULL,
+  action VARCHAR(96) NOT NULL,
+  params_sealed LONGTEXT NOT NULL,
+  requested_by BIGINT NOT NULL,
+  approved_by BIGINT NULL,
+  status ENUM('pending','approved','rejected','queued','expired') NOT NULL DEFAULT 'pending',
+  expires_at DATETIME NOT NULL,
+  command_id BIGINT UNSIGNED NULL,
+  decision_note VARCHAR(255) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_approval_status (status,expires_at),
+  INDEX idx_approval_device (device_id,created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pw_backup_vault (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  device_id VARCHAR(64) NOT NULL,
+  created_by BIGINT NULL,
+  filename VARCHAR(190) NOT NULL,
+  sha256 CHAR(64) NOT NULL,
+  size_bytes BIGINT UNSIGNED NOT NULL,
+  payload_sealed LONGBLOB NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at DATETIME NOT NULL,
+  INDEX idx_backup_device_time (device_id,created_at),
+  INDEX idx_backup_expiry (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pw_platform_settings (
+  setting_key VARCHAR(96) PRIMARY KEY,
+  setting_value LONGTEXT NOT NULL,
+  updated_by BIGINT NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pw_update_rollouts (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  version VARCHAR(32) NOT NULL,
+  device_ids_json LONGTEXT NOT NULL,
+  current_index INT UNSIGNED NOT NULL DEFAULT 0,
+  current_command_id BIGINT UNSIGNED NULL,
+  status ENUM('running','paused','completed','failed','cancelled') NOT NULL DEFAULT 'running',
+  created_by BIGINT NOT NULL,
+  next_run_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  current_started_at DATETIME NULL,
+  last_error TEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_rollout_due (status,next_run_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

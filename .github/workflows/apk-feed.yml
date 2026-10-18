@@ -1,0 +1,162 @@
+name: OpenWrt APK v3 Feed
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Existing signed release tag, for example v0.7.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apkv3-feed-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  apk-v3-feed:
+    runs-on: ubuntu-24.04
+    env:
+      # Filename and SHA256 copied from the official OpenWrt 25.12.2 SDK
+      # listing: https://downloads.openwrt.org/releases/25.12.2/targets/x86/64/
+      SDK_URL: https://downloads.openwrt.org/releases/25.12.2/targets/x86/64/openwrt-sdk-25.12.2-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+      SDK_SHA256: 4abb32a6dd05f80c24fc1a487a94b1f5f0a5d4cd560ff3dd8c1bf77793a2d5dc
+    steps:
+      - name: Check out the released tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install signing dependency and run offline tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install 'cryptography==46.0.3'
+          python3 -m unittest discover -s packaging -p 'test_*.py' -v
+
+      - name: Resolve tag and timestamp
+        id: release
+        shell: bash
+        env:
+          REQUESTED_TAG: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          RELEASE_TAG="$REQUESTED_TAG"
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+            echo "APK v3 workflow supports stable X.Y.Z release tags only" >&2
+            exit 1
+          }
+          git fetch --force --depth=1 origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+          RELEASE_EPOCH="$(git log -1 --format=%ct "$RELEASE_TAG")"
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "epoch=$RELEASE_EPOCH" >> "$GITHUB_OUTPUT"
+
+      - name: Download all officially signed Agent release bundles
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/release-bundles"
+          gh release download "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern 'pw-agent-openwrt-*' \
+            --dir "$RUNNER_TEMP/release-bundles"
+          sh packaging/verify-release-assets.sh "$RUNNER_TEMP/release-bundles" UPDATE_PUBLIC_KEY.b64
+
+      - name: Download and pin-check OpenWrt 25.12.2 SDK
+        id: sdk
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --connect-timeout 20 \
+            --output "$RUNNER_TEMP/openwrt-sdk.tar.zst" "$SDK_URL"
+          printf '%s  %s\n' "$SDK_SHA256" "$RUNNER_TEMP/openwrt-sdk.tar.zst" | sha256sum --check --status
+          command -v zstd >/dev/null || {
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq zstd
+          }
+          mkdir -p "$RUNNER_TEMP/sdk"
+          tar --use-compress-program=unzstd -xf "$RUNNER_TEMP/openwrt-sdk.tar.zst" -C "$RUNNER_TEMP/sdk"
+          APK_BIN="$(find "$RUNNER_TEMP/sdk" -path '*/staging_dir/host/bin/apk' -print -quit)"
+          test -n "$APK_BIN" && test -x "$APK_BIN" || {
+            echo "Pinned SDK does not contain executable staging_dir/host/bin/apk" >&2
+            exit 1
+          }
+          "$APK_BIN" --version
+          echo "apk=$APK_BIN" >> "$GITHUB_OUTPUT"
+
+      - name: Derive isolated APK P-256 signing key and sign key attestation
+        shell: bash
+        env:
+          UPDATE_SIGNING_PRIVATE_KEY_PEM_B64: ${{ secrets.UPDATE_SIGNING_PRIVATE_KEY_PEM_B64 }}
+        run: |
+          set -euo pipefail
+          test -n "$UPDATE_SIGNING_PRIVATE_KEY_PEM_B64" || {
+            echo "Existing Ed25519 signing secret is missing; no unsigned feed may be published" >&2
+            exit 1
+          }
+          mkdir -p dist/apk "$RUNNER_TEMP/apk-keys"
+          trap 'rm -f "$RUNNER_TEMP/original-release-key.pem"' EXIT
+          printf '%s' "$UPDATE_SIGNING_PRIVATE_KEY_PEM_B64" | base64 --decode > "$RUNNER_TEMP/original-release-key.pem"
+          chmod 600 "$RUNNER_TEMP/original-release-key.pem"
+          openssl pkey -in "$RUNNER_TEMP/original-release-key.pem" -pubout -outform DER \
+            | tail -c 32 | base64 -w0 > "$RUNNER_TEMP/release-public.b64"
+          test "$(cat "$RUNNER_TEMP/release-public.b64")" = "$(tr -d '\r\n' < UPDATE_PUBLIC_KEY.b64)" || {
+            echo "Original signing key does not match UPDATE_PUBLIC_KEY.b64" >&2
+            exit 1
+          }
+          python3 packaging/build_apk_feed.py derive-key \
+            --private-key-out "$RUNNER_TEMP/apk-ec-private.pem" \
+            --public-key-out dist/apk/pw-agent-apkv3-p256.pem
+          cp dist/apk/pw-agent-apkv3-p256.pem "$RUNNER_TEMP/apk-keys/pw-agent-apkv3-p256.pem"
+          openssl pkeyutl -sign -rawin -inkey "$RUNNER_TEMP/original-release-key.pem" \
+            -in dist/apk/pw-agent-apkv3-p256.pem \
+            -out dist/apk/pw-agent-apkv3-p256.pem.sig
+          openssl pkey -in "$RUNNER_TEMP/original-release-key.pem" -pubout \
+            -out "$RUNNER_TEMP/release-public.pem"
+          openssl pkeyutl -verify -rawin -pubin -inkey "$RUNNER_TEMP/release-public.pem" \
+            -in dist/apk/pw-agent-apkv3-p256.pem \
+            -sigfile dist/apk/pw-agent-apkv3-p256.pem.sig
+          rm -f "$RUNNER_TEMP/release-public.pem"
+
+      - name: Create real signed APK v3 artifacts and signed direct indexes
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          SOURCE_DATE_EPOCH: ${{ steps.release.outputs.epoch }}
+          APK_BIN: ${{ steps.sdk.outputs.apk }}
+        run: |
+          set -euo pipefail
+          trap 'rm -f "$RUNNER_TEMP/apk-ec-private.pem"' EXIT
+          python3 packaging/build_apk_feed.py build-feed \
+            --apk "$APK_BIN" \
+            --private-key "$RUNNER_TEMP/apk-ec-private.pem" \
+            --trusted-keys "$RUNNER_TEMP/apk-keys" \
+            --source-dir "$RUNNER_TEMP/release-bundles" \
+            --output-dir dist/apk \
+            --version "$RELEASE_VERSION" \
+            --source-date-epoch "$SOURCE_DATE_EPOCH"
+          (cd dist/apk && sha256sum ./*.apk ./*.adb pw-agent-apkv3-p256.pem > SHA256SUMS)
+
+      - name: Publish APK artifacts to the same release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          test "$(find dist/apk -name '*.apk' -type f | wc -l)" -eq 6
+          test "$(find dist/apk -name '*.adb' -type f | wc -l)" -eq 6
+          test -s dist/apk/pw-agent-apkv3-p256.pem.sig
+          gh release upload "$RELEASE_TAG" dist/apk/* \
+            --repo "$GITHUB_REPOSITORY" --clobber

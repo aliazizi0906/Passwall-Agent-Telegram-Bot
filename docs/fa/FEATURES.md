@@ -118,3 +118,9 @@ Public Key رسمی داخل Agent Embed شده و در `UPDATE_PUBLIC_KEY.b64` 
 نسخه v0.6 قابلیت‌های Multi-Device Fleet، Device Registry مبتنی بر Database، Group/Tag/Location، Zero-Touch Provisioning از Telegram و Dashboard، RBAC با Device Scope، Audit Log، Config History رمزنگاری‌شده همراه Rollback، Monitoring و Alert Rule پیشرفته، Maintenance Mode، Scheduled Actions و Mini App Dashboard را اضافه می‌کند.
 
 جزئیات: [مدیریت Fleet و Automation](FLEET.md)
+
+## سخت‌سازی Platform و عملیات در v0.7
+
+نسخه v0.7 شامل Device Secret Rotation دومرحله‌ای، Instance Key Rotation با Re-encryption قابل ادامه پس از Crash، آپدیت امضاشده Backend از مرورگر cPanel، Backup Vault رمزنگاری‌شده با Retention، Approval Workflow برای عملیات حساس، Configuration Profile امن همراه Drift Check، Canary Rollout ترتیبی Agent، Diagnostic Bundle قابل دانلود و Backend Health Check است.
+
+توزیع رسمی Router نیز هر دو نسل Package Manager را پوشش می‌دهد: APK v3 امضاشده برای OpenWrt 25.12+ و Feed امضاشده OPKG/IPK برای OpenWrt 24.10 و قدیمی‌تر.

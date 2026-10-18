@@ -2,7 +2,7 @@
 
 [صفحه مستندات](README.md) · [English](../en/INSTALL.md)
 
-نسخه v0.6 طوری طراحی شده که روی هاست cPanel **بدون SSH و بدون cPanel Terminal** نصب شود.
+نسخه v0.7 طوری طراحی شده که روی هاست cPanel **بدون SSH و بدون cPanel Terminal** نصب شود.
 
 مسیر Backend کاملاً Path-independent است. محتویات فولدر `server/` را می‌توانی در هر مسیر Web-accessible آپلود کنی؛ مثلاً:
 
@@ -21,7 +21,7 @@ Document Root یک Subdomain
 
 - PHP 8.1 یا جدیدتر
 - MySQL یا MariaDB
-- Extensionهای PHP: `pdo_mysql`، `curl` و `openssl`
+- Extensionهای PHP: `pdo_mysql`، `curl`، `openssl`، `sodium` و `zip`
 - HTTPS
 - cPanel File Manager
 - cPanel MySQL Databases
@@ -85,10 +85,10 @@ Bot Token را نگه دار.
 
 ## ۳. آپلود Backend با cPanel File Manager
 
-ساده‌ترین روش این است که از Release رسمی **v0.6.0** فایل زیر را دانلود کنی:
+ساده‌ترین روش این است که از Release رسمی **v0.7.0** فایل زیر را دانلود کنی:
 
 ```text
-pw-agent-cpanel-v0.6.0.zip
+pw-agent-cpanel-v0.7.0.zip
 ```
 
 در cPanel هر فولدر دلخواهی زیر Document Root بساز، ZIP را همان‌جا Upload کن و با **File Manager → Extract** بازش کن. محتویات ZIP مستقیماً فایل‌های Backend هستند و `setup.php` و فایل‌های لازم `.htaccess` را هم شامل می‌شوند.
@@ -226,7 +226,7 @@ Cron این بخش‌ها را اجرا می‌کند:
 ```sh
 PW_SERVER_BASE='https://example.com/your/chosen/path' \
 PW_PROVISION_TOKEN='ONE_TIME_TOKEN' \
-PW_AGENT_VERSION='v0.6.0' \
+PW_AGENT_VERSION='v0.7.0' \
 sh -c "$(wget -qO- 'https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh')"
 ```
 
@@ -258,7 +258,7 @@ https://example.com/your/chosen/path/health.php
 ```json
 {
   "ok": true,
-  "version": "0.6.0"
+  "version": "0.7.0"
 }
 ```
 

@@ -19,6 +19,15 @@ jobs:
         with:
           go-version: "1.23.x"
 
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: curl, pdo_mysql, sodium, zip
+          coverage: none
+
+      - name: Python packaging dependency
+        run: python3 -m pip install 'cryptography==46.0.3'
+
       - name: Go format
         run: test -z "$(gofmt -l *.go)"
 
@@ -45,11 +54,22 @@ jobs:
       - name: Web Setup tests
         run: php server/tests/setup_core_test.php
 
+      - name: Platform v0.7 security tests
+        run: php server/tests/platform_v070_test.php
+
+      - name: Signed backend updater security tests
+        run: php server/tests/web_update_test.php
+
+      - name: Package feed tests
+        run: python3 -m unittest discover -s packaging -p 'test_*.py' -v
+
       - name: Shell syntax
         run: |
           sh -n openwrt/install.sh
           sh -n openwrt/install-update.sh
           sh -n openwrt/install-remote.sh
+          sh -n packaging/verify-feed-archive.sh
+          sh -n packaging/verify-release-assets.sh
 
       - name: JSON validation
         run: find openwrt -name '*.json' -print0 | xargs -0 -n1 jq -e . >/dev/null
