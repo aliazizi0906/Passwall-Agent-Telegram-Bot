@@ -2,7 +2,7 @@
 
 All notable changes to PW Agent are documented here. Versions follow SemVer where production compatibility has been verified. Release candidates are **previews**, not declarations of feature-complete stable support.
 
-## [1.3.0-rc.1] — Source candidate (22 October 2026)
+## [1.3.0-rc.2] — Source candidate (22 October 2026)
 
 **Status:** work-in-progress release candidate on `feature/v1.3-control-center`, not stable/production-certified. Official GitHub prerelease exists only when a signed release workflow has completed successfully.
 
@@ -22,7 +22,7 @@ All notable changes to PW Agent are documented here. Versions follow SemVer wher
 ### Security / caveats
 - Agent actions respect allowlists; LuCI operations added here are read-only.
 - Per-router client policy enforcement, cellular-band/tower lock/SMS/USSD adapters, LED RGB writes, DNS split/kill switch and full safe-apply/rollback are **not implemented or hardware-verified** in RC. Do not advertise these as complete.
-- `1.3.0-rc.1` is **not** a stable upgrade path for critical routers; prefer isolated staging and explicit rollback checks.
+- `1.3.0-rc.2` is **not** a stable upgrade path for critical routers; prefer isolated staging and explicit rollback checks.
 - No WRTPro code, branding, licensing or proprietary assets are included.
 
 ### Testing
