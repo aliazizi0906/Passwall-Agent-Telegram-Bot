@@ -57,5 +57,8 @@ jobs:
       - name: Dashboard JavaScript
         run: python3 scripts/check_dashboard_js.py
 
+      - name: LuCI Control Center JavaScript
+        run: node --check openwrt/luci/www/luci-static/resources/view/pw-agent/control.js
+
       - name: Markdown links
         run: python3 scripts/check_markdown_links.py
