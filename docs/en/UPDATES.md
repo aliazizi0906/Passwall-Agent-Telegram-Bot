@@ -1,6 +1,6 @@
 # Updates and Releases
 
-> **v1.3 release candidate:** For the PW Control Center, use the [v1.3 RC install guide](INSTALL_V1_3.md), [migration guide](UPGRADE_V1_3.md) and [implementation status](CONTROL_CENTER_PROGRESS.md). Historical sections below document the v0.6 stable series; RC is not production certified.
+> **Latest public pre-release: v1.3.0-rc.2.** This page documents the legacy v0.6 update model; for the new control center use [Install v1.3 RC](INSTALL_V1_3.md), [Upgrade v0.6 → v1.3 RC](UPGRADE_V1_3.md) and [Implementation status](CONTROL_CENTER_PROGRESS.md). RC is not production-certified.
 
 [Documentation Home](README.md) · [فارسی](../fa/UPDATES.md)
 
