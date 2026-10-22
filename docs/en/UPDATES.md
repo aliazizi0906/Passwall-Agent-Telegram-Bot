@@ -4,7 +4,7 @@
 
 [Documentation Home](README.md) · [فارسی](../fa/UPDATES.md)
 
-PW Agent v0.6 supports a browser-first cPanel workflow. SSH, Git and cPanel Terminal are optional.
+This page documents the legacy v0.6 stable update workflow. The latest public pre-release is v1.3.0-rc.2; use [its install guide](INSTALL_V1_3.md) and [upgrade guide](UPGRADE_V1_3.md) for the new control center. SSH, Git and cPanel Terminal remain optional.
 
 ## What is updated
 
