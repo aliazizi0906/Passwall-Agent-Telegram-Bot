@@ -1,8 +1,8 @@
-# نصب PW Agent v1.3.0-rc.1 (نسخه آزمایشی)
+# نصب PW Agent v1.3.0-rc.2 (نسخه آزمایشی)
 
 [صفحه اصلی](../../README.md) · [English](../en/INSTALL_V1_3.md) · [ارتقا از v0.6](UPGRADE_V1_3.md) · [وضعیت قابلیت‌ها](CONTROL_CENTER_PROGRESS.md)
 
-> **هشدار انتشار:** این راهنما مخصوص تست نسخه RC است. تا زمانی که بسته‌های این نسخه در GitHub Releases منتشر نشده‌اند، فرمان نصب با `PW_AGENT_VERSION='v1.3.0-rc.1'` کار نمی‌کند. نسخه نهایی و سخت‌افزارهای مختلف هنوز تأیید نشده‌اند. نصب روی روتر اصلی توصیه نمی‌شود.
+> **نسخه آزمایشی منتشرشده — فقط برای Staging:** بسته‌های امضاشده `v1.3.0-rc.2` در [GitHub Release](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.3.0-rc.2) موجودند. این انتشار تأیید Production نیست و نصب روی روتر حیاتی توصیه نمی‌شود.
 
 ## ۱. پیش‌نیازها
 
@@ -14,14 +14,14 @@
 
 ## ۲. دریافت ZIP نسخه درست
 
-به [Releases](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases) برو. زمانی که Release Candidate منتشر شد، این فایل را بگیر:
+از [Release نسخه v1.3.0-rc.2](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.3.0-rc.2) فایل زیر را دریافت کن:
 
 ```text
-pw-agent-cpanel-v1.3.0-rc.1.zip
-pw-agent-cpanel-v1.3.0-rc.1.zip.sha256
+pw-agent-cpanel-v1.3.0-rc.2.zip
+pw-agent-cpanel-v1.3.0-rc.2.zip.sha256
 ```
 
-روی کامپیوتر شخصی فایل ZIP را با SHA256 اعلام‌شده تطبیق بده؛ برای اصالت‌سنجی از فایل امضای `.sig` و کلید معتبر از منبع مستقل استفاده می‌شود. اگر فایل پیدا نیست، Release هنوز تکمیل نشده است. Artifact آپلودشده در صفحه CI فقط برای تست داخلی Staging است.
+روی کامپیوتر شخصی فایل ZIP را با SHA256 اعلام‌شده تطبیق بده؛ برای اصالت‌سنجی از فایل امضای `.sig` و کلید معتبر از منبع مستقل استفاده می‌شود. اگر یکی از فایل‌های مورد انتظار موجود نبود، نصب را متوقف کن و از Artifact نامرتبط استفاده نکن.
 
 ZIP شامل **محتویات** `server/` در ریشه آرشیو است؛ **کل Repository یا پوشه server را داخل یک پوشه server دیگر استخراج نکن.**
 
@@ -55,7 +55,7 @@ pw-test/
 
 ۵. در HTTPS، فایل `setup.php` را باز کن؛ MySQL، Bot Token، Owner Telegram Numeric ID، نام/شناسه روتر و Timezone را پر کن. بعد از Install شدن `config.php` ساخته می‌شود و Wizard قفل می‌شود.
 
-۶. `health.php` را باز کن. **در صورت نصب RC انتظار نسخه `1.3.0-rc.1` داری.** خطای 500 در این مرحله نیازمند خواندن PHP `error_log` و بررسی افزونه‌ها/اتصال MySQL است؛ `config.php` را برای رفع آن حذف نکن.
+۶. `health.php` را باز کن. **در صورت نصب RC انتظار نسخه `1.3.0-rc.2` داری.** خطای 500 در این مرحله نیازمند خواندن PHP `error_log` و بررسی افزونه‌ها/اتصال MySQL است؛ `config.php` را برای رفع آن حذف نکن.
 
 ## ۴. Cron در cPanel
 
@@ -74,7 +74,7 @@ pw-test/
 ```sh
 PW_SERVER_BASE='https://example.com/pw-test' \
 PW_PROVISION_TOKEN='ONE_TIME_PRIVATE_TOKEN' \
-PW_AGENT_VERSION='v1.3.0-rc.1' \
+PW_AGENT_VERSION='v1.3.0-rc.2' \
 sh -c "$(wget -qO- 'https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh')"
 ```
 
