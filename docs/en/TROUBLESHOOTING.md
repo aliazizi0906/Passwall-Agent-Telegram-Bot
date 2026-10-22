@@ -1,5 +1,7 @@
 # Troubleshooting
 
+> **Current public pre-release: v1.3.0-rc.2.** Some troubleshooting sections below refer to the legacy v0.6 Agent/backend. For the current RC install and upgrade path, use [Install](INSTALL_V1_3.md) and [Upgrade](UPGRADE_V1_3.md).
+
 [Documentation Home](README.md) · [فارسی](../fa/TROUBLESHOOTING.md)
 
 ## Web Setup does not open
