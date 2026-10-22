@@ -1,4 +1,4 @@
-# ارتقا از PW Agent v0.6.0 به v1.3.0-rc.1
+# ارتقا از PW Agent v0.6.0 به v1.3.0-rc.2
 
 [نصب جدید](INSTALL_V1_3.md) · [English](../en/UPGRADE_V1_3.md) · [وضعیت قابلیت‌ها](CONTROL_CENTER_PROGRESS.md)
 
@@ -7,7 +7,7 @@
 ## نکته مهم درباره پایداری اطلاعات
 - فایل `config.php` و Instance Key را هرگز حذف یا بازتولید نکن. Secretهای `pw_device_registry` در دیتابیس به این کلید وابسته‌اند.
 - با نصب مجدد Setup روی Bot فعلی، Telegram Webhook می‌تواند به Backend دیگری منتقل شود. برای Staging یک Bot جداگانه بساز.
-- Backend RC و Agent RC هر دو نسخه `1.3.0-rc.1` دارند؛ اگر Agent قبلی را نگه داری، بعضی فرمان‌های تازه `unsupported action` برمی‌گردانند.
+- Backend RC و Agent RC هر دو نسخه `1.3.0-rc.2` دارند؛ اگر Agent قبلی را نگه داری، بعضی فرمان‌های تازه `unsupported action` برمی‌گردانند.
 - تنظیمات `/etc/pw-agent/config.json`، `/etc/config/passwall2`، `/etc/config/network`، `/etc/config/wireless` و `/etc/config/firewall` را ذخیره کن.
 
 ## ۱. تهیه بکاپ
@@ -32,10 +32,10 @@ cp -p /etc/pw-agent/config.json /tmp/pw-agent-v060-config.json
 ## ۳. ارتقای Backend اصلی (فقط پس از تایید عملی)
 
 1. یک بازه نگهداری انتخاب کن؛ عملیات زمان‌بندی‌شده و تغییرات حساس را در این بازه متوقف کن.
-2. ZIP رسمی `pw-agent-cpanel-v1.3.0-rc.1.zip` را دریافت و SHA256 آن را تطبیق بده. اگر فایل هنوز در Release نیست، این مرحله امکان‌پذیر نیست.
+2. ZIP `pw-agent-cpanel-v1.3.0-rc.2.zip` را از [Release امضاشده نسخه RC2](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.3.0-rc.2) دریافت و SHA256/امضای آن را بررسی کن. اگر Asset یا امضا موجود نبود، ادامه نده.
 3. در cPanel یک فولدر **Staging برای Extract** ایجاد کن؛ ZIP را همان‌جا Extract کن. نسخه جدید `config.php` تولیدی ندارد.
 4. در File Manager محتویات جدید را روی Backend موجود **بدون حذف فولدر مقصد** کپی کن. فایل قدیمی `config.php`، `releases/` و داده Runtime را حفظ کن؛ فایل‌های جدید `control/`، API و Dashboard باید وارد شوند. از همان مسیر قبلی استفاده کن تا Base URL و Webhook تغییر نکنند.
-5. `health.php` را باز کن؛ باید JSON `ok:true` و `version:1.3.0-rc.1` نشان دهد. اگر 500 شد، از `error_log` با جزئیات خطا بررسی کن. **به جای حذف دیتابیس/کانفیگ، بکاپ را بازگردان.**
+5. `health.php` را باز کن؛ باید JSON `ok:true` و `version:1.3.0-rc.2` نشان دهد. اگر 500 شد، از `error_log` با جزئیات خطا بررسی کن. **به جای حذف دیتابیس/کانفیگ، بکاپ را بازگردان.**
 6. Cron قدیمی را چک کن؛ اگر فعال است، **Cron دوم** نساز. در cPanel زمان‌بندی Once Per Minute را نگه دار و مسیر واقعی `cron/monitor.php` را بررسی کن.
 7. Mini App تلگرام را باز کن؛ کاربر Owner، Device Scope، Fleet و Command Queue باید درست باشند.
 
