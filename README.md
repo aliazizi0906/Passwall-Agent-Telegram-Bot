@@ -1,51 +1,71 @@
 # PW Agent — OpenWrt Network Control Center
 
-**Self-hosted management for OpenWrt + Passwall2, Telegram and a local LuCI panel.**
+**OpenWrt + Passwall2 · Telegram Mini App · Local LuCI · cPanel PHP/MySQL**
 
-[راهنمای فارسی](docs/fa/INSTALL_V1_3.md) · [English installation](docs/en/INSTALL_V1_3.md) · [Upgrade from v0.6 / ارتقا](docs/fa/UPGRADE_V1_3.md) · [Features / قابلیت‌ها](docs/fa/CONTROL_CENTER_V1_3.md) · [Changelog](CHANGELOG.md) · [GitHub Releases](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases)
+[Latest public release: v1.3.0-rc.2](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.3.0-rc.2) · [Latest stable: v0.6.0](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0) · [فارسی](#فارسی) · [Install v1.3 RC](docs/en/INSTALL_V1_3.md) · [Upgrade from v0.6](docs/en/UPGRADE_V1_3.md) · [Implementation status](docs/en/CONTROL_CENTER_PROGRESS.md) · [Changelog](CHANGELOG.md)
 
-> **Release status:** Current stable series: **v0.6.0**. The `feature/v1.3-control-center` branch is **v1.3.0-rc.1 (release candidate source)**, not a final production-certified v1.3.0 release. Do not treat all WRTPro-reference features as implemented. Development progress and gaps: [FA](docs/fa/CONTROL_CENTER_PROGRESS.md) / [EN](docs/en/CONTROL_CENTER_PROGRESS.md).
+> **Release status:** `v1.3.0-rc.2` is the latest publicly downloadable **pre-release**, not a stable/production-certified `v1.3.0`. The latest stable release remains `v0.6.0`. Version references inside `features_v060.go`, the changelog, and the legacy install/migration guides describe historical v0.6 behavior; they do not mean v1.3 RC is unpublished.
 
-## English
+## What is PW Agent?
 
-PW Agent controls your OpenWrt routers through a PHP 8.1+/MySQL backend that can run on shared cPanel hosting. The router **polls the server over outbound HTTPS** with authenticated HMAC requests—no WAN management port or public IP is necessary.
+PW Agent is a self-hosted management stack for OpenWrt routers running Passwall2. The router initiates authenticated outbound HTTPS/HMAC requests to a PHP/MySQL backend, so no public IP or WAN management port is required. The backend can run on cPanel shared hosting without a Node.js runtime or hosting-side SSH.
 
-v1.3 RC introduces **PW Control Center**:
-- **Telegram Mini App /control/**: Persian/English, RTL/LTR, light/dark UI; router selection, real monitoring history, health checks and read-only views for LAN clients, Wi-Fi, DNS and routes.
-- **Passwall2 tools**: node list and tests, select node, import configuration links, add/update/remove subscriptions, relay ranking, shunt overview and basic failover controls. Mutations require RBAC and explicit confirmation.
-- **LuCI local panel** at *Services → PW Control Center*: offline read-only system, Wi-Fi, clients, diagnostic, capability and optional GoogleWifiLED status.
-- **Agent diagnostics**: `agent.capabilities`, `network.doctor`, `led.status`; safely report unsupported hardware instead of showing nonfunctional cellular/LED controls.
-- **Existing v0.6 services remain**: monitoring/alerts, fleet, roles, audit, backups, schedules and signed-agent-update support.
+## v1.3.0-rc.2 preview
 
-**Important limitations:** This is a staged development preview. Per-client blocking/rate limits, WAN/Wi-Fi safe-apply rollback, cellular tower/band lock and SMS/USSD, RGB LED mutations, DNS/IPv6 kill-switch guarantees, real SQM/bufferbloat, standalone browser authentication and tested backend rollback are **not complete**. The UI labels them as planned. Read the [implementation matrix](docs/en/CONTROL_CENTER_PROGRESS.md).
+- **Telegram PW Control Center:** Persian/English, RTL/LTR, light/dark UI, router selection, real monitoring data and history, health checks.
+- **Passwall2 tools:** view/test/select nodes, import links, manage subscriptions and inspect Shunt/relay status with server-side validation and device-scoped permissions.
+- **Local LuCI panel:** offline read-only router/system status, LAN clients, Wi-Fi, Network Doctor, capability discovery and optional GoogleWifiLED status.
+- **Agent diagnostics:** `agent.capabilities`, `network.doctor`, `led.status` plus JSON CLI views.
+- **Existing platform:** fleet, RBAC, audit, monitoring/alerts, schedules, backups and signed Agent update support.
+- **Release assets:** cPanel ZIP plus six OpenWrt architectures, each with SHA256 and Ed25519 signature.
 
-### Installation (when an RC build has been published)
+### Known release limits
 
-1. Create a MySQL database/user and a Telegram bot; send `/start` to the bot.
-2. Download the matching `pw-agent-cpanel-v1.3.0-rc.1.zip` from the **corresponding GitHub prerelease**. If no prerelease asset appears, the build has **not been published** yet; use CI preview artifacts only on staging.
-3. In **cPanel → File Manager**, create a test directory (such as `public_html/pw-test`), upload/extract the ZIP **directly there** (it contains `setup.php`, `api/`, `control/` at the ZIP root). Preserve hidden `.htaccess` files.
-4. Visit `https://YOUR-DOMAIN/pw-test/setup.php`; complete Web Setup. Copy the **generated** cron command; set its schedule separately to **Once Per Minute** in cPanel (do not paste the five cron stars into the Command field).
-5. On an **unimportant test router**, run the one-time provisioning command displayed by Setup. It is pinned to `v1.3.0-rc.1` and needs the corresponding signed agent release asset. Keep tokens out of tickets and screenshots.
-6. Open the Telegram bot → Mini App Dashboard → **PW Control Preview**. In LuCI open *Services → PW Control Center*. Verify `health.php`, agent version, CLI `/usr/bin/pw-agent diagnose-json` and Network Doctor.
+This is a release candidate. Per-client traffic shaping/blocking, robust WAN/Wi-Fi/firewall safe-apply rollback, leak-proof IPv6/DNS kill switch, cellular tower/band lock and SMS/USSD, RGB LED writes, production SQM/UPnP controls, native VPN adapters and standalone browser login are **not complete or hardware-certified**. Do not infer these capabilities from a roadmap or UI mockup. See the [implementation matrix](docs/en/CONTROL_CENTER_PROGRESS.md).
 
-For full prerequisites, verification and troubleshooting read the [English installation guide](docs/en/INSTALL_V1_3.md). For existing deployments **do not rerun Setup or delete config.php**; follow [migration guidance](docs/en/UPGRADE_V1_3.md).
+## Quick install — v1.3.0-rc.2 (staging only)
 
-### Architecture
+1. Read the [full installation guide](docs/en/INSTALL_V1_3.md) or [راهنمای فارسی](docs/fa/INSTALL_V1_3.md).
+2. Download [`pw-agent-cpanel-v1.3.0-rc.2.zip`](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/download/v1.3.0-rc.2/pw-agent-cpanel-v1.3.0-rc.2.zip) and verify its published SHA256/signature.
+3. In cPanel File Manager, extract the ZIP **directly into an isolated staging directory**. It contains `setup.php`, `api/`, `control/` and related files at the archive root.
+4. Create a separate staging database and Telegram Bot, then open `https://YOUR-DOMAIN/YOUR-PATH/setup.php`.
+5. Configure cPanel Cron as documented and run the one-time provisioning command generated by Setup on a noncritical test router.
+6. Open the new panel inside the authorized Telegram Mini App and inspect local *LuCI → Services → PW Control Center*.
+
+**Do not run this RC against production without a tested backup and rollback.** Never reuse your production Telegram Bot for staging, delete `config.php`, or expose tokens/database dumps.
+
+For the stable v0.6.0 installer, use the [legacy installation guide](docs/en/INSTALL.md) and select the matching v0.6.0 release asset. Existing v0.6 deployments should follow the [v0.6 → v1.3 RC migration guide](docs/en/UPGRADE_V1_3.md); do not rerun Setup as an upgrade.
+
+## Architecture
 
 ```text
-Telegram Bot → HTTPS PHP API + MySQL + Cron
-                     ↑
-             signed HTTPS HMAC
-                     ↑
-                 Go Agent
-                  OpenWrt
-                /       \
-      Passwall2/UCI      Local LuCI Control (read-only)
+Telegram Mini App / Bot
+        │ HTTPS
+        ▼
+PHP Backend + MySQL + Cron
+        ▲
+        │ outbound HTTPS + HMAC
+        ▼
+Go Agent on OpenWrt ── Passwall2 / UCI / ubus / procd
+        │
+        └── Local read-only LuCI Control Center
 ```
 
-**Architecture compatibility:** release workflow builds `armv7`, `arm64`, `amd64`, `386`, `mips`, `mipsle`; actual OpenWrt hardware testing is still needed. Backend remains compatible with cPanel and PHP without a Node.js runtime.
+## Documentation
 
-### Build & verify
+| Guide | Description |
+|---|---|
+| [English v1.3 RC installation](docs/en/INSTALL_V1_3.md) / [فارسی](docs/fa/INSTALL_V1_3.md) | New staging install |
+| [English upgrade guide](docs/en/UPGRADE_V1_3.md) / [فارسی](docs/fa/UPGRADE_V1_3.md) | Safe migration from v0.6 with backup/rollback |
+| [Implementation matrix](docs/en/CONTROL_CENTER_PROGRESS.md) / [وضعیت فارسی](docs/fa/CONTROL_CENTER_PROGRESS.md) | Implemented vs incomplete |
+| [Features](docs/en/FEATURES.md) / [قابلیت‌ها](docs/fa/FEATURES.md) | Baseline and legacy capabilities |
+| [Architecture](docs/en/ARCHITECTURE.md) / [معماری](docs/fa/ARCHITECTURE.md) | Components and request flow |
+| [Security](docs/en/SECURITY.md) / [امنیت](docs/fa/SECURITY.md) | HMAC, secrets, signatures and provisioning |
+| [Updates](docs/en/UPDATES.md) / [به‌روزرسانی](docs/fa/UPDATES.md) | Release and update process |
+| [Development](docs/en/DEVELOPMENT.md) / [توسعه](docs/fa/DEVELOPMENT.md) | Local build, tests and CI |
+| [Changelog](CHANGELOG.md) | Versioned history |
+
+## Build and validate
 
 ```sh
 gofmt -l *.go
@@ -56,37 +76,57 @@ php server/tests/setup_core_test.php
 php server/tests/v130_command_validation_test.php
 python3 scripts/check_dashboard_js.py
 node --check openwrt/luci/www/luci-static/resources/view/pw-agent/control.js
+sh -n openwrt/install-remote.sh
+sh -n openwrt/install.sh
+sh -n openwrt/install-update.sh
 bash scripts/package_cpanel.sh
 ```
-
-Only push signed release assets after the matching version, CI, staging upgrade, authorization checks and rollback verification pass.
 
 ---
 
 ## فارسی
 
-**PW Agent** سامانه مدیریت شخصی روترهای OpenWrt و Passwall2 است که با PHP/MySQL روی هاست اشتراکی cPanel نصب می‌شود و از طریق تلگرام به روتر متصل است. ارتباط روتر به سرور خروجی و مبتنی بر HTTPS/HMAC است؛ نیازی به باز کردن پورت مدیریتی روی اینترنت نیست.
-
-### امکانات نسخه توسعه ۱.۳
-
-- **پنل PW Control:** طراحی واکنش‌گرا، فارسی و انگلیسی، RTL/LTR، تم روشن و تاریک، مدیریت چند روتر و نمودارهایی با اطلاعات واقعی.
-- **Passwall2:** نمایش/تست/انتخاب نود، ورود لینک، افزودن/به‌روزرسانی/حذف Subscription، رتبه‌بندی Relay و مشاهده Shunt.
-- **شبکه:** نمایش Wi-Fi، دستگاه‌های LAN، وضعیت DNS و Route، مانیتورینگ و Network Doctor.
-- **پنل محلی LuCI:** مشاهده وضعیت Router، Wi-Fi، Clients، Diagnostics، قابلیت‌های سخت‌افزاری و وضعیت اختیاری GoogleWifiLED حتی بدون اتصال به سرور.
-- **قابلیت‌های قبلی:** مدیریت Fleet، RBAC، Alert، Backup، Schedule و Audit.
-
-**موارد هنوز تکمیل‌نشده:** کنترل سرعت و قطع اینترنت کلاینت‌ها، تنظیمات WAN/Wi-Fi با Rollback، Kill Switch و جلوگیری قطعی از Leak، تنظیم باند و دکل مودم و SMS/USSD، تغییر رنگ LED، SQM/QoS پیشرفته و نسخه نهایی مستقل مرورگر. [گزارش دقیق](docs/fa/CONTROL_CENTER_PROGRESS.md)
-
-### نصب و ارتقا
-
-**نصب آزمایشی جدید:** از [راهنمای قدم‌به‌قدم نصب نسخه ۱.۳](docs/fa/INSTALL_V1_3.md) استفاده کن. ابتدا بسته Backend مخصوص cPanel را از GitHub Release Candidate دریافت کن؛ اگر بسته هنوز منتشر نشده، از Artifact تست CI فقط برای محیط Staging استفاده کن. نصب روتر به همان نسخه بسته امضاشده وابسته است.
-
-**ارتقا از v0.6:** از [راهنمای مهاجرت v0.6 به v1.3 RC](docs/fa/UPGRADE_V1_3.md) پیروی کن. **`config.php`، کلیدهای Runtime، دیتابیس یا تنظیمات Agent فعلی را پاک نکن.** قبل از ارتقا Backup مستقل داشته باش.
-
-**نکته Cron:** در cPanel گزینه `Once Per Minute` را جداگانه انتخاب کن. در فیلد Command فقط فرمان PHP تولیدشده توسط Setup را قرار بده، نه `* * * * *` ابتدا را.
+**PW Agent** سامانه مدیریت Self-hosted برای روترهای OpenWrt و Passwall2 است. روتر با درخواست‌های خروجی HTTPS/HMAC به Backend مبتنی بر PHP/MySQL متصل می‌شود؛ بنابراین به IP عمومی یا پورت مدیریتی باز روی WAN نیاز نیست. Backend روی cPanel و بدون Node.js قابل اجراست.
 
 ### وضعیت انتشار
 
-`v1.3.0-rc.1` برچسب برنامه‌ریزی‌شده برای نخستین Release Candidate است؛ وجود سورس در GitHub **به معنای وجود Release رسمی و قابل نصب نیست**. وقتی بسته‌ها امضا و منتشر شدند، فایل‌های cPanel ZIP و شش معماری OpenWrt در [صفحه Releases](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases) دیده می‌شوند. تا آن زمان `main` و نصب `v0.6.0` را تغییر نده.
+- **آخرین نسخه عمومی قابل دانلود:** `v1.3.0-rc.2` — نسخه آزمایشی (Pre-release).
+- **آخرین نسخه پایدار:** `v0.6.0`.
+- نسخه `v1.3.0` هنوز Stable/GA نیست؛ نصب RC فقط برای Staging و روتر آزمایشی توصیه می‌شود.
 
-**Maintainer source:** [GitHub repository](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot) · [Feature branch](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/tree/feature/v1.3-control-center) · [PR #5](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/pull/5)
+### قابلیت‌های نسخه آزمایشی ۱.۳
+
+- پنل PW Control Center داخل Telegram Mini App با فارسی/انگلیسی، RTL/LTR و تم روشن/تاریک.
+- نمایش داده واقعی Monitoring، تاریخچه Metrics، وضعیت روتر و انتخاب دستگاه.
+- ابزارهای Passwall2 برای مشاهده/تست/انتخاب Node، ورود لینک و مدیریت Subscription با کنترل مجوزها.
+- پنل محلی LuCI با وضعیت سیستم، Wi-Fi، دستگاه‌های LAN، Network Doctor و شناسایی قابلیت سخت‌افزار؛ این بخش برای مشاهده وضعیت به Backend وابسته نیست.
+- نسخه‌های امضاشده Agent برای شش معماری و ZIP نصب Backend برای cPanel.
+
+**موارد ناقص:** محدودسازی سرعت یا قطع اینترنت هر کلاینت، Rollback امن تغییرات WAN/Wi-Fi/Firewall، Kill Switch تضمین‌شده DNS/IPv6، کنترل باند/دکل مودم و SMS/USSD، تغییر رنگ RGB LED، SQM/UPnP پیشرفته و ورود مستقل مرورگر هنوز کامل یا روی سخت‌افزار واقعی تأیید نشده‌اند. [جدول وضعیت کامل](docs/fa/CONTROL_CENTER_PROGRESS.md)
+
+### نصب نسخه ۱.۳ RC
+
+۱. [راهنمای نصب کامل فارسی](docs/fa/INSTALL_V1_3.md) را بخوان.
+۲. [ZIP مخصوص cPanel نسخه RC2](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/download/v1.3.0-rc.2/pw-agent-cpanel-v1.3.0-rc.2.zip) را از Release دریافت و SHA256/امضا را بررسی کن.
+۳. ZIP را مستقیماً داخل یک پوشه Staging در cPanel استخراج کن؛ فایل `setup.php` باید در ریشه همان پوشه باشد.
+۴. Database و Telegram Bot آزمایشی جدا بساز و Setup را اجرا کن.
+۵. Cron را طبق راهنما تنظیم و فرمان Provisioning تولیدشده را روی یک روتر غیرحیاتی اجرا کن.
+۶. پنل را داخل Telegram Mini App و بخش *LuCI → Services → PW Control Center* بررسی کن.
+
+**روی سرور اصلی یا روتر حیاتی، بدون Backup و Rollback آزمایش‌شده نصب نکن.** فایل `config.php` و Tokenها را حذف یا منتشر نکن.
+
+برای نصب پایدار `v0.6.0` از [راهنمای قدیمی نصب](docs/fa/INSTALL.md) و Asset هم‌نسخه استفاده کن. برای ارتقا از v0.6، [راهنمای مهاجرت RC](docs/fa/UPGRADE_V1_3.md) را دنبال کن؛ Setup نصب تازه را به‌عنوان روش Upgrade اجرا نکن.
+
+### مستندات مهم
+
+- [نصب نسخه ۱.۳](docs/fa/INSTALL_V1_3.md)
+- [ارتقا از v0.6 به v1.3 RC](docs/fa/UPGRADE_V1_3.md)
+- [وضعیت پیاده‌سازی و قابلیت‌های ناقص](docs/fa/CONTROL_CENTER_PROGRESS.md)
+- [معماری](docs/fa/ARCHITECTURE.md) · [امنیت](docs/fa/SECURITY.md) · [به‌روزرسانی](docs/fa/UPDATES.md)
+- [Changelog](CHANGELOG.md) · [صفحه Releases](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases)
+
+### تست و Build
+
+دستورهای Go، PHP، JavaScript و Shell بالا برای تست محلی در بخش انگلیسی آمده‌اند. CI نسخه RC2 نیز تست‌ها و بسته‌های Release را تولید می‌کند.
+
+**تاریخچه نسخه‌ها:** عبارت‌های `v0.6` در فایل‌های `features_v060.go`، Changelog و راهنماهای Legacy برای توصیف قابلیت‌های تاریخی یا مسیر مهاجرت حفظ شده‌اند؛ این موارد به معنی منتشرنشدن RC2 نیستند.
