@@ -1,6 +1,6 @@
 # PW Control Center — v1.3 development status
 
-> **This is not a final v1.3.0 release.** Changes are confined to `feature/v1.3-control-center`, with the production `main` branch and deployed v0.6 installation unchanged.
+> **v1.3.0-rc.2 is published as a public pre-release, not final/stable v1.3.0.** The code is available in the repository and the release assets are downloadable; existing deployed v0.6 installations remain unchanged until explicitly upgraded.
 
 ## Implemented for staging verification
 - Independent `server/control/` Mini App preview with FA/EN, RTL/LTR and light/dark modes.
@@ -20,6 +20,6 @@
 - Hardware tests on OpenWrt 24/25, credential/authorization review, v0.6 production migration tests.
 - A signed official `v1.3.0` release and end-to-end provisioning verification.
 
-**Testing:** Use an isolated staging backend and noncritical OpenWrt router. The preview currently requires a Telegram Mini App context. Older v0.6 agents do not recognize new command names. Do not replace production binaries or backend with this branch.
+**Testing:** Use an isolated staging backend and noncritical OpenWrt router. The preview currently requires a Telegram Mini App context. Older v0.6 agents do not recognize new command names. Do not replace production binaries or backend without the documented staging, backup and rollback process.
 
 The project must not claim unavailable hardware controls are operational. CI success validates only covered tests, not production rollout.
