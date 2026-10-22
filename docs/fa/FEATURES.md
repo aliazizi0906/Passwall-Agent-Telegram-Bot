@@ -1,5 +1,7 @@
 # قابلیت‌ها
 
+> **آخرین نسخه عمومی آزمایشی: v1.3.0-rc.2.** این صفحه قابلیت‌های پایه و نسخه v0.6 را مستند می‌کند. برای تفکیک امکانات واقعاً پیاده‌سازی‌شده از موارد برنامه‌ریزی‌شده، [جدول وضعیت v1.3](CONTROL_CENTER_PROGRESS.md) و [راهنمای نصب RC](INSTALL_V1_3.md) را ببین؛ قابلیت‌های Roadmap لزوماً فعال نیستند.
+
 [صفحه مستندات](README.md) · [English](../en/FEATURES.md)
 
 ## مدیریت OpenWrt
@@ -113,7 +115,7 @@ Public Key رسمی داخل Agent Embed شده و در `UPDATE_PUBLIC_KEY.b64` 
 
 برای جزئیات [معماری](ARCHITECTURE.md) و [امنیت](SECURITY.md) را ببینید.
 
-## Fleet Management در v0.6
+## Fleet Management (قابلیت‌های پایه v0.6)
 
 نسخه v0.6 قابلیت‌های Multi-Device Fleet، Device Registry مبتنی بر Database، Group/Tag/Location، Zero-Touch Provisioning از Telegram و Dashboard، RBAC با Device Scope، Audit Log، Config History رمزنگاری‌شده همراه Rollback، Monitoring و Alert Rule پیشرفته، Maintenance Mode، Scheduled Actions و Mini App Dashboard را اضافه می‌کند.
 
