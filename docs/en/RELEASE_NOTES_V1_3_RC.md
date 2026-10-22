@@ -2,6 +2,8 @@
 
 > **PRE-RELEASE / نسخه آزمایشی** — Do not deploy to a critical production router. This is **not** a feature-complete WRTPro replacement or a stable v1.3.0 release.
 
+[فارسی: release notes](../fa/RELEASE_NOTES_V1_3_RC.md) · [Install](INSTALL_V1_3.md) · [Upgrade](UPGRADE_V1_3.md)
+
 ## What's new / تغییرات اصلی
 
 - **PW Control Center**: bilingual Persian/English RTL/LTR, light/dark Telegram Mini App preview with real fleet/monitoring data.
