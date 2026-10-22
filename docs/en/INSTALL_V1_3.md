@@ -1,8 +1,8 @@
-# PW Agent v1.3.0-rc.1 — staging installation
+# PW Agent v1.3.0-rc.2 — staging installation
 
 [Home](../../README.md) · [فارسی](../fa/INSTALL_V1_3.md) · [Upgrade](UPGRADE_V1_3.md) · [Implementation matrix](CONTROL_CENTER_PROGRESS.md)
 
-> **Release candidate only.** A pinned `PW_AGENT_VERSION='v1.3.0-rc.1'` installation cannot succeed until matching signed assets are published in GitHub Releases. Do not install RC source onto a critical production router.
+> **Published pre-release, staging only.** Matching signed assets for `v1.3.0-rc.2` are available from [GitHub Releases](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.3.0-rc.2). This is not production certification; do not install onto a critical production router.
 
 ## 1. Prerequisites
 
@@ -14,7 +14,7 @@ Use a **separate staging domain/subdirectory, database and Telegram Bot**, becau
 
 ## 2. Download and verify cPanel package
 
-When the GitHub prerelease exists, obtain `pw-agent-cpanel-v1.3.0-rc.1.zip` and its `.sha256` from [Releases](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases). Compare SHA256 before uploading; verify an accompanying `.sig` against a previously trusted signing public key if available. If the asset is missing, the release is not published. CI artifacts are staging previews, not official releases.
+Download `pw-agent-cpanel-v1.3.0-rc.2.zip` and its `.sha256` from the [v1.3.0-rc.2 pre-release](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.3.0-rc.2). Compare SHA256 before uploading; verify the `.sig` against a previously trusted signing public key. If an expected asset is missing, stop and do not substitute a random artifact.
 
 The ZIP contains the contents of `server/` at the archive root, **not an enclosing server directory**.
 
@@ -25,7 +25,7 @@ The ZIP contains the contents of `server/` at the archive root, **not an enclosi
 3. Upload/extract the ZIP directly there. Verify `setup.php`, `api/`, `control/`, `dashboard/`, `cron/` and hidden `.htaccess` exist at that level.
 4. Create a new test bot with BotFather; message it `/start`.
 5. Open `https://example.com/pw-test/setup.php`, enter MySQL and Bot details, owner Telegram numeric ID, initial router ID/name and timezone; complete installation.
-6. Open `https://example.com/pw-test/health.php`. The installed RC should report `"version":"1.3.0-rc.1"`. If HTTP 500 occurs, inspect PHP error_log and the DB connection. **Do not delete config.php as a troubleshooting shortcut.**
+6. Open `https://example.com/pw-test/health.php`. The installed RC should report `"version":"1.3.0-rc.2"`. If HTTP 500 occurs, inspect PHP error_log and the DB connection. **Do not delete config.php as a troubleshooting shortcut.**
 
 ## 4. Configure cron correctly
 
@@ -44,7 +44,7 @@ Only after the matching signed agent asset is published, run the exact one-time 
 ```sh
 PW_SERVER_BASE='https://example.com/pw-test' \
 PW_PROVISION_TOKEN='PRIVATE_SINGLE_USE_TOKEN' \
-PW_AGENT_VERSION='v1.3.0-rc.1' \
+PW_AGENT_VERSION='v1.3.0-rc.2' \
 sh -c "$(wget -qO- 'https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh')"
 ```
 
