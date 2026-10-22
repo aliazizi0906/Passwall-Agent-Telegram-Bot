@@ -45,6 +45,9 @@ jobs:
       - name: Web Setup tests
         run: php server/tests/setup_core_test.php
 
+      - name: Control Center input-validation tests
+        run: php server/tests/v130_command_validation_test.php
+
       - name: Shell syntax
         run: |
           sh -n openwrt/install.sh
