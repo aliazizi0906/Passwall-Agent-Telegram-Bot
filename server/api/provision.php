@@ -7,7 +7,11 @@ $body=json_decode_assoc(raw_body());
 $token=trim((string)($body['token']??''));
 if(!preg_match('/^[A-Za-z0-9_-]{32,128}$/',$token)) response_json(['ok'=>false,'error'=>'invalid provisioning token'],null,400);
 
-ensure_v050_schema();
+// Initialize/migrate the schema before starting a transaction.
+// MySQL DDL (including CREATE TABLE IF NOT EXISTS) implicitly commits an active transaction.
+// v060_device_secret() invokes ensure_v060_schema(), so it must not be the first caller
+// after the provisioning transaction has begun.
+ensure_v060_schema();
 $pdo=db();$pdo->beginTransaction();
 try{
     $hash=hash('sha256',$token);
