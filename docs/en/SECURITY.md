@@ -1,5 +1,7 @@
 # Security
 
+> **Current public pre-release: v1.3.0-rc.2.** This document contains version-specific v0.6 security and migration behavior. For the new control-center scope and known limitations, see the [implementation matrix](CONTROL_CENTER_PROGRESS.md). Preserve the original instance key during upgrades.
+
 [Documentation Home](README.md) · [فارسی](../fa/SECURITY.md)
 
 PW Agent is designed around outbound router communication and explicit command handling. It does not require a public router IP or a WAN SSH exposure.
