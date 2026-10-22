@@ -10,7 +10,7 @@
 |---|---|
 | [Install](INSTALL.md) | Terminal-free cPanel Web Setup + OpenWrt installation |
 | [Features](FEATURES.md) | Complete feature overview |
-| [Fleet & Automation](FLEET.md) | v0.6 multi-device, RBAC, audit, monitoring and schedules |
+| [Fleet & Automation](FLEET.md) | v0.6 baseline: fleet, RBAC, audit, monitoring and schedules; v1.3 RC preview linked above |
 | [Architecture](ARCHITECTURE.md) | Components and request flow |
 | [Security](SECURITY.md) | Authentication, encryption and update trust |
 | [Updates](UPDATES.md) | User updates and maintainer releases |
@@ -42,6 +42,6 @@ Passwall2 must already be installed on the router.
 
 ## cPanel installation model
 
-PW Agent v0.6 does not require cPanel Terminal or a fixed filesystem path.
+The cPanel backend is browser-first: neither the v0.6 stable release nor the v1.3 RC requires cPanel Terminal or a fixed filesystem path.
 
 Upload the contents of `server/` to any web-accessible directory and open `setup.php`. The browser installer detects the deployment URL, creates the database schema/configuration, registers the Telegram webhook and generates the exact Cron and OpenWrt provisioning commands for that installation.
