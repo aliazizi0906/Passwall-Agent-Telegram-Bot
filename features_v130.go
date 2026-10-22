@@ -238,7 +238,6 @@ func hasRuntimeFileV13(dir, file string) bool {
 	return err == nil
 }
 
-
 func hasGoogleWifiLEDProviderV13() bool {
 	if _, err := os.Stat("/usr/libexec/googlewifi-led/googlewifi-led.sh"); err != nil {
 		return false
