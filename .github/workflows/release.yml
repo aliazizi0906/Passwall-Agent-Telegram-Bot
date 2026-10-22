@@ -2,6 +2,8 @@ name: Release
 
 on:
   push:
+    branches:
+      - "feature/v1.3-control-center"
     tags:
       - "v*"
   workflow_dispatch:
@@ -16,6 +18,8 @@ permissions:
 
 jobs:
   release:
+    # Release from the feature branch ONLY for an explicitly labelled RC commit.
+    if: github.ref != 'refs/heads/feature/v1.3-control-center' || contains(github.event.head_commit.message, '[publish-rc]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +32,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+          if [ "$GITHUB_REF" = "refs/heads/feature/v1.3-control-center" ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            RELEASE_TAG="v$(php -r 'require "server/setup_core.php"; echo pw_setup_version();')"
+            [[ "$RELEASE_TAG" == v1.3.0-rc.* ]] || { echo "Only RC versions may publish from the feature branch" >&2; exit 1; }
+          elif [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             RELEASE_TAG="${{ inputs.version }}"
             if [ "$GITHUB_REF_NAME" != "main" ]; then
               [ "$GITHUB_REF_NAME" = "feature/v1.3-control-center" ] && [[ "$RELEASE_TAG" == v1.3.0-rc.* ]] || {
