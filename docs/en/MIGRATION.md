@@ -1,10 +1,10 @@
-# Migration
+# Legacy migration guide — v0.5.x to v0.6.x
 
-> **v1.3 release candidate:** For the PW Control Center, use the [v1.3 RC install guide](INSTALL_V1_3.md), [migration guide](UPGRADE_V1_3.md) and [implementation status](CONTROL_CENTER_PROGRESS.md). Historical sections below document the v0.6 stable series; RC is not production certified.
+> **Latest public pre-release: v1.3.0-rc.2.** This page documents only the historical v0.5→v0.6 migration. For the current v0.6→v1.3 RC path, use [Upgrade v1.3 RC](UPGRADE_V1_3.md), [Install v1.3 RC](INSTALL_V1_3.md) and [implementation status](CONTROL_CENTER_PROGRESS.md). RC is not production-certified.
 
 [Documentation Home](README.md) · [فارسی](../fa/MIGRATION.md)
 
-## Upgrade from v0.5.x to v0.6.x
+## Historical upgrade: v0.5.x → v0.6.x
 
 v0.6 keeps the outbound Agent protocol from v0.5 and adds Fleet Management, RBAC, Audit, Config History/Rollback, advanced Monitoring, Maintenance and Scheduling.
 
