@@ -260,6 +260,8 @@ func (a *Agent) execute(c *Command) (interface{}, error) {
 		return systemStatus()
 	case "agent.capabilities":
 		return capabilityReportV13(), nil
+	case "led.status":
+		return ledStatusV13()
 	case "network.doctor":
 		return networkDoctorV13()
 	case "system.interfaces":
