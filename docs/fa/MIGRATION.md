@@ -1,10 +1,10 @@
-# مهاجرت و ارتقا
+# راهنمای مهاجرت Legacy — از v0.5.x به v0.6.x
 
-> **نسخه ۱.۳ آزمایشی:** برای پنل PW Control Center، نصب تازه و ارتقا از v0.6 به راهنمای [نصب v1.3 RC](INSTALL_V1_3.md)، [ارتقا](UPGRADE_V1_3.md) و [وضعیت قابلیت‌ها](CONTROL_CENTER_PROGRESS.md) مراجعه کن. متن‌های پایین این صفحه درباره سری پایدار v0.6 هستند؛ پکیج ۱.۳ هنوز نسخه پایدار نیست.
+> **آخرین نسخه عمومی آزمایشی: v1.3.0-rc.2.** این صفحه فقط مسیر تاریخی ارتقا از v0.5 به v0.6 را توضیح می‌دهد. برای ارتقای فعلی از v0.6 به v1.3 RC از [راهنمای ارتقا](UPGRADE_V1_3.md)، [نصب](INSTALL_V1_3.md) و [وضعیت قابلیت‌ها](CONTROL_CENTER_PROGRESS.md) استفاده کن. RC هنوز نسخه پایدار نیست.
 
 [صفحه مستندات](README.md) · [English](../en/MIGRATION.md)
 
-## ارتقا از v0.5.x به v0.6.x
+## مسیر تاریخی ارتقا: v0.5.x ← v0.6.x
 
 نسخه v0.6 پروتکل Outbound Agent نسخه v0.5 را حفظ می‌کند و Fleet Management، RBAC، Audit، Config History/Rollback، Monitoring پیشرفته، Maintenance و Scheduler را اضافه می‌کند.
 
