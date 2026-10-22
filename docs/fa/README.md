@@ -8,7 +8,9 @@
 
 | بخش | توضیح |
 |---|---|
-| [نصب](INSTALL.md) | Web Setup بدون Terminal روی cPanel + نصب OpenWrt |
+| [نصب v1.3 RC](INSTALL_V1_3.md) | راهنمای نسخه عمومی آزمایشی فعلی |
+| [نصب Legacy](INSTALL.md) | راهنمای نسخه پایدار v0.6.0 |
+| [یادداشت انتشار RC2](RELEASE_NOTES_V1_3_RC.md) | تغییرات و محدودیت‌های v1.3.0-rc.2 |
 | [قابلیت‌ها](FEATURES.md) | معرفی کامل امکانات |
 | [Fleet و Automation](FLEET.md) | قابلیت‌های پایه v0.6؛ پیش‌نمایش پنل جدید در راهنمای v1.3 RC |
 | [معماری](ARCHITECTURE.md) | اجزا و جریان درخواست‌ها |
