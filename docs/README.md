@@ -10,7 +10,7 @@ Choose a language:
 - [Installation](en/INSTALL_V1_3.md) / [نصب](fa/INSTALL_V1_3.md)
 - [Upgrade from v0.6](en/UPGRADE_V1_3.md) / [ارتقا](fa/UPGRADE_V1_3.md)
 - [Implementation status](en/CONTROL_CENTER_PROGRESS.md) / [وضعیت پیاده‌سازی](fa/CONTROL_CENTER_PROGRESS.md)
-- [Release notes](en/RELEASE_NOTES_V1_3_RC.md)
+- [Release notes (EN)](en/RELEASE_NOTES_V1_3_RC.md) / [یادداشت انتشار فارسی](fa/RELEASE_NOTES_V1_3_RC.md)
 - [Changelog](../CHANGELOG.md)
 
 ## Baseline and legacy guides
