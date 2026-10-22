@@ -1,3 +1,4 @@
+// Hardware capabilities must never be reported unless verified at runtime.
 package main
 
 import (
