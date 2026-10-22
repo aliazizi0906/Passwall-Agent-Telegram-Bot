@@ -174,13 +174,19 @@ function internet(){
 }
 function proxy(){
  var m=latest();
- $('page').innerHTML='<div class="stack">'+hero()+'<section class="card"><div class="section-title">'+say('مدیریت فعلی Passwall2','Available Passwall2 controls')+' <span class="pill '+(status(metric(m,'passwall_running'))[1])+ '">'+status(metric(m,'passwall_running'))[0]+'</span></div><div class="actions">'+
+ var editor=has('passwall.modify')?'<section class="card"><div class="section-title">'+say('افزودن نود و اشتراک','Add node links or subscriptions')+'</div>'+
+ '<form data-passwall-form="passwall2.node.add_link" class="stack" style="margin-bottom:18px"><label>'+say('لینک‌های کانفیگ (یک یا چند لینک)','Configuration links (one or more)')+'<textarea name="link" required rows="3" maxlength="12000" placeholder="vless://..." style="width:100%;resize:vertical;background:var(--soft);color:var(--ink);padding:10px;border:1px solid var(--border);border-radius:9px"></textarea></label><button type="submit" class="action primary">'+say('وارد کردن لینک‌ها','Import node links')+'</button></form>'+
+ '<form data-passwall-form="passwall2.subscription.add" class="stack"><label>'+say('نام اشتراک','Subscription name')+'<input name="remark" required maxlength="80" style="display:block;width:100%;background:var(--soft);color:var(--ink);padding:10px;border:1px solid var(--border);border-radius:9px" placeholder="My Subscription"></label><label>Subscription HTTPS URL<input name="url" type="url" required maxlength="4096" pattern="https://.*" placeholder="https://…" style="display:block;width:100%;background:var(--soft);color:var(--ink);padding:10px;border:1px solid var(--border);border-radius:9px"></label><button class="action primary" type="submit">'+say('افزودن اشتراک','Add subscription')+'</button></form></section>':'';
+ $('page').innerHTML='<div class="stack">'+hero()+'<section class="card"><div class="section-title">'+say('مدیریت Passwall2','Passwall2 management')+' <span class="pill '+status(metric(m,'passwall_running'))[1]+'">'+status(metric(m,'passwall_running'))[0]+'</span></div><div class="actions">'+
  action('passwall2.status',say('وضعیت سرویس','Service status'),'passwall.read',false)+
- action('passwall2.nodes.list',say('لیست نودها','List nodes'),'passwall.read',false)+
+ action('passwall2.nodes.list',say('نودها و انتخاب سرور','Nodes & selection'),'passwall.read',false)+
+ action('passwall2.subscriptions.list',say('اشتراک‌ها','Subscriptions'),'passwall.read',false)+
+ action('passwall2.shunt.list',say('قوانین Shunt','Shunt rules'),'passwall.read',false)+
  action('passwall2.nodes.relay_ranking',say('رتبه‌بندی Relay','Rank relay nodes'),'passwall.read',false)+
  action('passwall2.failover.list',say('وضعیت Failover','Failover status'),'passwall.read',false)+
- action('passwall2.restart',say('ری‌استارت سرویس','Restart service'),'passwall.modify',true)+'</div></section>'+resultBox()+
- '<section class="card"><div class="section-title">'+say('در نقشه راه v1.3','Planned for v1.3')+'</div><div class="tags">'+['Node Editor','Subscription Manager','Smart Failover 2.0','Iran split routing','Kill Switch','IPv6 leak protection','WireGuard/OpenVPN adapters'].map(function(s){return '<span class="tag">'+esc(s)+'</span>';}).join('')+'</div><p class="muted" style="margin-top:15px">'+say('این کنترل‌ها تا زمان تکمیل API و تست‌های روی روتر فعال نخواهند شد.','These controls stay disabled until APIs and router-level tests are complete.')+'</p></section></div>';
+ action('passwall2.restart',say('راه‌اندازی مجدد سرویس','Restart Passwall2'),'passwall.modify',true)+'</div></section>'+
+ editor+resultBox()+
+ '<section class="card"><div class="section-title">'+say('محافظت پیشرفته (در حال توسعه)','Advanced protection (planned)')+'</div><div class="tags">'+['Smart Failover 2.0','Iran split routing','Kill Switch','IPv6 leak protection','WireGuard/OpenVPN adapters'].map(function(v){return '<span class="tag">'+esc(v)+'</span>';}).join('')+'</div><p class="muted" style="margin-top:15px">'+say('قابلیت‌های حفاظت از مسیر ترافیک بدون تست واقعی و مسیر Rollback فعال نمی‌شوند.','Packet-policy features remain disabled until path validation and recovery tests are complete.')+'</p></section></div>';
 }
 function routers(){
  var devices=state.fleet&&state.fleet.devices||[];
@@ -245,6 +251,25 @@ function renderCommandOutput(actionName,result){
   var clients=safe.clients;
   return '<div class="section-title">'+say('کلاینت‌های کشف‌شده','Discovered clients')+' ('+clients.length+')</div>'+
    (clients.map(function(c){return '<div class="device-row"><div><strong>'+esc(c.hostname||say('بدون نام','Unknown'))+'</strong><small>'+esc(c.ip||'—')+' · '+esc(c.mac||'—')+'</small></div><span class="pill">'+esc(c.interface||'—')+'</span></div>';}).join('')||'<div class="empty">'+say('دستگاهی شناسایی نشد.','No devices found.')+'</div>');
+ }
+ if((actionName==='passwall2.nodes.list'||actionName==='passwall2.node.add_link')&&safe&&Array.isArray(safe.nodes)){
+  return '<div class="section-title">'+say('نودهای Passwall2','Passwall2 nodes')+' ('+safe.nodes.length+')</div>'+
+    (safe.nodes.map(function(n){
+      var id=String(n.id||'');var ok=/^[A-Za-z0-9_-]{1,96}$/.test(id);
+      var buttons=ok&&has('passwall.modify')?'<div class="actions">'+
+       (!n.selected?'<button class="action" data-action-param="passwall2.node.select" data-param-id="'+esc(id)+'">'+say('انتخاب','Select')+'</button>':'')+
+       (!n.is_shunt?'<button class="action danger" data-action-param="passwall2.node.delete" data-param-id="'+esc(id)+'">'+say('حذف','Delete')+'</button>':'')+'</div>':'';
+      var test=ok?'<button class="action" data-action-param="passwall2.node.test" data-param-id="'+esc(id)+'">'+say('تست','Test')+'</button>':'';
+      return '<div class="device-row"><div><strong>'+esc(n.remarks||id)+(n.selected?' ●':'')+'</strong><small>'+esc(n.protocol||n.type||'—')+' · '+esc(n.address||'—')+'</small></div>'+test+buttons+'</div>';
+    }).join('')||'<div class="empty">'+say('نودی یافت نشد.','No nodes found.')+'</div>');
+ }
+ if((actionName==='passwall2.subscriptions.list'||actionName==='passwall2.subscription.add'||actionName==='passwall2.subscription.update'||actionName==='passwall2.subscription.delete')&&safe&&Array.isArray(safe.subscriptions)){
+   return '<div class="section-title">'+say('اشتراک‌های ثبت‌شده','Subscriptions')+' ('+safe.subscriptions.length+')</div>'+
+   (safe.subscriptions.map(function(n){
+    var id=String(n.id||'');var ok=/^[A-Za-z0-9_-]{1,96}$/.test(id);
+    return '<div class="device-row"><div><strong>'+esc(n.remark||id)+'</strong><small>'+esc(n.node_count||0)+' '+say('نود','nodes')+'</small></div>'+
+    (ok&&has('passwall.modify')?'<div class="actions"><button class="action" data-action-param="passwall2.subscription.update" data-param-id="'+esc(id)+'">'+say('به‌روزرسانی','Update')+'</button><button class="action danger" data-action-param="passwall2.subscription.delete" data-param-id="'+esc(id)+'">'+say('حذف','Delete')+'</button></div>':'')+'</div>';
+   }).join('')||'<div class="empty">'+say('اشتراکی ثبت نشده است.','No subscriptions registered.')+'</div>');
  }
  if(actionName==='wifi.list'&&safe&&Array.isArray(safe.wifi)){
   return '<div class="section-title">'+say('شبکه‌های تعریف‌شده','Configured SSIDs')+'</div>'+
@@ -319,13 +344,13 @@ async function refresh(){
   $('notice').textContent='';render();
  }catch(e){state.fleet=null;state.detail=null;$('notice').textContent=say('اتصال برقرار نشد: ','Connection failed: ')+e.message;render();}
 }
-async function command(id,confirmNeeded){
+async function command(id,confirmNeeded,params){
  if(state.busy)return;
  if(confirmNeeded&&!window.confirm(say('این عملیات ممکن است ارتباط روتر را تغییر دهد. مطمئنی؟','This action may affect router connectivity. Continue?')))return;
  state.busy=true;var buttons=document.querySelectorAll('[data-command]');buttons.forEach(function(b){b.disabled=true;});
  var out=$('feedback');if(out)out.textContent=say('در حال ارسال فرمان…','Submitting command…');
  try{
-  var ret=await api('command',{device_id:state.active,command_action:id,params:{}});
+  var ret=await api('command',{device_id:state.active,command_action:id,params:params||{},confirmed:!!confirmNeeded});
   if(out)out.textContent='Queued command #'+ret.command_id;
   var finished=false;
   for(var i=0;i<35;i++){
@@ -340,9 +365,22 @@ async function command(id,confirmNeeded){
  }catch(e){if(out)out.textContent=e.message;else $('notice').textContent=e.message;}
  finally{state.busy=false;buttons.forEach(function(b){b.disabled=false;});}
 }
+document.addEventListener('submit',function(ev){
+ var f=ev.target.closest('form[data-passwall-form]');if(!f)return;
+ ev.preventDefault();
+ var actionName=f.dataset.passwallForm;
+ if(!has('passwall.modify'))return;
+ if(actionName!=='passwall2.node.add_link'&&actionName!=='passwall2.subscription.add')return;
+ var fd=new FormData(f),params={};
+ if(actionName==='passwall2.node.add_link')params.link=String(fd.get('link')||'').trim();
+ else {params.url=String(fd.get('url')||'').trim();params.remark=String(fd.get('remark')||'').trim();}
+ if(!params.link&&!params.url)return;
+ command(actionName,true,params).then(function(){f.reset();}).catch(function(e){$('notice').textContent=e.message;});
+});
 document.addEventListener('click',function(event){
- var b=event.target.closest('[data-nav],[data-router],[data-command]');
+ var b=event.target.closest('[data-nav],[data-router],[data-command],[data-action-param]');
  if(!b)return;
+ if(b.dataset.actionParam){var id=b.dataset.paramId||'';if(!/^[A-Za-z0-9_-]{1,96}$/.test(id))return;var mutation=b.dataset.actionParam!=='passwall2.node.test';command(b.dataset.actionParam,mutation,{id:id});return;}
  if(b.dataset.nav){state.page=b.dataset.nav;render();window.scrollTo(0,0);}
  else if(b.dataset.router){api('select_device',{device_id:b.dataset.router}).then(refresh).catch(function(e){$('notice').textContent=e.message;});}
  else if(b.dataset.command){command(b.dataset.command,b.dataset.confirm==='1');}
