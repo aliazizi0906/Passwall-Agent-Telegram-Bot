@@ -1,5 +1,7 @@
 # به‌روزرسانی و Release
 
+> **نسخه ۱.۳ آزمایشی:** برای پنل PW Control Center، نصب تازه و ارتقا از v0.6 به راهنمای [نصب v1.3 RC](INSTALL_V1_3.md)، [ارتقا](UPGRADE_V1_3.md) و [وضعیت قابلیت‌ها](CONTROL_CENTER_PROGRESS.md) مراجعه کن. متن‌های پایین این صفحه درباره سری پایدار v0.6 هستند؛ پکیج ۱.۳ هنوز نسخه پایدار نیست.
+
 [صفحه مستندات](README.md) · [English](../en/UPDATES.md)
 
 در v0.6 مسیر اصلی مدیریت روی cPanel به‌صورت Web-first است. SSH، Git و cPanel Terminal اختیاری هستند.
