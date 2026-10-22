@@ -2,7 +2,7 @@
 
 Release source: `feature/v1.3-control-center`. The matching [GitHub Release is published as a Pre-release](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.3.0-rc.2), not Stable. Builds require the repository Ed25519 private signing key to match `UPDATE_PUBLIC_KEY.b64`.
 
-Validated pre-publication by branch CI:
+The v1.3.0-rc.2 Release workflow is configured to publish only after these checks pass:
 - Go fmt, test, vet and six target architectures
 - PHP lint and setup/command validation
 - Dashboard/LuCI JavaScript syntax
