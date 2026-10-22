@@ -1,42 +1,41 @@
 # Changelog
 
-All notable changes to PW Agent are documented here. Versions follow SemVer where production compatibility has been verified. Release candidates are **previews**, not declarations of feature-complete stable support.
+All notable PW Agent changes are documented here. Release candidates are pre-releases and are not claims of feature-complete, production-certified stable support.
 
-## [1.3.0-rc.2] — Source candidate (22 October 2026)
+## [1.3.0-rc.2] — Public pre-release (22 October 2026)
 
-**Status:** work-in-progress release candidate on `feature/v1.3-control-center`, not stable/production-certified. Official GitHub prerelease exists only when a signed release workflow has completed successfully.
+**Status:** Published GitHub pre-release with signed assets. Not stable/GA `v1.3.0`.
 
-### Added
-- PW Control Center Telegram Mini App UI: bilingual FA/EN, RTL/LTR, light/dark, fleet switch, real metric history and chart display.
-- Local LuCI Control Center with read-only system status, DHCP/neighbor clients, Wi-Fi networks, Network Doctor, capabilities and optional GoogleWifiLED provider status. Local views do not require Telegram/PHP connectivity.
-- Go actions `agent.capabilities`, `network.doctor`, `led.status`, plus allowlisted CLI JSON modes for local LuCI.
-- Passwall2 dashboard interactions for node list/test/select/import, subscriptions CRUD and Shunt read-only, backed by device-scoped RBAC and server-side input validation.
-- RC-aware version pins for Go Agent and PHP Backend; Go tests, PHP action-validation tests, CI JavaScript validation, cPanel ZIP staging with SHA256 and signed release workflow.
-- Dedicated FA/EN installation and v0.6 migration guides; status matrix and architecture plan.
+### Changed
+- Aligned Go Agent, PHP Setup and Backend version identifiers to `1.3.0-rc.2` so provisioning, health checks and generated package names agree.
+- Reworked the root README to distinguish the latest public pre-release from the latest stable release and link to the real cPanel ZIP.
+- Updated bilingual documentation landing pages, install/update guides, migration guidance, release notes and feature-status pages. The v0.6 docs are explicitly marked legacy where appropriate.
+- Updated CI artifact names and versioned release documentation.
+- Published cPanel ZIP and six OpenWrt architecture bundles, with SHA256 files and Ed25519 signatures.
 
-### Maintained compatibility
-- Outbound HMAC transport, command leasing, fleet/roles/audit, encrypted sensitive queued parameters, monitoring, schedules and existing v0.6 database schema.
-- The original Telegram dashboard remains available alongside the new UI.
-- The backend still targets cPanel PHP+MySQL without server-side Node.js.
+### Release boundaries
+- Use RC2 only in staging with a separate Telegram Bot/database and a noncritical OpenWrt router.
+- Existing deployed v0.6 installations remain unchanged until explicitly upgraded; keep `config.php`, instance keys, credentials and database backups.
+- Hardware-dependent and advanced networking items listed in the implementation matrix are not complete or hardware-certified.
 
-### Security / caveats
-- Agent actions respect allowlists; LuCI operations added here are read-only.
-- Per-router client policy enforcement, cellular-band/tower lock/SMS/USSD adapters, LED RGB writes, DNS split/kill switch and full safe-apply/rollback are **not implemented or hardware-verified** in RC. Do not advertise these as complete.
-- `1.3.0-rc.2` is **not** a stable upgrade path for critical routers; prefer isolated staging and explicit rollback checks.
-- No WRTPro code, branding, licensing or proprietary assets are included.
+## [1.3.0-rc.1] — Initial public pre-release (22 October 2026)
 
-### Testing
-- CI: Go format/test/vet, six target GOARCH builds, PHP lint, setup/security validations, shell/JSON validation, mini-app and LuCI JS checks, Markdown link checks, cPanel package creation.
-- Requires additional actual OpenWrt 24/25 and cellular hardware integration testing before GA.
+- Introduced the PW Control Center Telegram Mini App preview with Persian/English, RTL/LTR and light/dark themes.
+- Added the local read-only LuCI panel for system status, LAN clients, Wi-Fi, diagnostics and capability discovery.
+- Added Go Agent diagnostics for `agent.capabilities`, `network.doctor` and `led.status`.
+- Added Passwall2 dashboard operations for node list/test/select/import, subscription management and Shunt read-only views.
+- Added version-pinned cPanel packaging, signed six-architecture OpenWrt bundles, PHP/Go/JavaScript CI and initial installation/migration guides.
+- Added a safer Agent update installer that preserves the last-known-good binary and attempts rollback if service restart fails.
 
-## [0.6.0] — 17 October 2026
-- Multi-device fleet management and groups; role-based access and per-device scope.
-- Signed update/cache support, audit trail, config snapshots and rollback.
-- Monitoring, alert rules, maintenance mode, scheduled actions and dashboard.
-- cPanel Web Setup + one-time provisioning without hosting-side SSH.
+## [0.6.0] — Stable release (17 October 2026)
 
-## [0.5.0] — 17 October 2026
-- Idempotency protections, command retry control and signed update support.
-- Earlier Smart Failover and device/security improvements.
+- Multi-device Fleet management, groups, RBAC, audit trail and configuration history/rollback.
+- Monitoring, alert rules, maintenance mode, scheduled actions and Telegram Mini App dashboard.
+- Browser-first cPanel Web Setup, one-time provisioning and version-pinned multi-architecture Agent assets.
 
-[Source](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot) · [PR #5](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/pull/5)
+## [0.5.0] — Stable release (17 October 2026)
+
+- Public installation, one-time router provisioning and signed multi-architecture release bundles.
+- Idempotent command handling, encrypted queued secrets, monitoring and update reliability hardening.
+
+[Latest public pre-release](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.3.0-rc.2) · [Latest stable release](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0)
