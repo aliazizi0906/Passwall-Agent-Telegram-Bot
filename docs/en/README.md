@@ -1,6 +1,6 @@
 # PW Agent Documentation — English
 
-> **v1.3 release candidate:** For the PW Control Center, use the [v1.3 RC install guide](INSTALL_V1_3.md), [migration guide](UPGRADE_V1_3.md) and [implementation status](CONTROL_CENTER_PROGRESS.md). Historical sections below document the v0.6 stable series; RC is not production certified.
+> **Latest public pre-release: v1.3.0-rc.2.** Use the [RC install guide](INSTALL_V1_3.md), [upgrade guide](UPGRADE_V1_3.md) and [implementation status](CONTROL_CENTER_PROGRESS.md). Historical sections below document v0.6 stable behavior; RC is not production-certified.
 
 [← Project README](../../README.md) · [فارسی](../fa/README.md)
 
