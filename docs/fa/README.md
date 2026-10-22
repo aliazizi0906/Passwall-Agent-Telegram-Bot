@@ -39,7 +39,7 @@ PW Agent یک سیستم Self-hosted برای مدیریت OpenWrt و Passwall2 
 
 Passwall2 باید از قبل روی روتر نصب باشد.
 
-**مرحله بعد:** [نصب PW Agent](INSTALL.md)
+**مرحله بعد:** [نصب نسخه عمومی آزمایشی v1.3.0-rc.2](INSTALL_V1_3.md) · [راهنمای قدیمی v0.6.0](INSTALL.md)
 
 
 ## مدل نصب روی cPanel
