@@ -25,7 +25,7 @@ The physical installation directory does not matter. v0.6 continues to run from 
 
 ## 2. Deploy v0.6 using File Manager
 
-Download the current repository ZIP from GitHub, extract it into a temporary directory and copy the contents of its `server/` directory over the existing backend directory.
+For this historical v0.5→v0.6 migration, download the repository source archive pinned to tag `v0.6.0` (not `main` or the latest release): [v0.6.0 source ZIP](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/archive/refs/tags/v0.6.0.zip). Extract it into a temporary directory and copy the contents of its `server/` directory over the existing backend directory.
 
 Do not delete the destination directory first.
 
