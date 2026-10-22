@@ -63,5 +63,18 @@ jobs:
       - name: LuCI Control Center JavaScript
         run: node --check openwrt/luci/www/luci-static/resources/view/pw-agent/control.js
 
+      - name: Build cPanel distribution package
+        run: bash scripts/package_cpanel.sh
+
+      - name: Upload cPanel preview bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: pw-agent-v1.3.0-rc.1-cpanel-preview
+          path: |
+            dist/pw-agent-cpanel-*.zip
+            dist/pw-agent-cpanel-*.sha256
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Markdown links
         run: python3 scripts/check_markdown_links.py
