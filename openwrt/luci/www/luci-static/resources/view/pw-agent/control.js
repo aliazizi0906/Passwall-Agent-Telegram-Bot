@@ -124,6 +124,8 @@ return view.extend({
                 'style':'margin:0 8px 8px 0;background:'+(name===this.current?COLOR.blue:COLOR.paper)+';color:'+(name===this.current?'#fff':COLOR.navy)+';border:1px solid '+COLOR.line,
                 'click':L.bind(function(ev){
                     this.current=name;
+                    var tabs=ev.currentTarget.parentNode.querySelectorAll('button');
+                    Array.prototype.forEach.call(tabs,function(tab){var active=(tab===ev.currentTarget);tab.style.background=active?COLOR.blue:COLOR.paper;tab.style.color=active?'#fff':COLOR.navy;});
                     this.refresh(name,ev.currentTarget);
                 },this)
             },[OPERATIONS[name][1]]);
