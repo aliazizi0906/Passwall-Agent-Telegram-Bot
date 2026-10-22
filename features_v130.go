@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// CapabilityReportV13 advertises only features actually discovered on this router.
+// CapabilityReportV13 advertises only capabilities discovered on this router.
 // In particular, RGB LED, tower/band lock and SMS/USSD remain false until a
 // model-specific, tested adapter has been installed. Never infer them from name.
 func capabilityReportV13() map[string]interface{} {
