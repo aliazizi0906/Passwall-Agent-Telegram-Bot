@@ -5,6 +5,7 @@ function v050_sensitive_action(string $action): bool {
     static $set = [
         'system.backup.restore'=>1,'wifi.set_password'=>1,'passwall2.node.add_link'=>1,
         'passwall2.node.add_manual'=>1,'passwall2.subscription.add'=>1,'terminal.exec'=>1,'config.rollback_snapshot'=>1,
+        'agent.secret.rotate'=>1,
     ];
     return isset($set[$action]);
 }

@@ -30,6 +30,8 @@ type configSnapshotV6 struct {
 
 func configPackagesForActionV6(action string) []string {
 	switch {
+	case action == "system.profile.apply":
+		return []string{"wireless", "network", "firewall"}
 	case strings.HasPrefix(action, "wifi."):
 		if action == "wifi.reload" {
 			return nil
@@ -236,6 +238,13 @@ func (a *Agent) executeWithHistoryV6(c *Command) (interface{}, error) {
 		return a.rollbackConfigSnapshotV6(map[string]interface{}(c.Params))
 	}
 	packages := configPackagesForActionV6(c.Action)
+	if c.Action == "system.profile.apply" {
+		var err error
+		packages, err = profilePackagesV7(c.Params["rules"])
+		if err != nil {
+			return nil, err
+		}
+	}
 	if len(packages) == 0 || !isMutationActionV5(c.Action) {
 		return a.execute(c)
 	}

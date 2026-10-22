@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__) . '/lib.php';
-ensure_v060_schema();
+ensure_v070_schema();
 $pdo=db();$threshold=max(120,(int)(cfg()['monitoring']['offline_after_seconds']??300));
 $rows=$pdo->query('SELECT device_id,last_seen,hostname FROM pw_devices')->fetchAll();
 foreach($rows as $r){
@@ -27,4 +27,11 @@ $pdo->exec("DELETE FROM pw_metrics WHERE captured_at < (NOW()-INTERVAL 30 DAY)")
 $pdo->exec("DELETE FROM pw_events WHERE created_at < (NOW()-INTERVAL 90 DAY)");
 v060_evaluate_alerts();
 v060_run_due_schedules();
+v070_run_rollouts();
+$pdo->exec("DELETE FROM pw_backup_vault WHERE expires_at<=NOW()");
+$pdo->exec("UPDATE pw_approvals SET status='expired' WHERE status='pending' AND expires_at<=NOW()");
+$pdo->exec('UPDATE pw_device_registry SET previous_secret_sealed=NULL,previous_secret_expires_at=NULL WHERE previous_secret_expires_at IS NOT NULL AND previous_secret_expires_at<=NOW()');
+$pdo->exec('UPDATE pw_device_registry SET pending_secret_sealed=NULL,pending_secret_expires_at=NULL WHERE pending_secret_expires_at IS NOT NULL AND pending_secret_expires_at<=NOW()');
+$pdo->prepare('INSERT INTO pw_platform_settings(setting_key,setting_value) VALUES(?,?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value),updated_at=NOW()')->execute(['last_cron_at',gmdate('Y-m-d H:i:s')]);
+$pdo->prepare('INSERT INTO pw_platform_settings(setting_key,setting_value) VALUES(?,?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value),updated_at=NOW()')->execute(['last_cron_epoch',(string)time()]);
 echo "ok\n";

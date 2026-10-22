@@ -7,6 +7,8 @@
 | Section | Description |
 |---|---|
 | [Install](INSTALL.md) | Terminal-free cPanel Web Setup + OpenWrt installation |
+| [OpenWrt 25 APK](APK.md) | Signed APK v3 package/feed workflow for OpenWrt 25.12+ |
+| [Legacy OPKG](OPKG.md) | Signed IPK/opkg feed for OpenWrt 24.10 and older |
 | [Features](FEATURES.md) | Complete feature overview |
 | [Fleet & Automation](FLEET.md) | v0.6 multi-device, RBAC, audit, monitoring and schedules |
 | [Architecture](ARCHITECTURE.md) | Components and request flow |
@@ -40,6 +42,6 @@ Passwall2 must already be installed on the router.
 
 ## cPanel installation model
 
-PW Agent v0.6 does not require cPanel Terminal or a fixed filesystem path.
+PW Agent v0.7 does not require cPanel Terminal or a fixed filesystem path.
 
 Upload the contents of `server/` to any web-accessible directory and open `setup.php`. The browser installer detects the deployment URL, creates the database schema/configuration, registers the Telegram webhook and generates the exact Cron and OpenWrt provisioning commands for that installation.

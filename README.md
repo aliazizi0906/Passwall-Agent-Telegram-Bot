@@ -15,6 +15,8 @@ PW Agent is a self-hosted remote-management stack for OpenWrt routers running Pa
 | Section | Description |
 |---|---|
 | [Install](docs/en/INSTALL.md) | Terminal-free cPanel Web Setup + OpenWrt installation |
+| [OpenWrt 25 APK](docs/en/APK.md) | Signed APK v3 packages for OpenWrt 25.12+ |
+| [Legacy OPKG](docs/en/OPKG.md) | Signed IPK/opkg feed for OpenWrt 24.10 and older |
 | [Features](docs/en/FEATURES.md) | Router, Passwall2, Failover, Monitoring and Terminal capabilities |
 | [Fleet & Automation](docs/en/FLEET.md) | Multi-device, RBAC, audit, Dashboard, alerts and schedules |
 | [Architecture](docs/en/ARCHITECTURE.md) | Agent, backend, queue and request flow |
@@ -28,7 +30,7 @@ PW Agent is a self-hosted remote-management stack for OpenWrt routers running Pa
 
 ```text
 1. Create MySQL database/user in cPanel
-2. Upload + extract the Release asset pw-agent-cpanel-v0.6.0.zip anywhere under the document root
+2. Upload + extract the Release asset pw-agent-cpanel-v0.7.0.zip anywhere under the document root
 3. Open https://YOUR-DOMAIN/YOUR-PATH/setup.php
 4. Complete the Web Setup form
 5. Copy the generated Cron command into cPanel → Cron Jobs
@@ -69,6 +71,8 @@ PW Agent یک سامانه‌ی Self-hosted برای مدیریت از راه د
 | بخش | توضیح |
 |---|---|
 | [نصب](docs/fa/INSTALL.md) | Web Setup روی cPanel بدون Terminal + نصب OpenWrt |
+| [APK در OpenWrt 25](docs/fa/APK.md) | بسته‌های امضاشده APK v3 برای OpenWrt 25.12+ |
+| [OPKG قدیمی](docs/fa/OPKG.md) | Feed امضاشده IPK/opkg برای OpenWrt 24.10 و قدیمی‌تر |
 | [قابلیت‌ها](docs/fa/FEATURES.md) | امکانات روتر، Passwall2، Failover، Monitoring و Terminal |
 | [Fleet و Automation](docs/fa/FLEET.md) | Multi-Device، RBAC، Audit، Dashboard، Alert و Scheduler |
 | [معماری](docs/fa/ARCHITECTURE.md) | ساختار Agent، Backend، Queue و جریان درخواست |
@@ -82,7 +86,7 @@ PW Agent یک سامانه‌ی Self-hosted برای مدیریت از راه د
 
 ```text
 1. Database و User را در cPanel بساز
-2. فایل pw-agent-cpanel-v0.6.0.zip را از Release در هر مسیر دلخواه Upload و Extract کن
+2. فایل pw-agent-cpanel-v0.7.0.zip را از Release در هر مسیر دلخواه Upload و Extract کن
 3. https://YOUR-DOMAIN/YOUR-PATH/setup.php را باز کن
 4. فرم Web Setup را کامل کن
 5. Cron تولیدشده را در cPanel → Cron Jobs قرار بده
@@ -116,6 +120,6 @@ Build رسمی برای معماری‌های `armv7`، `arm64`، `amd64`، `386
 
 ## Project status / وضعیت پروژه
 
-Current public release / نسخه عمومی فعلی: **v0.6.0**
+Current public release / نسخه عمومی فعلی: **v0.7.0**
 
 Repository / مخزن: https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot

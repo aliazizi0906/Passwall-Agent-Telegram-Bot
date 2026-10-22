@@ -2,7 +2,7 @@
 
 [Documentation Home](README.md) · [فارسی](../fa/INSTALL.md)
 
-PW Agent v0.6 is designed to install on ordinary cPanel hosting **without SSH or cPanel Terminal**.
+PW Agent v0.7 is designed to install on ordinary cPanel hosting **without SSH or cPanel Terminal**.
 
 The backend directory is path-independent. You may upload the contents of `server/` to any web-accessible directory, for example:
 
@@ -21,7 +21,7 @@ No `/home/USER/public_html/pwagent` path is required or hardcoded.
 
 - PHP 8.1 or newer
 - MySQL or MariaDB
-- PHP extensions: `pdo_mysql`, `curl`, `openssl`
+- PHP extensions: `pdo_mysql`, `curl`, `openssl`, `sodium`, `zip`
 - HTTPS
 - cPanel File Manager
 - cPanel MySQL Databases
@@ -84,10 +84,10 @@ You do **not** need curl or Terminal to discover your Telegram numeric ID. The W
 The easiest method is to download this Release asset:
 
 ```text
-pw-agent-cpanel-v0.6.0.zip
+pw-agent-cpanel-v0.7.0.zip
 ```
 
-from the project's **v0.6.0 GitHub Release**.
+from the project's **v0.7.0 GitHub Release**.
 
 Create any directory you want under the domain document root, upload this ZIP there, and use **cPanel File Manager → Extract**. The ZIP contains the backend files at its root, including `setup.php` and the required `.htaccess` files.
 
@@ -220,7 +220,7 @@ Example shape:
 ```sh
 PW_SERVER_BASE='https://example.com/your/chosen/path' \
 PW_PROVISION_TOKEN='ONE_TIME_TOKEN' \
-PW_AGENT_VERSION='v0.6.0' \
+PW_AGENT_VERSION='v0.7.0' \
 sh -c "$(wget -qO- 'https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh')"
 ```
 
@@ -252,7 +252,7 @@ Expected:
 ```json
 {
   "ok": true,
-  "version": "0.6.0"
+  "version": "0.7.0"
 }
 ```
 

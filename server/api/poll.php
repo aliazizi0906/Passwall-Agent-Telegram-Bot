@@ -11,13 +11,14 @@ ensure_v060_schema();
 
 $pdo = db();
 $st = $pdo->prepare(
-    'INSERT INTO pw_devices (device_id,last_seen,last_ip,agent_version,hostname,meta_json) VALUES (?,NOW(),?,?,?,?) '
-    . 'ON DUPLICATE KEY UPDATE last_seen=NOW(),last_ip=VALUES(last_ip),agent_version=VALUES(agent_version),hostname=VALUES(hostname),meta_json=VALUES(meta_json)'
+    'INSERT INTO pw_devices (device_id,last_seen,last_ip,agent_version,architecture,hostname,meta_json) VALUES (?,NOW(),?,?,?,?,?) '
+    . 'ON DUPLICATE KEY UPDATE last_seen=NOW(),last_ip=VALUES(last_ip),agent_version=VALUES(agent_version),architecture=VALUES(architecture),hostname=VALUES(hostname),meta_json=VALUES(meta_json)'
 );
 $st->execute([
     $device,
     $_SERVER['REMOTE_ADDR'] ?? '',
     (string)($body['agent_version'] ?? ''),
+    substr((string)($body['architecture'] ?? ''),0,32),
     (string)($body['hostname'] ?? ''),
     json_encode($body, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),
 ]);
@@ -58,4 +59,4 @@ try {
 }
 
 v060_record_metric($device,$body);
-response_json(['ok'=>true,'command'=>$cmd], $secret);
+response_json(['ok'=>true,'command'=>$cmd,'rotate_secret'=>!empty($auth['rotation_pending'])], $secret);

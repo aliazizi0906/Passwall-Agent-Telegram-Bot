@@ -135,7 +135,7 @@ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&isset($_POST['install'])){
 
                 // Load the real application only after config.php exists.
                 require_once $root.'/lib.php';
-                ensure_v060_schema();
+                ensure_v070_schema();
                 $pdo=db();
                 $pdo->prepare('UPDATE pw_device_registry SET display_name=? WHERE device_id=?')->execute([$deviceName,$deviceId]);
 
