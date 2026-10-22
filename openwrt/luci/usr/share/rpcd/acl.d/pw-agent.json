@@ -20,6 +20,9 @@
         ],
         "/usr/bin/pw-agent status-json": [
           "exec"
+        ],
+        "/usr/bin/pw-agent led-json": [
+          "exec"
         ]
       }
     }
