@@ -60,17 +60,17 @@ func capabilityReportV13() map[string]interface{} {
 			"board": board,
 		},
 		"capabilities": map[string]interface{}{
-			"passwall2":      exists("/etc/config/passwall2"),
-			"wifi_radios":    radios,
+			"passwall2":     exists("/etc/config/passwall2"),
+			"wifi_radios":   radios,
 			"guest_network": len(radios) > 0,
-			"cellular":       false,
-			"cell_lock":      false,
-			"sms":            false,
-			"led_rgb":        false,
-			"sqm":            exists("/etc/config/sqm") && commandPath("tc") != "",
-			"upnp":           exists("/etc/init.d/miniupnpd"),
-			"wireguard":      commandPath("wg") != "",
-			"openvpn":        exists("/etc/init.d/openvpn"),
+			"cellular":      false,
+			"cell_lock":     false,
+			"sms":           false,
+			"led_rgb":       false,
+			"sqm":           exists("/etc/config/sqm") && commandPath("tc") != "",
+			"upnp":          exists("/etc/init.d/miniupnpd"),
+			"wireguard":     commandPath("wg") != "",
+			"openvpn":       exists("/etc/init.d/openvpn"),
 		},
 		"limits": map[string]interface{}{
 			"can_control_led": false,
@@ -102,10 +102,10 @@ func readSmallFileV13(path string) string {
 }
 
 type doctorCheckV13 struct {
-	ID       string `json:"id"`
-	Status   string `json:"status"`
-	Detail   string `json:"detail,omitempty"`
-	Latency  int64  `json:"latency_ms,omitempty"`
+	ID      string `json:"id"`
+	Status  string `json:"status"`
+	Detail  string `json:"detail,omitempty"`
+	Latency int64  `json:"latency_ms,omitempty"`
 }
 
 func doctorStatusV13(ok bool) string {
@@ -155,12 +155,14 @@ func networkDoctorV13() (map[string]interface{}, error) {
 		client := &http.Client{
 			Timeout: 7 * time.Second,
 			Transport: &http.Transport{
-				Proxy: nil,
+				Proxy:           nil,
 				TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12},
-				DialContext: (&net.Dialer{Timeout: 5*time.Second}).DialContext,
+				DialContext:     (&net.Dialer{Timeout: 5 * time.Second}).DialContext,
 			},
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				if len(via) >= 2 { return errors.New("redirect limit reached") }
+				if len(via) >= 2 {
+					return errors.New("redirect limit reached")
+				}
 				return nil
 			},
 		}
@@ -182,41 +184,51 @@ func networkDoctorV13() (map[string]interface{}, error) {
 	if _, err := os.Stat("/etc/config/passwall2"); err == nil {
 		add("passwall_service", pw, "Passwall2 service state", 0)
 	} else {
-		checks = append(checks, doctorCheckV13{ID:"passwall_service", Status:"skipped", Detail:"Passwall2 not installed"})
+		checks = append(checks, doctorCheckV13{ID: "passwall_service", Status: "skipped", Detail: "Passwall2 not installed"})
 	}
 
 	rootCause := ""
 	status := "healthy"
 	for _, check := range checks {
 		if check.Status == "fail" {
-			if rootCause == "" { rootCause = check.ID }
+			if rootCause == "" {
+				rootCause = check.ID
+			}
 			status = "degraded"
 		}
 	}
 	return map[string]interface{}{
-		"status":status,
-		"first_failed":rootCause,
-		"checks":checks,
-		"tested_at":time.Now().Unix(),
-		"note":"Probes are point-in-time diagnostics; regional reachability and leak safety require separate path-specific tests.",
-	},nil
+		"status":       status,
+		"first_failed": rootCause,
+		"checks":       checks,
+		"tested_at":    time.Now().Unix(),
+		"note":         "Probes are point-in-time diagnostics; regional reachability and leak safety require separate path-specific tests.",
+	}, nil
 }
 
 func safeIfaceV13(v interface{}) string {
 	iface, _ := v.(string)
-	if len(iface) > 32 { iface = iface[:32] }
+	if len(iface) > 32 {
+		iface = iface[:32]
+	}
 	for _, r := range iface {
 		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '.' || r == '_' || r == '-') {
 			return "unavailable"
 		}
 	}
-	if iface == "" {return "unavailable"}
+	if iface == "" {
+		return "unavailable"
+	}
 	return iface
 }
 
 func sanitizedProbeErrorV13(err error) string {
-	if err == nil {return "Reachable"}
-	if errors.Is(err, context.DeadlineExceeded) || os.IsTimeout(err) {return "Timed out"}
+	if err == nil {
+		return "Reachable"
+	}
+	if errors.Is(err, context.DeadlineExceeded) || os.IsTimeout(err) {
+		return "Timed out"
+	}
 	return "Connection check failed"
 }
 
