@@ -8,7 +8,9 @@
 
 | Section | Description |
 |---|---|
-| [Install](INSTALL.md) | Terminal-free cPanel Web Setup + OpenWrt installation |
+| [Install v1.3 RC](INSTALL_V1_3.md) | Current public pre-release installation |
+| [Legacy install](INSTALL.md) | Stable v0.6.0 installation guide |
+| [Release notes](RELEASE_NOTES_V1_3_RC.md) | v1.3.0-rc.2 changes and limitations |
 | [Features](FEATURES.md) | Complete feature overview |
 | [Fleet & Automation](FLEET.md) | v0.6 baseline: fleet, RBAC, audit, monitoring and schedules; v1.3 RC preview linked above |
 | [Architecture](ARCHITECTURE.md) | Components and request flow |
