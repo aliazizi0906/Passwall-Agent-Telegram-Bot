@@ -1,5 +1,7 @@
 # Migration
 
+> **v1.3 release candidate:** For the PW Control Center, use the [v1.3 RC install guide](INSTALL_V1_3.md), [migration guide](UPGRADE_V1_3.md) and [implementation status](CONTROL_CENTER_PROGRESS.md). Historical sections below document the v0.6 stable series; RC is not production certified.
+
 [Documentation Home](README.md) · [فارسی](../fa/MIGRATION.md)
 
 ## Upgrade from v0.5.x to v0.6.x
