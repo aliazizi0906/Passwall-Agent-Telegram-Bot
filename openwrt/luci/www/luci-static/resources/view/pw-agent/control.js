@@ -9,7 +9,8 @@ var OPERATIONS = {
     clients: ['clients-json', 'Clients'],
     wifi: ['wifi-json', 'Wi-Fi'],
     doctor: ['network-doctor-json', 'Network doctor'],
-    capability: ['capabilities-json', 'Hardware']
+    capability: ['capabilities-json', 'Hardware'],
+    led: ['led-json', 'LED']
 };
 
 function card(label, children) {
@@ -84,6 +85,13 @@ function renderDoctor(data) {
     });
     return [card('Connection diagnostics', body)];
 }
+function renderLED(data) {
+    var body = [kv('Supported provider', label(data.supported)), kv('Service running', label(data.active))];
+    if (data.reason) body.push(E('p',{'style':'color:'+COLOR.muted},[data.reason]));
+    var channels=data.channels||{},brightness=data.brightness||{};
+    Object.keys(channels).forEach(function(color){body.push(kv(color+' channel',channels[color]+' · brightness '+(brightness[color]||'—')));});
+    return [card('GoogleWifiLED · read-only',body)];
+}
 function renderCapability(data) {
     var caps = data.capabilities || {}, hw = data.hardware || {};
     var body = [kv('OpenWrt', data.openwrt_version), kv('Hardware model', hw.model), kv('Board', hw.board)];
@@ -103,6 +111,7 @@ return view.extend({
         if (name === 'clients') return renderClients(data);
         if (name === 'wifi') return renderWiFi(data);
         if (name === 'doctor') return renderDoctor(data);
+        if (name === 'led') return renderLED(data);
         return renderCapability(data);
     },
     refresh: function(name, btn) {
