@@ -63,6 +63,7 @@ Go Agent on OpenWrt ── Passwall2 / UCI / ubus / procd
 | [Security](docs/en/SECURITY.md) / [امنیت](docs/fa/SECURITY.md) | HMAC, secrets, signatures and provisioning |
 | [Updates](docs/en/UPDATES.md) / [به‌روزرسانی](docs/fa/UPDATES.md) | Release and update process |
 | [Development](docs/en/DEVELOPMENT.md) / [توسعه](docs/fa/DEVELOPMENT.md) | Local build, tests and CI |
+| [Release notes EN](docs/en/RELEASE_NOTES_V1_3_RC.md) / [یادداشت فارسی](docs/fa/RELEASE_NOTES_V1_3_RC.md) | RC2 scope and release boundaries |
 | [Changelog](CHANGELOG.md) | Versioned history |
 
 ## Build and validate
