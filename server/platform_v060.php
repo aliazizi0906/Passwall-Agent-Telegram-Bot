@@ -549,6 +549,8 @@ function v060_dashboard_command_allowed(string $action): bool {
       'passwall2.status','passwall2.nodes.list','passwall2.nodes.relay_ranking',
       'passwall2.failover.list','passwall2.failover.run','passwall2.restart',
       'passwall2.subscriptions.list','passwall2.shunt.list','passwall2.log',
+      'passwall2.node.test','passwall2.node.select','passwall2.node.add_link','passwall2.node.delete',
+      'passwall2.subscription.add','passwall2.subscription.update','passwall2.subscription.delete',
       'system.backup.create','agent.update.check','agent.update.apply'
     ],true);
 }
