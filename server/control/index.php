@@ -217,6 +217,12 @@ function showDNS(){
  ['network.doctor','عیب‌یابی مرحله‌ای','Network doctor','network.read']
  ],say('DNS رمزنگاری‌شده، تفکیک ترافیک ایران، نشت DNS/IPv6 و Kill Switch تا زمان تست بسته‌ها و مسیرها فعلاً فقط در برنامه توسعه هستند.','Encrypted/split DNS, IPv6 leak blocking and kill switch need validated packet-path tests.'));
 }
+function showLED(){
+ readPanel(say('چراغ Google WiFi','Google WiFi LED'),say('تشخیص کانال‌های RGB و وضعیت سرویس GoogleWifiLED؛ فقط روی روترهایی که این پکیج نصب است.','Detect RGB channels and the installed GoogleWifiLED service; unsupported routers will report unavailable.'),[
+  ['led.status','بررسی وضعیت LED','Read LED state','system.read'],
+  ['agent.capabilities','شناسایی سخت‌افزار','Read capabilities','system.read']
+ ],say('تنظیم رنگ و روشنایی و زمان‌بندی چراغ به Adapter تست‌شده نیاز دارد. این نسخه از طریق Agent تغییری در LED ایجاد نمی‌کند.','Changing color/brightness and scheduling needs a tested adapter; no LED mutations are exposed yet.'));
+}
 function showGaming(){
  readPanel(say('بازی و کیفیت اتصال','Gaming & quality'),say('تست‌های تشخیصی شبکه برای بررسی کیفیت پایه؛ مقادیر فعلی جایگزین تست واقعی Bufferbloat نیستند.','Network diagnostics are available; these do not replace a true bufferbloat test.'),[
  ['network.internet_test','آزمایش اتصال','Connectivity test','network.read'],
@@ -285,7 +291,7 @@ function render(){
  nav();
  if(!state.fleet){$('page').innerHTML='<div class="empty">'+say('برای مشاهده داده‌های روتر، پنل را از دکمه Mini App در تلگرام باز کن. ورود مستقیم مرورگر در این پیش‌نمایش پشتیبانی نمی‌شود.','Open this preview from the Telegram Mini App button. Direct browser authentication is not available.')+'</div>';return;}
  if(!state.active){$('page').innerHTML='<div class="empty">'+say('هیچ روتر فعالی وجود ندارد.','No active router.')+'</div>';return;}
- if(state.page==='home')home();else if(state.page==='internet')internet();else if(state.page==='proxy')proxy();else if(state.page==='routers')routers();else if(state.page==='clients')showClients();else if(state.page==='wifi')showWifi();else if(state.page==='dns')showDNS();else if(state.page==='gaming')showGaming();else if(state.page==='system')system();else if(state.page==='automation'){automation();}else{
+ if(state.page==='home')home();else if(state.page==='internet')internet();else if(state.page==='proxy')proxy();else if(state.page==='routers')routers();else if(state.page==='clients')showClients();else if(state.page==='wifi')showWifi();else if(state.page==='dns')showDNS();else if(state.page==='gaming')showGaming();else if(state.page==='led')showLED();else if(state.page==='system')system();else if(state.page==='automation'){automation();}else{
  var plans={
   clients:[say('مدیریت دستگاه‌های شبکه','LAN client management'),say('فهرست کلاینت‌ها، محدودیت سرعت، مسدودسازی، زمان‌بندی و اولویت‌بندی پس از توسعه API مجاز نمایش داده می‌شود.','Live client list, rate limits, blocking, schedules and priorities require an authorized agent API.'),['DHCP / ARP','MAC identity','Live RX/TX','Rate limit','Block / unblock','Parental schedules']],
   wifi:[say('مدیریت Wi-Fi','Wi-Fi management'),say('مدیریت SSID، رمز، ۲٫۴/۵ گیگاهرتز، شبکه مهمان، QR و انتخاب کانال ایمن همراه با Rollback.','SSID, password, 2.4/5 GHz, guest Wi-Fi, QR, safe channel selection and rollback.'),['SSID & WPA2/WPA3','Guest isolation','Channel scan','QR codes','Safe rollback']],
