@@ -103,6 +103,7 @@ var menu=[
  ['dns','08','DNS و امنیت','DNS & Security','سیاست‌های DNS و محافظت','DNS and protection rules'],
  ['gaming','09','بازی و کیفیت','Gaming','تأخیر، NAT و اولویت ترافیک','Latency, NAT and traffic priority'],
  ['system','10','سیستم','System','سلامت Agent و ابزارهای موجود','Agent health and available operations'],
+ ['led','12','چراغ روتر','Router LED','کنترل LED برای سخت‌افزارهای سازگار','LED features on supported hardware'],
  ['automation','11','اتوماسیون','Automation','هشدار و زمان‌بندی','Alerts and schedules']
 ];
 var $=function(id){return document.getElementById(id);};
@@ -128,7 +129,7 @@ function row(label,v){var x=status(v);return '<div class="status-row"><span>'+es
 function formatDate(s){return s?String(s).replace('T',' ').slice(0,19):'—';}
 function latest(){var m=state.detail&&state.detail.metrics||[];return m.length?m[m.length-1]:{};}
 function chartHtml(id,label){return '<section class="card"><div class="section-title">'+esc(label)+'</div><canvas class="chart" id="'+id+'" width="900" height="180"></canvas><div class="muted" style="font-size:11px">'+say('حداکثر ۶۰ نمونه ثبت‌شده، بدون داده ساختگی','Up to 60 recorded samples, no simulated data')+'</div></section>';}
-function drawChart(id,key){var el=$(id);if(!el)return;var entries=state.detail&&state.detail.metrics||[];var a=entries.map(function(e){return Number(e[key]);}).filter(Number.isFinite);if(a.length<2){el.replaceWith(document.createTextNode(say('داده کافی برای رسم نمودار وجود ندارد.','Not enough samples to draw a chart.')));return;}
+function drawChart(id,key){var el=$(id);if(!el)return;var entries=state.detail&&state.detail.metrics||[];var a=entries.map(function(e){return e[key];}).filter(function(v){return v!==null&&v!==undefined&&v!=='';}).map(Number).filter(Number.isFinite);if(a.length<2){el.replaceWith(document.createTextNode(say('داده کافی برای رسم نمودار وجود ندارد.','Not enough samples to draw a chart.')));return;}
  var c=el.getContext('2d'),w=el.width,h=el.height,lo=Math.min.apply(null,a),hi=Math.max.apply(null,a),range=Math.max(1,hi-lo);c.clearRect(0,0,w,h);c.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--border').trim();c.lineWidth=1;
  for(var i=0;i<4;i++){c.beginPath();c.moveTo(12,17+i*46);c.lineTo(w-12,17+i*46);c.stroke();}
  c.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();c.lineWidth=3;c.lineJoin='round';c.beginPath();
@@ -220,6 +221,7 @@ function render(){
   wifi:[say('مدیریت Wi-Fi','Wi-Fi management'),say('مدیریت SSID، رمز، ۲٫۴/۵ گیگاهرتز، شبکه مهمان، QR و انتخاب کانال ایمن همراه با Rollback.','SSID, password, 2.4/5 GHz, guest Wi-Fi, QR, safe channel selection and rollback.'),['SSID & WPA2/WPA3','Guest isolation','Channel scan','QR codes','Safe rollback']],
   cellular:[say('سیم‌کارت و دکل','Cellular & towers'),say('فقط برای مودم‌هایی که Adapter سخت‌افزاری معتبر دارند؛ Google WiFi این قابلیت را ندارد.','Only modems with verified hardware adapters; Google WiFi does not have cellular capabilities.'),['LTE/5G signal','Cell scanning','Band lock','Cell lock','Fallback timer','SMS / USSD']],
   dns:[say('DNS و امنیت','DNS & security'),say('DNS مستقیم و رمزنگاری‌شده، تشخیص نشت، فیلتر تبلیغات، دسترسی پنل و تفکیک ترافیک.','Direct/encrypted DNS, leak detection, ad filtering, panel access and split routing.'),['DNS upstreams','Encrypted DNS','Iran direct routing','Ad-block','IPv6 leaks','Kill switch']],
+  led:[say('چراغ هوشمند روتر','Router LED'),say('نمایش وضعیت اتصال، رنگ دلخواه، پینگ، خاموشی شبانه و تنظیم شدت نور تنها در سخت‌افزار سازگار.','Status colors, custom RGB, latency indication, night schedule and brightness on supported LED hardware only.'),['Google WiFi LED adapter','RGB / brightness','Latency colors','Night quiet hours']],
   gaming:[say('بازی و کیفیت اتصال','Gaming & quality'),say('تست Bufferbloat، نوع NAT، QoS/SQM، اولویت‌بندی دستگاه و UPnP اختیاری.','Bufferbloat, NAT type, SQM/QoS, client priorities and opt-in UPnP.'),['Latency','Bufferbloat','SQM','NAT type','UPnP opt-in']]
  };
  var p=plans[state.page];if(p)pending(p[0],p[1],p[2]);
@@ -239,7 +241,7 @@ async function refresh(){
   var r=await api('summary');state.fleet=r.fleet;state.active=r.active_device_id||'';state.role=r.role||'viewer';state.permissions=r.permissions||[];
   state.detail=state.active?await api('device_detail',{device_id:state.active}):null;
   $('notice').textContent='';render();
- }catch(e){$('notice').textContent=say('اتصال برقرار نشد: ','Connection failed: ')+e.message;render();}
+ }catch(e){state.fleet=null;state.detail=null;$('notice').textContent=say('اتصال برقرار نشد: ','Connection failed: ')+e.message;render();}
 }
 async function command(id,confirmNeeded){
  if(state.busy)return;
