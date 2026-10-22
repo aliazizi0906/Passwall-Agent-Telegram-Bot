@@ -25,7 +25,7 @@ releases/
 
 ## ۲. Deploy نسخه v0.6 با File Manager
 
-ZIP آخر Repository را از GitHub دانلود کن، داخل یک فولدر موقت Extract کن و محتویات `server/` را روی فولدر فعلی Backend کپی کن.
+برای همین مسیر تاریخی v0.5 به v0.6، سورس را دقیقاً از Tag نسخه `v0.6.0` دریافت کن، نه از `main` یا آخرین Release: [دانلود ZIP سورس v0.6.0](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/archive/refs/tags/v0.6.0.zip). آن را در پوشه موقت Extract کن و محتویات `server/` را روی Backend فعلی کپی کن.
 
 فولدر مقصد را قبل از Copy پاک نکن.
 
