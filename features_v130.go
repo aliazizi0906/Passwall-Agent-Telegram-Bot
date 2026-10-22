@@ -66,7 +66,7 @@ func capabilityReportV13() map[string]interface{} {
 			"cellular":      false,
 			"cell_lock":     false,
 			"sms":           false,
-			"led_rgb":       false,
+			"led_rgb":       hasGoogleWifiLEDProviderV13(),
 			"sqm":           exists("/etc/config/sqm") && commandPath("tc") != "",
 			"upnp":          exists("/etc/init.d/miniupnpd"),
 			"wireguard":     commandPath("wg") != "",
@@ -236,4 +236,53 @@ func sanitizedProbeErrorV13(err error) string {
 func hasRuntimeFileV13(dir, file string) bool {
 	_, err := os.Stat(filepath.Join(dir, file))
 	return err == nil
+}
+
+
+func hasGoogleWifiLEDProviderV13() bool {
+	if _, err := os.Stat("/usr/libexec/googlewifi-led/googlewifi-led.sh"); err != nil {
+		return false
+	}
+	return len(ledChannelsV13()) == 3
+}
+
+func ledChannelsV13() map[string]string {
+	channels := map[string]string{}
+	entries, err := os.ReadDir("/sys/class/leds")
+	if err != nil {
+		return channels
+	}
+	for _, entry := range entries {
+		n := strings.ToLower(entry.Name())
+		for _, color := range []string{"red", "green", "blue"} {
+			if _, already := channels[color]; !already && strings.Contains(n, color) {
+				if _, err := os.Stat(filepath.Join("/sys/class/leds", entry.Name(), "brightness")); err == nil {
+					channels[color] = entry.Name()
+				}
+			}
+		}
+	}
+	return channels
+}
+
+func ledStatusV13() (map[string]interface{}, error) {
+	channels := ledChannelsV13()
+	provider := hasGoogleWifiLEDProviderV13()
+	status := map[string]interface{}{
+		"supported": provider,
+		"provider":  "googlewifi-led",
+		"channels":  channels,
+		"active":    false,
+	}
+	if !provider {
+		status["reason"] = "RGB provider not installed or required sysfs channels missing"
+		return status, nil
+	}
+	status["active"] = serviceState("googlewifi-led")["status"] == "running"
+	values := map[string]string{}
+	for color, name := range channels {
+		values[color] = readSmallFileV13(filepath.Join("/sys/class/leds", name, "brightness"))
+	}
+	status["brightness"] = values
+	return status, nil
 }
