@@ -39,7 +39,7 @@ The design is suitable for routers behind CGNAT or without a public/static IP be
 
 Passwall2 must already be installed on the router.
 
-**Next:** [Install PW Agent](INSTALL.md)
+**Next:** [Install current public pre-release v1.3.0-rc.2](INSTALL_V1_3.md) · [Legacy v0.6.0 installer](INSTALL.md)
 
 
 ## cPanel installation model
