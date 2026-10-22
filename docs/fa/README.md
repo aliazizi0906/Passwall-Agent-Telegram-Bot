@@ -10,7 +10,7 @@
 |---|---|
 | [نصب](INSTALL.md) | Web Setup بدون Terminal روی cPanel + نصب OpenWrt |
 | [قابلیت‌ها](FEATURES.md) | معرفی کامل امکانات |
-| [Fleet و Automation](FLEET.md) | Multi-Device، RBAC، Audit، Monitoring و Scheduler در v0.6 |
+| [Fleet و Automation](FLEET.md) | قابلیت‌های پایه v0.6؛ پیش‌نمایش پنل جدید در راهنمای v1.3 RC |
 | [معماری](ARCHITECTURE.md) | اجزا و جریان درخواست‌ها |
 | [امنیت](SECURITY.md) | احراز هویت، رمزنگاری و اعتماد Update |
 | [به‌روزرسانی](UPDATES.md) | آپدیت کاربران و Release برای Maintainer |
@@ -42,6 +42,6 @@ Passwall2 باید از قبل روی روتر نصب باشد.
 
 ## مدل نصب روی cPanel
 
-در v0.6 هیچ نیازی به cPanel Terminal یا مسیر ثابت فایل‌سیستم نیست.
+در نسخه پایدار v0.6 و نسخه آزمایشی v1.3، Backend به cPanel Terminal یا مسیر ثابت فایل‌سیستم نیاز ندارد.
 
 محتویات `server/` را در هر فولدر Web-accessible آپلود کن و `setup.php` را باز کن. Web Setup آدرس واقعی Deployment را تشخیص می‌دهد، Schema و Config را می‌سازد، Telegram Webhook را ثبت می‌کند و Cron Command و Provisioning Command دقیق همان نصب را تحویل می‌دهد.
