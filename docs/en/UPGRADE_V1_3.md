@@ -1,4 +1,4 @@
-# Upgrade PW Agent v0.6 to v1.3.0-rc.1
+# Upgrade PW Agent v0.6 to v1.3.0-rc.2
 
 [Fresh install](INSTALL_V1_3.md) · [فارسی](../fa/UPGRADE_V1_3.md) · [Feature status](CONTROL_CENTER_PROGRESS.md)
 
@@ -34,10 +34,10 @@ Deploy the matching published RC cPanel package in an **isolated** subdomain or 
 ## Step 3: Backend in-place upgrade (only after acceptance)
 
 1. Schedule maintenance; pause sensitive automation and snapshot DB and files.
-2. Download `pw-agent-cpanel-v1.3.0-rc.1.zip` from a genuine matching prerelease and compare its SHA256. If no published asset exists, stop.
+2. Download `pw-agent-cpanel-v1.3.0-rc.2.zip` from the [matching signed pre-release](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.3.0-rc.2) and compare its SHA256. If the asset or signature is missing, stop.
 3. Extract to a *temporary directory* in cPanel File Manager. The ZIP has all backend files at root and intentionally excludes `config.php`.
 4. Copy the new files over the current backend folder **without deleting the destination**. Preserve `config.php`, the existing releases cache, and all runtime state. Keep your existing base URL.
-5. Open `health.php`: expect `{"ok":true,"version":"1.3.0-rc.1",...}`. For a failure inspect PHP error_log, not by deleting configuration/database.
+5. Open `health.php`: expect `{"ok":true,"version":"1.3.0-rc.2",...}`. For a failure inspect PHP error_log, not by deleting configuration/database.
 6. Verify the existing Once Per Minute cron continues to call your real `cron/monitor.php`. Do not add a duplicate job or paste five schedule stars into the Command field.
 7. Verify the authorized Telegram Mini App Dashboard and device list.
 
