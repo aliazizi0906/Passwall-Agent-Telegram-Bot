@@ -164,11 +164,13 @@ jobs:
             exit 1
           fi
           release_args=()
+          notes_args=(--generate-notes)
           if [[ "$RELEASE_TAG" == *-rc.* || "$RELEASE_TAG" == *-beta.* ]]; then
             release_args+=(--prerelease)
+            notes_args=(--notes-file docs/en/RELEASE_NOTES_V1_3_RC.md)
           fi
           gh release create "$RELEASE_TAG" dist/* \
             --target "$GITHUB_SHA" \
-            --generate-notes \
+            "${notes_args[@]}" \
             "${release_args[@]}" \
             --title "PW Agent $RELEASE_TAG"
