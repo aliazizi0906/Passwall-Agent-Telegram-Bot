@@ -62,7 +62,7 @@ func capabilityReportV13() map[string]interface{} {
 		"capabilities": map[string]interface{}{
 			"passwall2":     exists("/etc/config/passwall2"),
 			"wifi_radios":   radios,
-			"guest_network": len(radios) > 0,
+			"guest_network": false,
 			"cellular":      false,
 			"cell_lock":     false,
 			"sms":           false,
