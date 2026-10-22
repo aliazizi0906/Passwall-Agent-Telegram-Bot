@@ -1,7 +1,7 @@
 # PW Control Center v1.3 — Functional specification (FA)
 
-Status: **proposed / implementation in progress**, not a description of shipped v0.6 features.  
-Branch: `feature/v1.3-control-center`. Existing v0.6 deployment must remain untouched.  
+Status: **partially implemented in public pre-release v1.3.0-rc.2**; this specification also contains planned items that are not yet implemented or hardware-certified.  
+Source branch: `feature/v1.3-control-center`; public pre-release: `v1.3.0-rc.2`. Existing production v0.6 deployments must remain untouched until staged migration and rollback checks pass.  
 Reference: user-supplied WRTPro screenshots and product-description text, used solely as a functional reference. PW Control Center must have its own code, styles, identity, components and permissions. **No WRTPro binaries, source or license system.**
 
 ## Product goal
