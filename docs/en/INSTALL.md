@@ -1,4 +1,6 @@
-# Install PW Agent
+# Legacy installation guide — PW Agent v0.6.0
+
+> **Latest public pre-release: v1.3.0-rc.2.** This file is the legacy installer guide for stable v0.6.0. For new installs use [Install v1.3 RC](INSTALL_V1_3.md); for existing v0.6 installations use [Upgrade to v1.3 RC](UPGRADE_V1_3.md). RC is not production-certified.
 
 [Documentation Home](README.md) · [فارسی](../fa/INSTALL.md)
 

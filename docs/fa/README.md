@@ -1,14 +1,18 @@
 # مستندات PW Agent — فارسی
 
+> **آخرین نسخه عمومی آزمایشی: v1.3.0-rc.2.** برای نصب و ارتقا از راهنمای [نصب RC](INSTALL_V1_3.md)، [ارتقا](UPGRADE_V1_3.md) و [وضعیت قابلیت‌ها](CONTROL_CENTER_PROGRESS.md) استفاده کن. بخش‌های تاریخی این صفحه رفتار نسخه پایدار v0.6 را توضیح می‌دهند؛ RC هنوز نسخه پایدار نیست.
+
 [← صفحه اصلی پروژه](../../README.md) · [English](../en/README.md)
 
 ## منو
 
 | بخش | توضیح |
 |---|---|
-| [نصب](INSTALL.md) | Web Setup بدون Terminal روی cPanel + نصب OpenWrt |
+| [نصب v1.3 RC](INSTALL_V1_3.md) | راهنمای نسخه عمومی آزمایشی فعلی |
+| [نصب Legacy](INSTALL.md) | راهنمای نسخه پایدار v0.6.0 |
+| [یادداشت انتشار RC2](RELEASE_NOTES_V1_3_RC.md) | تغییرات و محدودیت‌های v1.3.0-rc.2 |
 | [قابلیت‌ها](FEATURES.md) | معرفی کامل امکانات |
-| [Fleet و Automation](FLEET.md) | Multi-Device، RBAC، Audit، Monitoring و Scheduler در v0.6 |
+| [Fleet و Automation](FLEET.md) | قابلیت‌های پایه v0.6؛ پیش‌نمایش پنل جدید در راهنمای v1.3 RC |
 | [معماری](ARCHITECTURE.md) | اجزا و جریان درخواست‌ها |
 | [امنیت](SECURITY.md) | احراز هویت، رمزنگاری و اعتماد Update |
 | [به‌روزرسانی](UPDATES.md) | آپدیت کاربران و Release برای Maintainer |
@@ -35,11 +39,11 @@ PW Agent یک سیستم Self-hosted برای مدیریت OpenWrt و Passwall2 
 
 Passwall2 باید از قبل روی روتر نصب باشد.
 
-**مرحله بعد:** [نصب PW Agent](INSTALL.md)
+**مرحله بعد:** [نصب نسخه عمومی آزمایشی v1.3.0-rc.2](INSTALL_V1_3.md) · [راهنمای قدیمی v0.6.0](INSTALL.md)
 
 
 ## مدل نصب روی cPanel
 
-در v0.6 هیچ نیازی به cPanel Terminal یا مسیر ثابت فایل‌سیستم نیست.
+در نسخه پایدار v0.6 و نسخه آزمایشی v1.3، Backend به cPanel Terminal یا مسیر ثابت فایل‌سیستم نیاز ندارد.
 
 محتویات `server/` را در هر فولدر Web-accessible آپلود کن و `setup.php` را باز کن. Web Setup آدرس واقعی Deployment را تشخیص می‌دهد، Schema و Config را می‌سازد، Telegram Webhook را ثبت می‌کند و Cron Command و Provisioning Command دقیق همان نصب را تحویل می‌دهد.

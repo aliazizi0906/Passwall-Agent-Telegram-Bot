@@ -1,5 +1,7 @@
 # Architecture
 
+> **Current public pre-release: v1.3.0-rc.2.** This document includes historical v0.6 architecture details; use the [v1.3 implementation matrix](CONTROL_CENTER_PROGRESS.md) for the current control-center scope and limitations.
+
 [Documentation Home](README.md) · [فارسی](../fa/ARCHITECTURE.md)
 
 ## High-level design

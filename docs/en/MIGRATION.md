@@ -1,8 +1,10 @@
-# Migration
+# Legacy migration guide — v0.5.x to v0.6.x
+
+> **Latest public pre-release: v1.3.0-rc.2.** This page documents only the historical v0.5→v0.6 migration. For the current v0.6→v1.3 RC path, use [Upgrade v1.3 RC](UPGRADE_V1_3.md), [Install v1.3 RC](INSTALL_V1_3.md) and [implementation status](CONTROL_CENTER_PROGRESS.md). RC is not production-certified.
 
 [Documentation Home](README.md) · [فارسی](../fa/MIGRATION.md)
 
-## Upgrade from v0.5.x to v0.6.x
+## Historical upgrade: v0.5.x → v0.6.x
 
 v0.6 keeps the outbound Agent protocol from v0.5 and adds Fleet Management, RBAC, Audit, Config History/Rollback, advanced Monitoring, Maintenance and Scheduling.
 
@@ -23,7 +25,7 @@ The physical installation directory does not matter. v0.6 continues to run from 
 
 ## 2. Deploy v0.6 using File Manager
 
-Download the current repository ZIP from GitHub, extract it into a temporary directory and copy the contents of its `server/` directory over the existing backend directory.
+For this historical v0.5→v0.6 migration, download the repository source archive pinned to tag `v0.6.0` (not `main` or the latest release): [v0.6.0 source ZIP](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/archive/refs/tags/v0.6.0.zip). Extract it into a temporary directory and copy the contents of its `server/` directory over the existing backend directory.
 
 Do not delete the destination directory first.
 

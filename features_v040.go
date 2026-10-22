@@ -905,6 +905,37 @@ func runCLIIfRequestedV4() bool {
 		fmt.Println(agentVersion)
 		return true
 	}
+	// Local read-only operations work without a PHP backend or Telegram connectivity.
+	// LuCI rpcd ACL explicitly grants each subcommand; no arbitrary exec surface.
+	if len(os.Args) == 2 {
+		var value interface{}
+		var execErr error
+		switch os.Args[1] {
+		case "capabilities-json":
+			value = capabilityReportV13()
+		case "led-json":
+			value, execErr = ledStatusV13()
+		case "network-doctor-json":
+			value, execErr = networkDoctorV13()
+		case "clients-json":
+			value, execErr = connectedClients()
+		case "wifi-json":
+			value, execErr = listWiFi()
+		case "status-json":
+			value, execErr = systemStatus()
+		}
+		if value != nil || execErr != nil {
+			if execErr != nil {
+				value = map[string]interface{}{"ok": false, "error": execErr.Error()}
+			}
+			output, encodeErr := json.Marshal(value)
+			if encodeErr != nil {
+				output = []byte(`{"ok":false,"error":"serialization failed"}`)
+			}
+			fmt.Println(string(output))
+			return true
+		}
+	}
 	if os.Args[1] != "diagnose-json" {
 		return false
 	}

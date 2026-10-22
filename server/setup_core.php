@@ -6,7 +6,7 @@ declare(strict_types=1);
  * from both the CLI installer and the browser-based cPanel installer.
  */
 
-function pw_setup_version(): string { return '0.6.0'; }
+function pw_setup_version(): string { return '1.3.0-rc.2'; }
 
 function pw_setup_valid_device_id(string $v): bool {
     return (bool)preg_match('/^[A-Za-z0-9_-]{1,64}$/',$v);

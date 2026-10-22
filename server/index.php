@@ -5,29 +5,41 @@ if(!is_file(__DIR__.'/config.php')){
     header('Location: setup.php',true,302);
     exit;
 }
-
 require __DIR__.'/lib.php';
 header('Cache-Control: no-store');
+header('X-Content-Type-Options: nosniff');
+$version=htmlspecialchars(app_version(),ENT_QUOTES,'UTF-8');
 ?><!doctype html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PW Agent</title>
+<meta name="color-scheme" content="light dark">
+<title>PW Control Center · <?= $version ?></title>
 <style>
-:root{color-scheme:dark;--bg:#0b0f14;--card:#131a22;--line:#283747;--text:#eef4fb;--muted:#8fa3b8;--accent:#58a6ff}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:760px;margin:auto;padding:28px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}.muted{color:var(--muted)}a{color:var(--accent)}code{background:#080b0f;border:1px solid var(--line);border-radius:7px;padding:2px 6px}
+:root{color-scheme:light;--bg:#f6f8fc;--card:#fff;--text:#172941;--muted:#65758d;--line:#dce5ef;--accent:#2263ca}
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0c1729;--card:#16243a;--text:#e5eeff;--muted:#93a8c3;--line:#2b3c55;--accent:#82b1ff}}
+*{box-sizing:border-box}body{font:14px/1.8 Tahoma,system-ui,sans-serif;margin:0;background:var(--bg);color:var(--text)}
+main{max-width:900px;margin:auto;padding:50px 18px}.brand{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.logo{background:linear-gradient(120deg,#2563eb,#0ca6a6);border-radius:14px;width:56px;height:56px;display:grid;place-items:center;font-size:18px;color:#fff;font-weight:900}
+h1{font-size:27px;margin:0}.sub{color:var(--muted)}.layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.card{padding:23px;border:1px solid var(--line);border-radius:18px;background:var(--card)}.card h2{margin:0 0 8px;font-size:18px}.card p{color:var(--muted)}
+a{color:var(--accent);font-weight:700;text-decoration:none;word-wrap:break-word}a:hover{text-decoration:underline}.note{margin-top:16px;background:var(--card);border:1px solid var(--line);border-right:4px solid var(--accent);border-radius:11px;padding:14px}
+small{color:var(--muted)}@media(max-width:620px){.layout{grid-template-columns:1fr}main{padding:26px 15px}}
 </style>
 </head>
 <body><main>
-<h1>PW Agent <?=htmlspecialchars(app_version(),ENT_QUOTES,'UTF-8')?></h1>
-<div class="card">
-<b>Backend installed</b>
-<p class="muted">This directory is a PW Agent backend installation. Management is performed from Telegram and the Telegram Mini App Dashboard.</p>
-<p><a href="health.php">Health check</a></p>
+<div class="brand"><div class="logo">PW</div><div><h1>مرکز کنترل PW Agent</h1><div class="sub">Self-hosted OpenWrt Control Center · v<?= $version ?></div></div></div>
+<div class="layout">
+<section class="card"><h2>پنل مدیریتی جدید · PW Control</h2><p>پنل فارسی/انگلیسی، نظارت بر شبکه و روتر، Passwall2، دستگاه‌های LAN، Wi-Fi و عیب‌یابی شبکه.</p>
+<a href="control/">PW Control Center →</a></section>
+<section class="card"><h2>داشبورد تلگرام · Fleet</h2><p>مدیریت روترهای ثبت‌شده، مجوز کاربران، Monitoring، Alerts و Schedule.</p>
+<a href="dashboard/">Telegram Dashboard →</a></section>
+<section class="card"><h2>تست سلامت Backend</h2><p>بررسی اتصال PHP به MySQL و وضعیت Schema و نسخه نصب‌شده.</p>
+<a href="health.php">Backend Health Check →</a></section>
+<section class="card"><h2>وضعیت نصب و امنیت</h2><p>فایل `config.php` موجود است و Web Setup قفل شده. هیچ Token یا Secret در این صفحه نمایش داده نمی‌شود.</p>
+<a href="setup.php">Setup (locked) →</a></section>
 </div>
-<div class="card">
-<b>Security</b>
-<p class="muted">Browser Setup is automatically locked while <code>config.php</code> exists. Do not publish or copy runtime secrets into public files.</p>
-</div>
+<div class="note"><strong>نحوه ورود به پنل / Authentication:</strong> نسخه حاضر پنل وب را از داخل <strong>Telegram Mini App</strong> و با `initData` امضاشده تلگرام احراز هویت می‌کند. صرف بازکردن لینک در مرورگر معمولی امکان مدیریت روتر را نمی‌دهد. لطفاً از Bot مجاز وارد Dashboard شوید.</div>
+<p><small>PW Agent v<?= $version ?> · Hosted cPanel-compatible PHP/MySQL backend · Router connects using outbound HTTPS/HMAC</small></p>
 </main></body></html>

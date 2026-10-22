@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require dirname(__DIR__) . '/lib.php';
 require dirname(__DIR__) . '/release_tools.php';
+require dirname(__DIR__) . '/v130_command_validation.php';
 header('Cache-Control: no-store');
 
 $in=json_decode_assoc(raw_body());
@@ -21,6 +22,7 @@ function dash_device(int $uid,string $device): void {
     if($device===''||!v060_can_device($uid,$device)||!v060_device_enabled($device))response_json(['ok'=>false,'error'=>'Device access denied'],null,403);
 }
 function dash_json($v): array { return is_array($v)?$v:[]; }
+
 
 try{
     if($action==='summary'){
@@ -174,7 +176,7 @@ try{
         dash_device($uid,$device);
         $commandAction=(string)($in['command_action']??'');
         if(!v060_dashboard_command_allowed($commandAction))throw new RuntimeException('Dashboard action is not allowed');
-        $params=dash_json($in['params']??[]);
+        $params=dash_v130_safe_params($commandAction,dash_json($in['params']??[]),!empty($in['confirmed']));
         $chat=$commandAction==='system.backup.create'?$uid:null;
         $id=queue_command($device,$commandAction,$params,$chat,$uid,null,'dashboard');
         db()->prepare("UPDATE pw_audit_log SET source='dashboard' WHERE command_id=?")->execute([$id]);

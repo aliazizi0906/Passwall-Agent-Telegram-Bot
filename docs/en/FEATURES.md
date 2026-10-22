@@ -1,5 +1,7 @@
 # Features
 
+> **Current public pre-release: v1.3.0-rc.2.** This page documents baseline and v0.6 capabilities. For what is actually implemented in the new control center, consult the [v1.3 implementation matrix](CONTROL_CENTER_PROGRESS.md) and [v1.3 RC guide](INSTALL_V1_3.md); planned controls must not be assumed operational.
+
 [Documentation Home](README.md) · [فارسی](../fa/FEATURES.md)
 
 ## Core router management
@@ -113,7 +115,7 @@ v0.5 adds:
 
 See [Architecture](ARCHITECTURE.md) and [Security](SECURITY.md) for details.
 
-## Fleet Management (v0.6)
+## Fleet Management (v0.6 baseline)
 
 v0.6 adds multi-device Fleet Management, database-backed device registry, Device Groups/Tags/Location, Zero-Touch Provisioning from Telegram/Dashboard, RBAC with per-device scope, Audit Log, encrypted Config History with Rollback, advanced Monitoring/Alert Rules, Maintenance Mode, Scheduled Actions and a Fleet Mini App Dashboard.
 

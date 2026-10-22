@@ -2,12 +2,14 @@ name: Release
 
 on:
   push:
+    branches:
+      - "feature/v1.3-control-center"
     tags:
       - "v*"
   workflow_dispatch:
     inputs:
       version:
-        description: "Release tag, for example v0.5.0"
+        description: "Release tag, e.g. v1.3.0-rc.2 or stable v1.3.0"
         required: true
         type: string
 
@@ -16,6 +18,8 @@ permissions:
 
 jobs:
   release:
+    # Release from the feature branch ONLY for an explicitly labelled RC commit.
+    if: github.ref != 'refs/heads/feature/v1.3-control-center' || contains(github.event.head_commit.message, '[publish-rc]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,12 +32,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            [ "$GITHUB_REF_NAME" = "main" ] || {
-              echo "Official manual releases must run from the main branch" >&2
-              exit 1
-            }
+          if [ "$GITHUB_REF" = "refs/heads/feature/v1.3-control-center" ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            RELEASE_TAG="v$(php -r 'require "server/setup_core.php"; echo pw_setup_version();')"
+            [[ "$RELEASE_TAG" == v1.3.0-rc.* ]] || { echo "Only RC versions may publish from the feature branch" >&2; exit 1; }
+          elif [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             RELEASE_TAG="${{ inputs.version }}"
+            if [ "$GITHUB_REF_NAME" != "main" ]; then
+              [ "$GITHUB_REF_NAME" = "feature/v1.3-control-center" ] && [[ "$RELEASE_TAG" == v1.3.0-rc.* ]] || {
+                echo "Stable releases require main; only prerelease RC builds are allowed on feature/v1.3-control-center." >&2
+                exit 1
+              }
+            fi
           else
             RELEASE_TAG="$GITHUB_REF_NAME"
           fi
@@ -51,6 +60,17 @@ jobs:
           test -z "$(gofmt -l *.go)"
           go test ./...
           go vet ./...
+
+      - name: PHP and Web UI syntax
+        run: |
+          find server -name '*.php' -print0 | xargs -0 -n1 php -l
+          php server/tests/setup_core_test.php
+          php server/tests/v130_command_validation_test.php
+          python3 scripts/check_dashboard_js.py
+          node --check openwrt/luci/www/luci-static/resources/view/pw-agent/control.js
+          sh -n openwrt/install-remote.sh
+          sh -n openwrt/install.sh
+          sh -n openwrt/install-update.sh
 
       - name: Load and validate Ed25519 signing key
         shell: bash
@@ -124,6 +144,13 @@ jobs:
           build_bundle mips mips "" softfloat
           build_bundle mipsle mipsle "" softfloat
 
+          bash scripts/package_cpanel.sh
+          CPANEL_ZIP="dist/pw-agent-cpanel-${RELEASE_TAG}.zip"
+          [ -s "$CPANEL_ZIP" ] || { echo "Missing cPanel ZIP" >&2; exit 1; }
+          openssl pkeyutl -sign -rawin \
+            -inkey /tmp/update-ed25519.pem \
+            -in "$CPANEL_ZIP" \
+            -out "$CPANEL_ZIP.sig"
           rm -f /tmp/update-ed25519.pem
 
       - name: Publish GitHub release
@@ -136,7 +163,14 @@ jobs:
             echo "Release $RELEASE_TAG already exists" >&2
             exit 1
           fi
+          release_args=()
+          notes_args=(--generate-notes)
+          if [[ "$RELEASE_TAG" == *-rc.* || "$RELEASE_TAG" == *-beta.* ]]; then
+            release_args+=(--prerelease)
+            notes_args=(--notes-file docs/en/RELEASE_NOTES_V1_3_RC.md)
+          fi
           gh release create "$RELEASE_TAG" dist/* \
             --target "$GITHUB_SHA" \
-            --generate-notes \
+            "${notes_args[@]}" \
+            "${release_args[@]}" \
             --title "PW Agent $RELEASE_TAG"

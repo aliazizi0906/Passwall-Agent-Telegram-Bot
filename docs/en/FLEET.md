@@ -1,5 +1,7 @@
 # Fleet Management & Automation
 
+> **Legacy v0.6 guide.** This page describes the v0.6 Fleet baseline. For the public v1.3.0-rc.2 preview, see [installation](INSTALL_V1_3.md), [upgrade](UPGRADE_V1_3.md) and the [implementation matrix](CONTROL_CENTER_PROGRESS.md). RC is not production-certified.
+
 [Documentation Home](README.md) · [فارسی](../fa/FLEET.md)
 
 PW Agent v0.6 adds a database-backed fleet layer on top of the v0.5 single-device architecture.

@@ -39,6 +39,7 @@ canvas{width:100%;height:150px}
 <button data-tab="maintenance">Maintenance</button>
 <button data-tab="schedules">Schedules</button>
 <button data-tab="access">Access</button>
+<a href="../control/" style="display:inline-flex;align-items:center;white-space:nowrap;text-decoration:none;color:var(--accent);padding:9px;border:1px solid var(--line);border-radius:9px">PW Control Preview ↗</a>
 </nav>
 <section id="devices"></section>
 <section id="groups" class="hidden"></section>

@@ -1,5 +1,7 @@
 # مدیریت Fleet و Automation
 
+> **راهنمای Legacy نسخه v0.6.** این صفحه امکانات Fleet نسخه پایدار v0.6 را توضیح می‌دهد. برای پیش‌نمایش عمومی v1.3.0-rc.2، [نصب](INSTALL_V1_3.md)، [ارتقا](UPGRADE_V1_3.md) و [جدول وضعیت](CONTROL_CENTER_PROGRESS.md) را ببین. RC هنوز نسخه پایدار نیست.
+
 [صفحه مستندات](README.md) · [English](../en/FLEET.md)
 
 نسخه v0.6 یک لایه Fleet مبتنی بر Database روی معماری تک‌روتری v0.5 اضافه می‌کند.

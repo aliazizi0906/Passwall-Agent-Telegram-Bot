@@ -1,8 +1,10 @@
-# مهاجرت و ارتقا
+# راهنمای مهاجرت Legacy — از v0.5.x به v0.6.x
+
+> **آخرین نسخه عمومی آزمایشی: v1.3.0-rc.2.** این صفحه فقط مسیر تاریخی ارتقا از v0.5 به v0.6 را توضیح می‌دهد. برای ارتقای فعلی از v0.6 به v1.3 RC از [راهنمای ارتقا](UPGRADE_V1_3.md)، [نصب](INSTALL_V1_3.md) و [وضعیت قابلیت‌ها](CONTROL_CENTER_PROGRESS.md) استفاده کن. RC هنوز نسخه پایدار نیست.
 
 [صفحه مستندات](README.md) · [English](../en/MIGRATION.md)
 
-## ارتقا از v0.5.x به v0.6.x
+## مسیر تاریخی ارتقا: v0.5.x ← v0.6.x
 
 نسخه v0.6 پروتکل Outbound Agent نسخه v0.5 را حفظ می‌کند و Fleet Management، RBAC، Audit، Config History/Rollback، Monitoring پیشرفته، Maintenance و Scheduler را اضافه می‌کند.
 
@@ -23,7 +25,7 @@ releases/
 
 ## ۲. Deploy نسخه v0.6 با File Manager
 
-ZIP آخر Repository را از GitHub دانلود کن، داخل یک فولدر موقت Extract کن و محتویات `server/` را روی فولدر فعلی Backend کپی کن.
+برای همین مسیر تاریخی v0.5 به v0.6، سورس را دقیقاً از Tag نسخه `v0.6.0` دریافت کن، نه از `main` یا آخرین Release: [دانلود ZIP سورس v0.6.0](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/archive/refs/tags/v0.6.0.zip). آن را در پوشه موقت Extract کن و محتویات `server/` را روی Backend فعلی کپی کن.
 
 فولدر مقصد را قبل از Copy پاک نکن.
 
