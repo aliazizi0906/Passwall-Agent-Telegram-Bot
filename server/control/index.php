@@ -153,6 +153,7 @@ function home(){
  '<section class="card"><div class="section-title">'+say('ابزارهای پرکاربرد','Quick actions')+'</div><div class="actions">'+
  action('system.status',say('وضعیت روتر','Router status'),'system.read',false)+
  action('agent.diagnose',say('عیب‌یابی Agent','Agent diagnostics'),'system.read',false)+
+ action('network.doctor',say('عیب‌یابی شبکه','Network doctor'),'network.read',false)+
  action('passwall2.status',say('وضعیت Passwall2','Passwall2 status'),'passwall.read',false)+
  action('passwall2.restart',say('راه‌اندازی مجدد Passwall2','Restart Passwall2'),'passwall.modify',true)+
  '</div><p class="muted" style="margin-top:17px">'+esc(say('آمار ۲۴ ساعت گذشته: ','Last 24h: '))+esc(safeNum(h.heartbeat_coverage,1))+'% '+say('پوشش Heartbeat','heartbeat coverage')+'</p></section></div>'+
@@ -187,6 +188,73 @@ function routers(){
  (devices.map(function(d){return '<div class="device-row"><div><strong>'+esc(d.display_name||d.device_id)+' '+(d.device_id===state.active?'●':'')+'</strong><small>'+esc(d.device_id)+' · '+esc(d.hostname||'—')+' · Agent '+esc(d.agent_version||'—')+'</small></div><button type="button" class="action" data-router="'+esc(d.device_id)+'" '+(d.device_id===state.active?'disabled':'')+'>'+say('انتخاب','Select')+'</button></div>';}).join('')||'<div class="empty">'+say('روتری ثبت نشده است.','No registered routers.')+'</div>')+
  '</section><p class="muted" style="margin-top:14px">'+say('این بخش مربوط به Fleet روترها است؛ دستگاه‌های متصل به وای‌فای/LAN در بخش «دستگاه‌ها» قرار می‌گیرند.','This section manages routers; Wi-Fi/LAN clients have a separate page.')+'</p>';
 }
+
+function readPanel(title,desc,items,planned){
+ $('page').innerHTML='<div class="stack"><section class="card"><div class="section-title">'+esc(title)+'</div><p class="muted" style="margin-bottom:14px">'+esc(desc)+'</p><div class="actions">'+
+ items.map(function(item){return action(item[0],say(item[1],item[2]),item[3],false);}).join('')+
+ '</div></section>'+resultBox()+
+ (planned?'<section class="card"><div class="section-title">'+say('در حال توسعه','Upcoming capabilities')+'</div><p class="warn-note">'+esc(planned)+'</p></section>':'')+'</div>';
+}
+function showClients(){
+ readPanel(say('دستگاه‌های شبکه','LAN clients'),say('مشاهده DHCP و جدول همسایه‌های شبکه از خود روتر. فقط دستگاه شناسایی‌شده نمایش داده می‌شود؛ فعال‌بودن همه آن‌ها تضمین نیست.','Read-only DHCP and neighbor-table discovery. A detected client is not necessarily online.'),[
+  ['system.clients','دریافت لیست دستگاه‌ها','List clients','system.read'],
+  ['system.interfaces','اینترفیس‌های شبکه','Network interfaces','system.read'],
+  ['network.dhcp_leases','اجاره‌های DHCP','DHCP leases','network.read']
+ ],say('مسدودسازی دستگاه، محدودیت سرعت، زمان‌بندی و اولویت‌دهی به قوانین nftables/tc آزمایش‌شده روی روتر نیاز دارند. فعلاً غیرفعال‌اند.','Blocking, limits, schedules and priorities require tested nftables/tc policies; not active yet.'));
+}
+function showWifi(){
+ readPanel(say('مدیریت وای‌فای','Wi-Fi control'),say('مشاهده SSID و رادیوها و کلاینت‌های وای‌فای. رمزهای فعلی هیچ‌وقت در خروجی نمایش داده نمی‌شوند.','Discover SSIDs, radios and stations. Existing Wi-Fi passwords are never returned.'),[
+ ['wifi.list','شبکه‌های وای‌فای','Wi-Fi networks','wifi.read'],
+ ['wifi.radios','رادیوهای ۲٫۴/۵/۶','Wi-Fi radios','wifi.read'],
+ ['wifi.stations','دستگاه‌های وای‌فای','Wi-Fi stations','wifi.read']
+ ],say('تغییر رمز و کانال تنها بعد از فعال‌شدن Apply با Rollback زمان‌دار ارائه خواهد شد تا دسترسی به روتر از دست نرود.','Mutating SSID/password/channel settings await timed safe-apply rollback.'));
+}
+function showDNS(){
+ readPanel(say('DNS و امنیت','DNS & security'),say('مشاهده Resolver و Route و اجرای آزمایش اتصال بدون تغییر تنظیمات فعلی.','Read resolver configuration and routing; test connectivity without altering settings.'),[
+ ['network.dns','مشاهده DNS روتر','Read DNS','network.read'],
+ ['network.routes','جدول مسیریابی','Routing table','network.read'],
+ ['network.internet_test','تست اینترنت','Internet probes','network.read'],
+ ['network.doctor','عیب‌یابی مرحله‌ای','Network doctor','network.read']
+ ],say('DNS رمزنگاری‌شده، تفکیک ترافیک ایران، نشت DNS/IPv6 و Kill Switch تا زمان تست بسته‌ها و مسیرها فعلاً فقط در برنامه توسعه هستند.','Encrypted/split DNS, IPv6 leak blocking and kill switch need validated packet-path tests.'));
+}
+function showGaming(){
+ readPanel(say('بازی و کیفیت اتصال','Gaming & quality'),say('تست‌های تشخیصی شبکه برای بررسی کیفیت پایه؛ مقادیر فعلی جایگزین تست واقعی Bufferbloat نیستند.','Network diagnostics are available; these do not replace a true bufferbloat test.'),[
+ ['network.internet_test','آزمایش اتصال','Connectivity test','network.read'],
+ ['network.doctor','عیب‌یابی شبکه','Network doctor','network.read'],
+ ['system.interfaces','وضعیت اینترفیس‌ها','Interfaces','system.read']
+ ],say('SQM، QoS، UPnP و اولویت دستگاه‌ها پس از تشخیص قابلیت واقعی سخت‌افزار و طراحی تنظیمات برگشت‌پذیر فعال می‌شوند.','SQM/QoS, UPnP and prioritization require capability discovery and recoverable configuration.'));
+}
+function renderCommandOutput(actionName,result){
+ var keysensitive=/(^|_)(password|secret|token|private|credential|psk|auth|key|data_b64|sealed|url|link)(_|$)/i;
+ function clean(x,depth){
+  if(depth>5)return '[depth limit]';
+  if(Array.isArray(x))return x.slice(0,100).map(function(v){return clean(v,depth+1);});
+  if(x&&typeof x==='object'){
+   var out={};Object.keys(x).slice(0,100).forEach(function(k){out[k]=keysensitive.test(k)?'[redacted]':clean(x[k],depth+1);});return out;
+  }
+  return typeof x==='string'?x.slice(0,2048):x;
+ }
+ var safe=clean(result,0);
+ if(actionName==='system.clients'&&safe&&Array.isArray(safe.clients)){
+  var clients=safe.clients;
+  return '<div class="section-title">'+say('کلاینت‌های کشف‌شده','Discovered clients')+' ('+clients.length+')</div>'+
+   (clients.map(function(c){return '<div class="device-row"><div><strong>'+esc(c.hostname||say('بدون نام','Unknown'))+'</strong><small>'+esc(c.ip||'—')+' · '+esc(c.mac||'—')+'</small></div><span class="pill">'+esc(c.interface||'—')+'</span></div>';}).join('')||'<div class="empty">'+say('دستگاهی شناسایی نشد.','No devices found.')+'</div>');
+ }
+ if(actionName==='wifi.list'&&safe&&Array.isArray(safe.wifi)){
+  return '<div class="section-title">'+say('شبکه‌های تعریف‌شده','Configured SSIDs')+'</div>'+
+   (safe.wifi.map(function(w){return '<div class="device-row"><div><strong>'+esc(w.ssid||'—')+'</strong><small>'+esc(w.section||'—')+' · '+esc(w.encryption||'—')+'</small></div><span class="pill">'+(w.disabled?say('خاموش','Disabled'):say('روشن','Enabled'))+'</span></div>';}).join('')||'<div class="empty">'+say('شبکه‌ای یافت نشد.','No Wi-Fi interfaces detected.')+'</div>');
+ }
+ if(actionName==='network.doctor'&&safe&&Array.isArray(safe.checks)){
+  return '<div class="section-title">'+say('گزارش عیب‌یابی','Network doctor report')+' <span class="pill">'+esc(safe.status||'—')+'</span></div>'+
+   '<p class="muted">'+say('اولین مرحله ناموفق: ','First failed check: ')+esc(safe.first_failed||'—')+'</p>'+
+   safe.checks.map(function(v){return '<div class="device-row"><div><strong>'+esc(v.id||'—')+'</strong><small>'+esc(v.detail||'')+'</small></div><span class="pill '+(v.status==='pass'?'ok':v.status==='fail'?'bad':'')+'">'+esc(v.status||'—')+' · '+esc(v.latency_ms||0)+'ms</span></div>';}).join('');
+ }
+ if(actionName==='agent.capabilities'&&safe&&safe.capabilities){
+  return '<div class="section-title">'+say('قابلیت‌های شناسایی‌شده','Discovered capabilities')+'</div><p class="muted">'+esc(safe.hardware&&safe.hardware.model||'—')+' · OpenWrt '+esc(safe.openwrt_version||'—')+'</p>'+
+  Object.entries(safe.capabilities).map(function(entry){return '<div class="status-row"><span>'+esc(entry[0])+'</span><span>'+esc(Array.isArray(entry[1])?entry[1].join(', ')||'—':entry[1]?'✓':'—')+'</span></div>';}).join('');
+ }
+ return '<pre id="feedback">'+esc(JSON.stringify(safe,null,2).slice(0,24000))+'</pre>';
+}
 function pending(title,summary,bullets){
  $('page').innerHTML='<div class="grid"><section class="card info"><span class="pill">'+say('در دست توسعه · فعلاً غیرفعال','Planned · Not yet implemented')+'</span><h3>'+esc(title)+'</h3><p>'+esc(summary)+'</p><div class="tags">'+bullets.map(function(b){return '<span class="tag">'+esc(b)+'</span>';}).join('')+'</div></section><section class="card"><div class="section-title">'+say('سازگاری و امنیت','Compatibility & safety')+'</div><p class="muted">'+say('تا وقتی Agent قابلیت سخت‌افزاری مربوط را اعلام نکند و API عملیات با RBAC و Rollback آزمایش نشود، کنترل تغییردهنده‌ای فعال نمی‌شود.','No mutating controls are enabled until the agent advertises the required capability and the API action passes RBAC and rollback testing.')+'</p><p class="warn-note" style="margin-top:16px">'+say('برای دستگاه‌های ناسازگار نباید تنظیمات ساختگی یا موفقیت ظاهری نمایش داده شود.','Unsupported hardware must not show fake settings or simulated success.')+'</p></section></div>';
 }
@@ -194,6 +262,8 @@ function system(){
  $('page').innerHTML='<div class="stack">'+hero()+'<section class="card"><div class="section-title">'+say('ابزارهای پشتیبانی‌شده','Supported tools')+'</div><div class="actions">'+
  action('system.status',say('وضعیت سیستم','System status'),'system.read',false)+
  action('agent.diagnose',say('تست ارتباط Agent','Agent diagnostics'),'system.read',false)+
+ action('agent.capabilities',say('شناسایی سخت‌افزار','Hardware capabilities'),'system.read',false)+
+ action('system.interfaces',say('اینترفیس‌های شبکه','Network interfaces'),'system.read',false)+
  action('system.backup.create',say('ارسال بکاپ در تلگرام','Send backup to Telegram'),'backup.create',true)+
  action('agent.update.check',say('بررسی آپدیت','Check updates'),'system.read',false)+
  action('agent.update.apply',say('نصب آپدیت Agent','Update agent'),'agent.update',true)+'</div></section>'+resultBox()+
@@ -215,7 +285,7 @@ function render(){
  nav();
  if(!state.fleet){$('page').innerHTML='<div class="empty">'+say('برای مشاهده داده‌های روتر، پنل را از دکمه Mini App در تلگرام باز کن. ورود مستقیم مرورگر در این پیش‌نمایش پشتیبانی نمی‌شود.','Open this preview from the Telegram Mini App button. Direct browser authentication is not available.')+'</div>';return;}
  if(!state.active){$('page').innerHTML='<div class="empty">'+say('هیچ روتر فعالی وجود ندارد.','No active router.')+'</div>';return;}
- if(state.page==='home')home();else if(state.page==='internet')internet();else if(state.page==='proxy')proxy();else if(state.page==='routers')routers();else if(state.page==='system')system();else if(state.page==='automation'){automation();}else{
+ if(state.page==='home')home();else if(state.page==='internet')internet();else if(state.page==='proxy')proxy();else if(state.page==='routers')routers();else if(state.page==='clients')showClients();else if(state.page==='wifi')showWifi();else if(state.page==='dns')showDNS();else if(state.page==='gaming')showGaming();else if(state.page==='system')system();else if(state.page==='automation'){automation();}else{
  var plans={
   clients:[say('مدیریت دستگاه‌های شبکه','LAN client management'),say('فهرست کلاینت‌ها، محدودیت سرعت، مسدودسازی، زمان‌بندی و اولویت‌بندی پس از توسعه API مجاز نمایش داده می‌شود.','Live client list, rate limits, blocking, schedules and priorities require an authorized agent API.'),['DHCP / ARP','MAC identity','Live RX/TX','Rate limit','Block / unblock','Parental schedules']],
   wifi:[say('مدیریت Wi-Fi','Wi-Fi management'),say('مدیریت SSID، رمز، ۲٫۴/۵ گیگاهرتز، شبکه مهمان، QR و انتخاب کانال ایمن همراه با Rollback.','SSID, password, 2.4/5 GHz, guest Wi-Fi, QR, safe channel selection and rollback.'),['SSID & WPA2/WPA3','Guest isolation','Channel scan','QR codes','Safe rollback']],
@@ -256,7 +326,7 @@ async function command(id,confirmNeeded){
    await new Promise(function(resolve){setTimeout(resolve,1400);});
    var j=await api('command_status',{device_id:state.active,command_id:ret.command_id});
    if(j.command && ['done','failed'].includes(j.command.status)){
-     if(out)out.textContent=JSON.stringify(j.command,null,2).slice(0,20000);
+     if(out){var box=out.parentElement; if(j.command.status==='done'&&j.command.result){box.innerHTML='<div class="section-title">'+esc(id)+'</div>'+renderCommandOutput(id,j.command.result);}else{out.textContent=JSON.stringify({status:j.command.status,error:j.command.error},null,2).slice(0,20000);}}
      finished=true;break;
    }
   }
