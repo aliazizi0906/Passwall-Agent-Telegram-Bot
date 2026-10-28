@@ -395,6 +395,7 @@ function system(){
  action('system.backup.create',say('ارسال بکاپ در تلگرام','Send backup to Telegram'),'backup.create',true)+
  action('agent.update.check',say('بررسی آپدیت','Check updates'),'system.read',false)+
  action('agent.update.apply',say('نصب آپدیت Agent','Update agent'),'agent.update',true)+'</div></section>'+resultBox()+
+ (state.role==='owner'&&init?'<section class="card"><div class="section-title">'+say('مهاجرت دیتابیس','Database migrations')+'</div><p class="muted">'+say('مهاجرت‌های افزودنی بدون حذف داده؛ ابتدا بکاپ دیتابیس تهیه کن. اجرای تغییر فقط با تأیید Owner تلگرام مجاز است.','Additive, non-destructive migrations. Back up MySQL first; only Telegram Owner may apply.')+'</p><div class="actions"><button class="action" data-migration="status">'+say('نمایش وضعیت','Show status')+'</button><button class="action danger" data-migration="apply">'+say('اجرای مهاجرت تأییدشده','Apply confirmed migrations')+'</button></div><div id="migrationInfo" class="muted" aria-live="polite"></div></section>':'')+
  (state.role==='owner'&&init?'<section class="card"><div class="section-title">'+say('تنظیم ورود مستقل وب','Configure browser login')+'</div><p class="muted">'+say('فقط Owner از داخل Telegram Mini App می‌تواند نام کاربری و رمز پنل را ایجاد یا بازنشانی کند.','Only a Telegram Owner can create or reset the web login credentials.')+'</p><form data-web-admin class="stack"><input required name="username" placeholder="admin" autocomplete="username" pattern="[a-z][a-z0-9._-]{2,31}" minlength="3" maxlength="32"><input required type="password" name="password" autocomplete="new-password" minlength="12" maxlength="256" placeholder="Password (12+ characters)"><button type="submit" class="action primary">'+say('ثبت نام کاربری و رمز','Save login credentials')+'</button></form></section>':'')+
  '<section class="card"><div class="section-title">'+say('بخش‌های آماده توسعه','Planned integration')+'</div><p class="muted">'+say('مدیریت LED، سرویس‌ها، آپدیت PHP Backend و کنسول پیشرفته بعد از توسعه Adapter و مسیر بازیابی اضافه می‌شوند.','LED control, service operations, staged backend updates and advanced console will require adapters and recovery paths.')+'</p></section></div>';
 }
@@ -482,6 +483,18 @@ document.addEventListener('click',function(ev){
  button.disabled=true;
  api('rollout_control',{id:id,operation:operation,confirmed:true}).then(loadRollouts)
  .catch(function(e){$('notice').textContent=e.message;button.disabled=false;});
+});
+document.addEventListener('click',function(ev){
+ var b=ev.target.closest('[data-migration]');if(!b)return;
+ if(!init||state.role!=='owner')return;
+ var mode=String(b.dataset.migration||'');
+ if(!['status','apply'].includes(mode))return;
+ if(mode==='apply'&&!window.confirm(say('از دیتابیس بکاپ گرفته‌ای؟ مهاجرت جداول جدید را ایجاد می‌کند. ادامه؟','Do you have a MySQL backup? This creates new tables. Continue?')))return;
+ b.disabled=true;
+ api(mode==='apply'?'migration_apply':'migration_status',mode==='apply'?{confirmed:true}:{}).then(function(result){
+  var el=$('migrationInfo');if(el)el.textContent=(result.applied?('Applied: '+result.applied.join(', ')+' · '):'')+
+    'Pending: '+((result.migration&&result.migration.pending)||[]).join(', ');
+ }).catch(function(e){$('notice').textContent=e.message;}).finally(function(){b.disabled=false;});
 });
 document.addEventListener('click',function(ev){
  var b=ev.target.closest('[data-led-identify]');if(!b)return;
