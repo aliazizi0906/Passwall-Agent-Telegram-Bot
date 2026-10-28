@@ -264,6 +264,8 @@ func (a *Agent) execute(c *Command) (interface{}, error) {
 		return ledStatusV13()
 	case "network.doctor":
 		return networkDoctorV13()
+	case "network.speed_probe":
+		return speedProbeV14()
 	case "system.interfaces":
 		return networkInterfaces()
 	case "system.clients":
