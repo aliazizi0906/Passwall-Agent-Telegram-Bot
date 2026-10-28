@@ -22,12 +22,19 @@ echo "$TOKEN" | grep -Eq '^[A-Za-z0-9_-]{32,128}$' || {
 }
 
 case "$(uname -m)" in
+    armv5*|armv5tel) ARCH=armv5 ;;
+    armv6*|armv6l) ARCH=armv6 ;;
     armv7l|armv7*) ARCH=armv7 ;;
     aarch64|arm64) ARCH=arm64 ;;
     x86_64|amd64) ARCH=amd64 ;;
     i386|i486|i586|i686) ARCH=386 ;;
     mips) ARCH=mips ;;
     mipsel|mipsle) ARCH=mipsle ;;
+    mips64el|mips64le) ARCH=mips64le ;;
+    mips64) ARCH=mips64 ;;
+    riscv64) ARCH=riscv64 ;;
+    loongarch64|loong64) ARCH=loong64 ;;
+    ppc64le) ARCH=ppc64le ;;
     *) echo "ERROR: unsupported architecture: $(uname -m)" >&2; exit 1 ;;
 esac
 
