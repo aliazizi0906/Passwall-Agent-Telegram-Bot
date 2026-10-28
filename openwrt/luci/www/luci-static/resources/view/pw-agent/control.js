@@ -13,7 +13,8 @@ var OPERATIONS = {
     led: ['led-json', 'GoogleWifiLED'],
     led_inventory: ['led-inventory-json', 'Board LEDs'],
     cellular: ['cellular-json', 'Cellular modem'],
-    sqm: ['network-policies-json', 'SQM / UPnP']
+    sqm: ['network-policies-json', 'SQM / UPnP'],
+    services: ['network-services-json', 'DNS / WAN / VLAN']
 };
 
 function card(label, children) {
