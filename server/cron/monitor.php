@@ -27,4 +27,6 @@ $pdo->exec("DELETE FROM pw_metrics WHERE captured_at < (NOW()-INTERVAL 30 DAY)")
 $pdo->exec("DELETE FROM pw_events WHERE created_at < (NOW()-INTERVAL 90 DAY)");
 v060_evaluate_alerts();
 v060_run_due_schedules();
+require_once dirname(__DIR__).'/fleet_rollout.php';
+pw_rollout_tick();
 echo "ok\n";
