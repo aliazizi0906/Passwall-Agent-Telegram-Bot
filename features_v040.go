@@ -913,6 +913,12 @@ func runCLIIfRequestedV4() bool {
 		switch os.Args[1] {
 		case "capabilities-json":
 			value = capabilityReportV13()
+		case "cellular-json":
+			value, execErr = cellularStatusV14()
+		case "network-policies-json":
+			value, execErr = networkPoliciesV14()
+		case "led-inventory-json":
+			value, execErr = ledInventoryV14()
 		case "led-json":
 			value, execErr = ledStatusV13()
 		case "network-doctor-json":
