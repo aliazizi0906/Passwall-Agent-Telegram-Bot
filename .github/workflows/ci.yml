@@ -45,12 +45,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          GOOS=linux GOARCH=arm GOARM=5 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-armv5 .
+          GOOS=linux GOARCH=arm GOARM=6 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-armv6 .
           GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-armv7 .
           GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-arm64 .
           GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-amd64 .
           GOOS=linux GOARCH=386 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-386 .
           GOOS=linux GOARCH=mips GOMIPS=softfloat CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-mips .
           GOOS=linux GOARCH=mipsle GOMIPS=softfloat CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-mipsle .
+          GOOS=linux GOARCH=mips64 GOMIPS64=softfloat CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-mips64 .
+          GOOS=linux GOARCH=mips64le GOMIPS64=softfloat CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-mips64le .
+          GOOS=linux GOARCH=riscv64 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-riscv64 .
+          GOOS=linux GOARCH=loong64 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-loong64 .
+          GOOS=linux GOARCH=ppc64le CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-ppc64le .
 
       - name: PHP lint
         run: find server -name '*.php' -print0 | xargs -0 -n1 php -l
