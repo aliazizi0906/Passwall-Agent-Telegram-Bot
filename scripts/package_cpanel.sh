@@ -31,6 +31,33 @@ rsync -a \
   --exclude='*.sqlite' \
   server/ "$STAGE/backend/"
 
+# Guarantee Vazirmatn locally even if the public CDN is unavailable at runtime.
+# CDN is the initial source, a second pinned mirror is the download fallback.
+# Failing the build is safer than shipping a broken CDN-only font reference.
+mkdir -p "$STAGE/backend/assets/fonts"
+FONT="$STAGE/backend/assets/fonts/Vazirmatn.woff2"
+FONT_URL="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/fonts/webfonts/Vazirmatn%5Bwght%5D.woff2"
+FONT_MIRROR="https://raw.githubusercontent.com/rastikerdar/vazirmatn/v33.003/fonts/webfonts/Vazirmatn%5Bwght%5D.woff2"
+curl --globoff --fail --location --silent --show-error --connect-timeout 15 --max-time 90 --retry 2 \
+    "$FONT_URL" --output "$FONT" || \
+curl --globoff --fail --location --silent --show-error --connect-timeout 15 --max-time 90 --retry 2 \
+    "$FONT_MIRROR" --output "$FONT"
+FONT_FILE="$FONT" python3 - <<'PY'
+import os
+from pathlib import Path
+font=Path(os.environ['FONT_FILE'])
+data=font.read_bytes()
+if len(data)<20000 or data[:4]!=b'wOF2':
+    raise SystemExit("Invalid Vazirmatn WOFF2; aborting release package")
+PY
+curl --fail --location --silent --show-error --max-time 45 \
+  https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/OFL.txt \
+  --output "$STAGE/backend/assets/fonts/OFL.txt"
+
+[ -f "$STAGE/backend/auth/login.php" ]
+[ -f "$STAGE/backend/web_auth.php" ]
+[ -f "$STAGE/backend/assets/vazirmatn.css" ]
+
 [ -f "$STAGE/backend/setup.php" ]
 [ -f "$STAGE/backend/health.php" ]
 [ -f "$STAGE/backend/control/index.php" ]
