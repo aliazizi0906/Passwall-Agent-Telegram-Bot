@@ -2,9 +2,9 @@
 
 **OpenWrt + Passwall2 · Telegram Mini App · Local LuCI · cPanel PHP/MySQL**
 
-[Latest public release: v1.3.0-rc.2](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.3.0-rc.2) · [Latest stable: v0.6.0](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0) · [فارسی](#فارسی) · [Install v1.3 RC](docs/en/INSTALL_V1_3.md) · [Upgrade from v0.6](docs/en/UPGRADE_V1_3.md) · [Implementation status](docs/en/CONTROL_CENTER_PROGRESS.md) · [Changelog](CHANGELOG.md)
+[Latest GitHub Release: v1.3.0-rc.2](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/latest) · [Previous production baseline: v0.6.0](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0) · [فارسی](#فارسی) · [Install v1.3 RC](docs/en/INSTALL_V1_3.md) · [Upgrade from v0.6](docs/en/UPGRADE_V1_3.md) · [Implementation status](docs/en/CONTROL_CENTER_PROGRESS.md) · [Changelog](CHANGELOG.md)
 
-> **Release status:** `v1.3.0-rc.2` is the latest publicly downloadable **pre-release**, not a stable/production-certified `v1.3.0`. The latest stable release remains `v0.6.0`. Version references inside `features_v060.go`, the changelog, and the legacy install/migration guides describe historical v0.6 behavior; they do not mean v1.3 RC is unpublished.
+> **Release status:** GitHub's **Latest** release points to `v1.3.0-rc.2` (classified as a regular GitHub Release). The tag intentionally retains `-rc.2`: the software has **not** been certified as feature-complete / production-ready `v1.3.0`. `v0.6.0` remains the previous production baseline. Historical v0.6 code and migration files are preserved where still required.
 
 ## What is PW Agent?
 
