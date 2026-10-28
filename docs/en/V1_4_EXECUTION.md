@@ -4,6 +4,7 @@ Current development branch: `feature/v1.4-secure-browser-control`. Published **L
 
 ## Implemented and under CI
 
+- Security hardening: device detail and update API responses now use a strict public-field allowlist rather than exposing `secret_sealed` or raw metadata; CI validates redaction.
 - Secure independent web username/password set by cPanel Web Setup; hashed credentials, HTTPS session, CSRF, RBAC/device scoping, rate-limited login, idle timeout, credential reset/revocation by Telegram Owner.
 - Refreshed RTL/LTR web UI and inline SVG navigation icons.
 - Pinned Vazirmatn font with local verified WOFF2 inside the cPanel build, pinned CDN fallback and system-font final fallback. No runtime Node.js.
