@@ -7,6 +7,11 @@ function cfg(): array {
       'security'=>['instance_key'=>base64_encode(str_repeat('A',32))],
     ];
 }
+$GLOBALS['pw_test_database']=null;
+function db(): PDO {
+    if(!($GLOBALS['pw_test_database'] instanceof PDO))throw new RuntimeException('Test database is not connected');
+    return $GLOBALS['pw_test_database'];
+}
 $_SERVER['HTTP_USER_AGENT']='PW-Agent-CI';
 function expect_web(bool $ok,string $label): void {if(!$ok)throw new RuntimeException($label);}
 foreach([
@@ -42,6 +47,7 @@ if($dsn!==''){
     $pdo=new PDO($dsn,(string)getenv('PW_TEST_MYSQL_USER'),(string)getenv('PW_TEST_MYSQL_PASSWORD'),[
       PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC
     ]);
+    $GLOBALS['pw_test_database']=$pdo;
     $pdo->exec('DROP TABLE IF EXISTS pw_web_login_attempts');
     $pdo->exec('DROP TABLE IF EXISTS pw_web_accounts');
     pw_web_auth_install($pdo,'admin','Testing-Unique-Password_123',123456);
@@ -55,7 +61,9 @@ if($dsn!==''){
     pw_web_auth_logout();
     for($i=0;$i<7;$i++){expect_web(!pw_web_auth_login($pdo,'admin','bad','127.0.0.2'),'Brute-force rejection');}
     expect_web(!pw_web_auth_login($pdo,'admin','Testing-Unique-Password_123','127.0.0.2'),'Lockout enforced');
+    expect_web(pw_web_auth_login($pdo,'admin','Testing-Unique-Password_123','127.0.0.3'),'Second session before rotation');
     pw_web_auth_install($pdo,'admin','New-Secure-Password_789',123456);
+    expect_web(pw_web_auth_user()===null,'Password reset must revoke existing web session');
     expect_web(pw_web_auth_login($pdo,'admin','New-Secure-Password_789','127.0.0.3'),'Credential rotation');
     $pdo->exec('DROP TABLE pw_web_login_attempts');
     $pdo->exec('DROP TABLE pw_web_accounts');
