@@ -1,0 +1,32 @@
+name: Temporary LED gofmt
+on:
+  push:
+    branches: [feature/v1.4-secure-browser-control]
+    paths:
+      - features_v140_led_test.go
+permissions:
+  contents: write
+jobs:
+  format:
+    if: contains(github.event.head_commit.message, '[format-led-v140]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/v1.4-secure-browser-control
+          persist-credentials: true
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+      - name: Format new Go files
+        run: |
+          set -euo pipefail
+          gofmt -w features_v140_led.go features_v140_led_test.go agent_main.go
+          git diff --check
+          if ! git diff --quiet -- features_v140_led.go features_v140_led_test.go agent_main.go; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add features_v140_led.go features_v140_led_test.go agent_main.go
+            git commit -m "style(led): format Go LED implementation"
+            git push origin HEAD:feature/v1.4-secure-browser-control
+          fi
