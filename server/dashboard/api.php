@@ -7,8 +7,18 @@ header('Cache-Control: no-store');
 
 $in=json_decode_assoc(raw_body());
 $init=(string)($in['init_data']??'');
-try{$tgUser=tg_validate_webapp_init_data($init);}catch(Throwable $e){response_json(['ok'=>false,'error'=>$e->getMessage()],null,403);}
-$uid=(int)($tgUser['id']??0);
+$isBrowser=$init==='';
+if(!$isBrowser){
+    try{$tgUser=tg_validate_webapp_init_data($init);}catch(Throwable $e){response_json(['ok'=>false,'error'=>$e->getMessage()],null,403);}
+    $uid=(int)($tgUser['id']??0);
+}else{
+    require_once dirname(__DIR__).'/web_auth.php';
+    try{
+        $uid=pw_web_auth_user()??0;
+        $csrf=(string)($_SERVER['HTTP_X_PW_CSRF']??'');
+        if($uid<=0||!pw_web_auth_csrf_ok($csrf))response_json(['ok'=>false,'error'=>'Browser session expired or CSRF mismatch'],null,403);
+    }catch(Throwable $e){response_json(['ok'=>false,'error'=>'Browser authentication unavailable'],null,403);}
+}
 ensure_v060_schema();
 if($uid<=0||!v060_user_allowed($uid))response_json(['ok'=>false,'error'=>'Unauthorized user'],null,403);
 
@@ -25,6 +35,20 @@ function dash_json($v): array { return is_array($v)?$v:[]; }
 
 
 try{
+    if($action==='web_credentials_set'){
+        // Only a verified Telegram Owner can bootstrap/recover browser credentials.
+        // A logged-in browser session is deliberately insufficient for reset.
+        $actor=v060_user($uid);
+        if($isBrowser||!is_array($actor)||(string)($actor['role']??'')!=='owner'){
+            response_json(['ok'=>false,'error'=>'Only the Telegram Owner may configure browser credentials'],null,403);
+        }
+        require_once dirname(__DIR__).'/web_auth.php';
+        $name=trim((string)($in['username']??''));
+        $pass=(string)($in['password']??'');
+        pw_web_auth_install(db(),$name,$pass,$uid);
+        v060_audit_event($device?:'fleet',$uid,'dashboard','web.auth.configure','done',['username'=>$name]);
+        response_json(['ok'=>true,'configured'=>true]);
+    }
     if($action==='summary'){
         dash_need($uid,'device.read');
         $fleet=v060_fleet_summary($uid);
