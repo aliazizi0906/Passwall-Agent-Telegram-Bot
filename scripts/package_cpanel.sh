@@ -22,6 +22,8 @@ rsync -a \
   --exclude='.env' \
   --exclude='.git/' \
   --exclude='releases/' \
+  --exclude='tests/' \
+  --exclude='config.example.php' \
   --exclude='logs/' \
   --exclude='backups/' \
   --exclude='cache/' \
@@ -34,6 +36,8 @@ rsync -a \
 [ -f "$STAGE/backend/control/index.php" ]
 [ -f "$STAGE/backend/.htaccess" ]
 [ ! -e "$STAGE/backend/config.php" ]
+[ ! -e "$STAGE/backend/tests" ]
+[ ! -e "$STAGE/backend/config.example.php" ]
 if find "$STAGE/backend" -type l | grep -q .; then
   echo "Unexpected symbolic link in cPanel release" >&2
   exit 1

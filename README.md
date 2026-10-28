@@ -19,6 +19,22 @@ PW Agent is a self-hosted management stack for OpenWrt routers running Passwall2
 - **Existing platform:** fleet, RBAC, audit, monitoring/alerts, schedules, backups and signed Agent update support.
 - **Release assets:** cPanel ZIP plus six OpenWrt architectures, each with SHA256 and Ed25519 signature.
 
+### UI previews / پیش‌نمایش محیط کاربری
+
+These **documentation-only static previews** follow the actual PW Control Center layout and color tokens in `server/control/index.php`. Values and names are illustrative sample data, **not live router screenshots or proof of implemented controls**. The operational UI requires authentication inside Telegram; LuCI runs locally on OpenWrt.
+
+تصاویر زیر **پیش‌نمایش ثابت و نمونه‌ای** بر پایه کد رابط کاربری همین مخزن هستند؛ اطلاعات روتر، IP و مقادیر صرفاً مثال‌اند و اسکرین‌شاتِ اتصال واقعی محسوب نمی‌شوند.
+
+![PW Control Center — dashboard layout with example data](docs/assets/previews/control-center-overview.svg)
+
+| Passwall2 node & subscription UI | LAN client discovery UI |
+|:---:|:---:|
+| ![Passwall2 UI — example data](docs/assets/previews/control-center-passwall2.svg) | ![Clients UI — example data](docs/assets/previews/control-center-clients.svg) |
+
+**Local LuCI preview / پیش‌نمایش پنل محلی:**
+
+![PW Control Center running as a local LuCI read-only panel — illustrative sample data](docs/assets/previews/luci-local-panel.svg)
+
 ### Known release limits
 
 This is a release candidate. Per-client traffic shaping/blocking, robust WAN/Wi-Fi/firewall safe-apply rollback, leak-proof IPv6/DNS kill switch, cellular tower/band lock and SMS/USSD, RGB LED writes, production SQM/UPnP controls, native VPN adapters and standalone browser login are **not complete or hardware-certified**. Do not infer these capabilities from a roadmap or UI mockup. See the [implementation matrix](docs/en/CONTROL_CENTER_PROGRESS.md).
@@ -64,6 +80,7 @@ Go Agent on OpenWrt ── Passwall2 / UCI / ubus / procd
 | [Updates](docs/en/UPDATES.md) / [به‌روزرسانی](docs/fa/UPDATES.md) | Release and update process |
 | [Development](docs/en/DEVELOPMENT.md) / [توسعه](docs/fa/DEVELOPMENT.md) | Local build, tests and CI |
 | [Release notes EN](docs/en/RELEASE_NOTES_V1_3_RC.md) / [یادداشت فارسی](docs/fa/RELEASE_NOTES_V1_3_RC.md) | RC2 scope and release boundaries |
+| [Repository structure](docs/REPOSITORY_STRUCTURE.md) | Source layout, retention decisions and UI preview provenance |
 | [Changelog](CHANGELOG.md) | Versioned history |
 
 ## Build and validate

@@ -66,7 +66,7 @@ a{color:var(--accent)}
  <div class="brand"><div class="brand-logo">PW</div><div><b>PW Control</b><small>Network Control Center</small></div></div>
  <div class="nav-title">CONTROL PANEL</div>
  <nav class="nav" id="navigation" aria-label="Primary navigation"></nav>
- <div class="nav-foot">Independent UI preview • v1.3 roadmap<br>API compatibility: PW Agent v0.6</div>
+ <div class="nav-foot">PW Control Center · Release candidate<br>Local LuCI available offline</div>
 </aside>
 <div class="main">
  <header class="topbar">
@@ -81,7 +81,7 @@ a{color:var(--accent)}
   <div id="notice" role="status" aria-live="polite"></div>
   <div class="headline"><div><h2 id="pageTitle"></h2><p id="pageDesc"></p></div><select id="devicePicker" class="select" aria-label="Router" hidden></select></div>
   <section id="page" aria-live="polite"><div class="empty">Connecting…</div></section>
-  <footer>PW Control Center · Experimental feature branch · Existing v0.6 dashboard remains available</footer>
+  <footer>PW Control Center · v1.3 release candidate · Legacy dashboard also available</footer>
  </main>
 </div></div>
 <script>
@@ -138,7 +138,7 @@ function drawChart(id,key){var el=$(id);if(!el)return;var entries=state.detail&&
 function action(id,title,permission,needsConfirm){if(!has(permission))return '';return '<button class="action '+(needsConfirm?'danger':'')+'" type="button" data-command="'+id+'" data-confirm="'+(needsConfirm?'1':'0')+'">'+esc(title)+'</button>';}
 function hero(){
  var d=state.detail&&state.detail.device||{},m=latest(),wan=status(metric(m,'wan_up'));
- return '<article class="card hero"><div><div class="eyebrow">PW CONTROL CENTER / '+esc(d.agent_version||'v0.6')+'</div><h3>'+esc(say('روتر ','Router ')+(d.display_name||state.active||'—'))+'</h3><p class="muted">'+esc(say('ارتباط WAN: ','WAN: ')+wan[0]+' · '+say('آخرین اتصال: ','Last seen: ')+formatDate(d.last_seen))+'</p></div><div class="hero-status">'+(wan[1]==='ok'?'✓':'—')+'</div></article>';
+ return '<article class="card hero"><div><div class="eyebrow">PW CONTROL CENTER / '+esc(d.agent_version||'—')+'</div><h3>'+esc(say('روتر ','Router ')+(d.display_name||state.active||'—'))+'</h3><p class="muted">'+esc(say('ارتباط WAN: ','WAN: ')+wan[0]+' · '+say('آخرین اتصال: ','Last seen: ')+formatDate(d.last_seen))+'</p></div><div class="hero-status">'+(wan[1]==='ok'?'✓':'—')+'</div></article>';
 }
 function home(){
  var m=latest(),d=state.detail&&state.detail.device||{},ov=state.detail&&state.detail.overview||{},h=ov['24h']||{};

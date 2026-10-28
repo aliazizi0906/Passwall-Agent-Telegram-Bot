@@ -10,3 +10,16 @@ pw-agent-*
 .DS_Store
 .idea/
 .vscode/
+__pycache__/
+*.pyc
+coverage/
+coverage.out
+*.test
+*.swp
+*.bak
+*.backup
+*.sqlite
+.env
+server/backups/
+server/cache/
+server/logs/
