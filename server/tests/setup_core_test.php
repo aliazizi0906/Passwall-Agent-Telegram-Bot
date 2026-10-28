@@ -39,7 +39,7 @@ $cmd=pw_setup_router_command('https://example.com/network/control','abcdefghijkl
 expect_true(str_contains($cmd,"PW_SERVER_BASE='https://example.com/network/control'"),'router command lost subdirectory base URL');
 expect_true(str_contains($cmd,"PW_AGENT_VERSION='v".pw_setup_version()."'"),'router command is not pinned to the backend Agent version');
 expect_true(!str_contains($cmd,'/home/'),'router command contains a hardcoded home path');
-expect_true(str_contains($cmd,'/v'.pw_setup_version().'/openwrt/install-remote.sh'),'bootstrap is not pinned to release tag');
+expect_true(str_contains($cmd,'https://example.com/network/control/install/remote.sh'),'bootstrap must use the configured cPanel domain');
 expect_true(str_contains($cmd,'curl -4 -fLsS')&&str_contains($cmd,'wget -O'), 'download fallback is missing');
 expect_true(str_contains($cmd,'test -s'), 'bootstrap can execute empty downloads');
 
