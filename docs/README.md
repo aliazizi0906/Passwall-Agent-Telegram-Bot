@@ -6,6 +6,9 @@ Choose a language:
 - [English](en/README.md)
 - [فارسی](fa/README.md)
 
+## v1.4 development — not yet released
+- [Workstream status (EN)](en/V1_4_EXECUTION.md) / [وضعیت اجرایی ۱۴ قابلیت (FA)](fa/V1_4_EXECUTION.md)
+
 ## Current v1.3 RC documentation
 - [Installation](en/INSTALL_V1_3.md) / [نصب](fa/INSTALL_V1_3.md)
 - [Upgrade from v0.6](en/UPGRADE_V1_3.md) / [ارتقا](fa/UPGRADE_V1_3.md)
