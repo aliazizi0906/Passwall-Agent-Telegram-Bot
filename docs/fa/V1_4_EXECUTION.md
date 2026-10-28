@@ -7,6 +7,7 @@
 - **No. 1 — setup/recovery (partial):** safer, version-tag-pinned router bootstrap, nonempty download verification, curl/wget fallback. Complete backend staged upgrade/migration rollback not yet implemented.
 - **No. 8 — local/web UI (partial):** updated PW Control Center design tokens, typography, responsive surfaces; LuCI remains read-only for risky mutations.
 - **No. 9 — browser login (implemented for staging):** independent owner username/password entered during fresh cPanel Web Setup; password hashed with Argon2id or bcrypt in MySQL; server-side sessions, SameSite/HttpOnly/Secure cookie, 30-minute idle timeout, CSRF, per-IP persistent lockout and existing RBAC/device scopes. Existing installs bootstrap via Telegram Owner (System page), never anonymous web signup.
+- **No. 7 — bounded speed probe (partial):** explicit opt-in 2 MiB download from the fixed Cloudflare endpoint with 10-minute Agent cooldown, strict network quota and a privacy notice. Does **not** measure actual ISP peak bandwidth, domestic routing, upload or bufferbloat.
 - **No. 14 — CI (partial):** PHP credential/session/lockout integration tests against MySQL, existing multi-architecture Go CI, version-consistency checks.
 - **Cross-router portability (partial):** Passwall2 made optional for OpenWrt-only controls; CPU build targets expanded to armv5, armv6, armv7, arm64, x86/386, amd64, mips/le, mips64/le, riscv64, loong64, ppc64le. Target support and actual compatibility differ: the target kernel, flash, library and package dependencies must be checked per router.
 - **Vazirmatn reliability:** pinned v33.0.3 stylesheet, runtime CDN fallback, build-time locally bundled verified WOFF2, font license bundled; system-font fallback if both unexpectedly fail.
@@ -21,7 +22,7 @@
 | 4 | Iran/direct split, VPN kill switch, DNS/IPv6 leak | Not enabled; require audited nftables path policies, IPv4+IPv6 leak tests and connectivity rollback |
 | 5 | DoH/DoT, split DNS and ad-block | DNS view/tests exist; resolver-specific adapters and split-path proof remain |
 | 6 | SQM/QoS, NAT, UPnP, gaming | Installed-package detection exists; controlled SQM tuning, bufferbloat measurements, UPnP permissions remain |
-| 7 | Router speed test, history and client traffic | Metrics/graphs exist; real quota-bounded speed test and trustworthy per-client counters remain |
+| 7 | Router speed test, history and client traffic | Real 2 MiB capped download probe added; existing metrics/graphs kept. Full throughput/load testing, uploads and trustworthy per-client counters remain |
 | 8 | Full local LuCI and remote UI | Read-only local panel and redesigned remote UI; safe writes not released |
 | 9 | Independent browser username/password | Implemented for staging in v1.4 development, production hardening and live review pending |
 | 10 | RGB LED and time-of-day schedules | Verified provider detection/read only; RGB mutation and nightly schedule require actual GoogleWifiLED device tests |
