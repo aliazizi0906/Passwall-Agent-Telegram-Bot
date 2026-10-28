@@ -334,6 +334,15 @@ function renderCommandOutput(actionName,result){
   return typeof x==='string'?x.slice(0,2048):x;
  }
  var safe=clean(result,0);
+ if(actionName==='system.leds'&&safe&&Array.isArray(safe.leds)){
+   return '<div class="section-title">'+say('چراغ‌های شناسایی‌شده','Discovered sysfs LEDs')+' ('+safe.leds.length+')</div>'+
+     (safe.leds.map(function(item){
+       var name=String(item.name||'');
+       var valid=/^[A-Za-z0-9:_+.-]{1,96}$/.test(name)&&name!=='.'&&name!=='..';
+       return '<div class="device-row"><div><strong>'+esc(name)+'</strong><small>'+say('شدت فعلی: ','Brightness: ')+esc(item.brightness||0)+' / '+esc(item.max_brightness||0)+'</small></div>'+
+        (valid&&has('system.modify')?'<button class="action" data-led-identify="'+esc(name)+'">'+say('شناسایی چراغ (۱ ثانیه)','Identify (1 sec)')+'</button>':'')+'</div>';
+     }).join('')||'<div class="empty">'+say('چراغ قابل شناسایی نیست','No LEDs discovered')+'</div>');
+ }
  if(actionName==='system.clients'&&safe&&Array.isArray(safe.clients)){
   var clients=safe.clients;
   return '<div class="section-title">'+say('کلاینت‌های کشف‌شده','Discovered clients')+' ('+clients.length+')</div>'+
@@ -434,7 +443,7 @@ async function refresh(){
 }
 async function command(id,confirmNeeded,params){
  if(state.busy)return;
- if(confirmNeeded&&!window.confirm(id==='network.speed_probe'?say('این آزمون حدود ۲ مگابایت داده از Cloudflare دانلود می‌کند و IP عمومی روتر قابل مشاهده خواهد بود. اجرا شود؟','This probe downloads 2 MiB from Cloudflare, exposing your router public IP. Continue?'):say('این عملیات ممکن است ارتباط روتر را تغییر دهد. مطمئنی؟','This action may affect router connectivity. Continue?')))return;
+ if(confirmNeeded&&!window.confirm(id==='network.speed_probe'?say('این آزمون حدود ۲ مگابایت داده از Cloudflare دانلود می‌کند و IP عمومی روتر قابل مشاهده خواهد بود. اجرا شود؟','This probe downloads 2 MiB from Cloudflare, exposing your router public IP. Continue?'):id==='led.identify'?say('چراغ حدود یک ثانیه تغییر کرده و سپس برمی‌گردد. ادامه؟','The LED changes for one second and then returns to its original state. Continue?'):say('این عملیات ممکن است ارتباط روتر را تغییر دهد. مطمئنی؟','This action may affect router connectivity. Continue?')))return;
  state.busy=true;var buttons=document.querySelectorAll('[data-command]');buttons.forEach(function(b){b.disabled=true;});
  var out=$('feedback');if(out)out.textContent=say('در حال ارسال فرمان…','Submitting command…');
  try{
@@ -472,6 +481,12 @@ document.addEventListener('click',function(ev){
  button.disabled=true;
  api('rollout_control',{id:id,operation:operation,confirmed:true}).then(loadRollouts)
  .catch(function(e){$('notice').textContent=e.message;button.disabled=false;});
+});
+document.addEventListener('click',function(ev){
+ var b=ev.target.closest('[data-led-identify]');if(!b)return;
+ var name=String(b.dataset.ledIdentify||'');
+ if(!/^[A-Za-z0-9:_+.-]{1,96}$/.test(name)||name==='.'||name==='..'||!has('system.modify'))return;
+ command('led.identify',true,{name:name}).catch(function(e){$('notice').textContent=e.message;});
 });
 document.addEventListener('submit',function(ev){
  var form=ev.target.closest('form[data-web-admin]');if(!form)return;
