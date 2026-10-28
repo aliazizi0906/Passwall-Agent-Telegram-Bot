@@ -139,8 +139,8 @@ func networkPoliciesV14() (map[string]interface{}, error) {
 			interfaces = append(interfaces, map[string]interface{}{
 				"enabled": opt["enabled"] == "1", "interface": boundSafeV14(opt["interface"], 32),
 				"download_kbit": boundPositiveV14(opt["download"], 100000000),
-				"upload_kbit": boundPositiveV14(opt["upload"], 100000000),
-				"qdisc": boundSafeV14(opt["qdisc"], 40),
+				"upload_kbit":   boundPositiveV14(opt["upload"], 100000000),
+				"qdisc":         boundSafeV14(opt["qdisc"], 40),
 			})
 		}
 		result["sqm_interfaces"] = interfaces
@@ -178,8 +178,8 @@ func ledInventoryV14() (map[string]interface{}, error) {
 		}
 		folder := filepath.Join("/sys/class/leds", name)
 		list = append(list, map[string]interface{}{
-			"name": name,
-			"brightness": boundPositiveV14(readSmallFileV13(filepath.Join(folder, "brightness")), 65535),
+			"name":           name,
+			"brightness":     boundPositiveV14(readSmallFileV13(filepath.Join(folder, "brightness")), 65535),
 			"max_brightness": boundPositiveV14(readSmallFileV13(filepath.Join(folder, "max_brightness")), 65535),
 		})
 	}
