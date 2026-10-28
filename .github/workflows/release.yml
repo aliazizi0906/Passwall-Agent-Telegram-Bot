@@ -110,7 +110,12 @@ jobs:
 
             env_args=(GOOS=linux GOARCH="$goarch" CGO_ENABLED=0)
             [ -z "$goarm" ] || env_args+=(GOARM="$goarm")
-            [ -z "$gomips" ] || env_args+=(GOMIPS="$gomips")
+            if [ -n "$gomips" ]; then
+              case "$goarch" in
+                mips64|mips64le) env_args+=(GOMIPS64="$gomips") ;;
+                *) env_args+=(GOMIPS="$gomips") ;;
+              esac
+            fi
 
             env "${env_args[@]}" go build -trimpath -ldflags="-s -w" -o "$stage/pw-agent" .
 
@@ -145,8 +150,8 @@ jobs:
           build_bundle 386 386
           build_bundle mips mips "" softfloat
           build_bundle mipsle mipsle "" softfloat
-          build_bundle mips64 mips64
-          build_bundle mips64le mips64le
+          build_bundle mips64 mips64 "" softfloat
+          build_bundle mips64le mips64le "" softfloat
           build_bundle riscv64 riscv64
           build_bundle loong64 loong64
           build_bundle ppc64le ppc64le
