@@ -208,6 +208,18 @@ function v060_device_row(string $deviceId): ?array {
     $st=db()->prepare('SELECT r.*,g.name group_name,d.last_seen,d.last_ip,d.agent_version,d.hostname,d.meta_json FROM pw_device_registry r LEFT JOIN pw_device_groups g ON g.id=r.group_id LEFT JOIN pw_devices d ON d.device_id=r.device_id WHERE r.device_id=?');
     $st->execute([$deviceId]);$r=$st->fetch();return $r?:null;
 }
+/** Only explicitly public attributes may cross Telegram/Web API boundaries. */
+function v060_public_device_fields(array $raw): array {
+    $allowed=[
+      'device_id','display_name','enabled','group_id','group_name','location','tags_json',
+      'last_seen','agent_version','hostname','created_at','updated_at'
+    ];
+    return array_intersect_key($raw,array_flip($allowed));
+}
+function v060_public_device_row(string $deviceId): ?array {
+    $row=v060_device_row($deviceId);
+    return $row===null?null:v060_public_device_fields($row);
+}
 function v060_device_secret(string $deviceId): string {
     ensure_v060_schema();
     $st=db()->prepare('SELECT secret_sealed,enabled FROM pw_device_registry WHERE device_id=?');$st->execute([$deviceId]);$r=$st->fetch();
