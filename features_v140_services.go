@@ -67,12 +67,12 @@ func networkServiceInventoryV14() (map[string]interface{}, error) {
 		}
 	}
 	return map[string]interface{}{
-		"read_only":        true,
-		"services":         services,
-		"bridge_vlans":     vlans,
-		"ddns_service_count": ddnsCount,
+		"read_only":           true,
+		"services":            services,
+		"bridge_vlans":        vlans,
+		"ddns_service_count":  ddnsCount,
 		"multiwan_interfaces": mwanInterfaces,
-		"warning":          "Installed configuration is not proof the service is running; mutation and failover need verified adapters.",
+		"warning":             "Installed configuration is not proof the service is running; mutation and failover need verified adapters.",
 	}, nil
 }
 
