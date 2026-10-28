@@ -1,17 +1,17 @@
 # PW Agent v1.3.0-rc.2 — یادداشت انتشار
 
-> **نسخه آزمایشی عمومی (Pre-release)**؛ این نسخه، نسخه پایدار/Production-certified یا جایگزین کامل WRTPro نیست. ابتدا فقط در محیط Staging نصب شود.
+> **آخرین Release گیت‌هاب (با نام RC)**؛ این نسخه در GitHub به‌عنوان Release و Latest معرفی شده، اما هنوز نسخه پایدار/Production-certified یا جایگزین کامل WRTPro نیست. ابتدا فقط در محیط Staging نصب شود.
 
 ## وضعیت نسخه
 
-- آخرین نسخه عمومی آزمایشی: `v1.3.0-rc.2`
-- آخرین نسخه پایدار: `v0.6.0`
+- آخرین Release در GitHub: `v1.3.0-rc.2`
+- نسخه پایه قدیمی برای Production: `v0.6.0`
 - [دانلود Release و همه بسته‌ها](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.3.0-rc.2)
 
 ## تغییرات
 
 - هماهنگ‌سازی Version در Go Agent، PHP Setup و Backend روی `1.3.0-rc.2`.
-- اصلاح README اصلی برای نمایش صحیح آخرین Pre-release، آخرین Stable و لینک واقعی ZIP نصب cPanel.
+- اصلاح README اصلی برای نمایش صحیح Latest Release و نسخه پایه قدیمی و لینک واقعی ZIP نصب cPanel.
 - اصلاح راهنماهای فارسی و انگلیسی برای نصب تازه، ارتقا، به‌روزرسانی، قابلیت‌ها و وضعیت پیاده‌سازی؛ راهنماهای تاریخی v0.6 به‌صورت Legacy مشخص شده‌اند.
 - انتشار ZIP مخصوص cPanel و بسته‌های OpenWrt برای شش معماری: `armv7`، `arm64`، `amd64`، `386`، `mips` و `mipsle`.
 - انتشار فایل‌های SHA256 و امضای Ed25519 برای بسته‌ها.
