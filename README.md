@@ -10,7 +10,7 @@
 
 The next implementation branch adds **independent web username/password login** during cPanel setup, hardened session/CSRF protection, Owner-only credential recovery from Telegram, redesigned control-center surfaces, pinned Vazirmatn with a self-hosted font in packaged ZIPs, safer bootstrap download, and broader OpenWrt CPU builds. These changes are undergoing CI and are **not included** in the currently published `v1.3.0-rc.2` release. **Do not install the development version as production.**
 
-[Full 14-workstream implementation matrix / وضعیت اجرایی همه ۱۴ بخش](docs/fa/V1_4_EXECUTION.md).
+[Full 14-workstream implementation matrix](docs/en/V1_4_EXECUTION.md) / [وضعیت اجرایی همه ۱۴ بخش](docs/fa/V1_4_EXECUTION.md).
 
 ## What is PW Agent?
 
