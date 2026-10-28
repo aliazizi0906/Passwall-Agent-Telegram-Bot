@@ -78,3 +78,6 @@ jobs:
 
       - name: Markdown links
         run: python3 scripts/check_markdown_links.py
+
+      - name: Repository hygiene and UI previews
+        run: python3 scripts/check_repository_hygiene.py
