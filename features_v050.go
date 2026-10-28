@@ -153,15 +153,19 @@ func (a *Agent) verifyUpdateSignatureV5(payload []byte, signatureB64 string) err
 	return verifyEd25519SignatureV5(effectiveUpdatePublicKeyV5(a.cfg), payload, signatureB64)
 }
 
+// releaseArchV14 is injected into official multiarchitecture bundles with
+// -ldflags="-X main.releaseArchV14=<arch>". For GOARCH=arm, runtime.GOARCH
+// alone cannot distinguish GOARM 5, 6 and 7; never guess on manual builds.
+var releaseArchV14 string
+
 func agentArchV5() string {
-	switch runtime.GOARCH {
-	case "arm":
-		return "armv7"
-	case "amd64", "arm64", "386", "mips", "mipsle":
-		return runtime.GOARCH
-	default:
-		return runtime.GOARCH
+	if releaseArchV14 != "" {
+		return releaseArchV14
 	}
+	if runtime.GOARCH == "arm" {
+		return "unknown"
+	}
+	return runtime.GOARCH
 }
 
 type nodeHealthV5 struct {
