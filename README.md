@@ -80,6 +80,7 @@ Go Agent on OpenWrt ── Passwall2 / UCI / ubus / procd
 | [Updates](docs/en/UPDATES.md) / [به‌روزرسانی](docs/fa/UPDATES.md) | Release and update process |
 | [Development](docs/en/DEVELOPMENT.md) / [توسعه](docs/fa/DEVELOPMENT.md) | Local build, tests and CI |
 | [Release notes EN](docs/en/RELEASE_NOTES_V1_3_RC.md) / [یادداشت فارسی](docs/fa/RELEASE_NOTES_V1_3_RC.md) | RC2 scope and release boundaries |
+| [Repository structure](docs/REPOSITORY_STRUCTURE.md) | Source layout, retention decisions and UI preview provenance |
 | [Changelog](CHANGELOG.md) | Versioned history |
 
 ## Build and validate
