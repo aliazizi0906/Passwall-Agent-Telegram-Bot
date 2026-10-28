@@ -207,7 +207,7 @@ try{
         dash_need($uid,'agent.update');
         $dir=dirname(__DIR__).'/releases';
         $rows=[];
-        foreach(['armv7','arm64','amd64','386','mips','mipsle'] as $arch){
+        foreach(['armv5','armv6','armv7','arm64','amd64','386','mips','mipsle','mips64','mips64le','riscv64','loong64','ppc64le'] as $arch){
             $path=$dir.'/pw-agent-openwrt-'.app_version().'-'.$arch.'.tar.gz';
             $rows[]=[
                 'arch'=>$arch,
@@ -221,9 +221,10 @@ try{
     }
     if($action==='release_sync'){
         dash_need($uid,'agent.update');
+        if(empty($in['confirmed']))throw new RuntimeException('Explicit confirmation is required before downloading signed release bundles');
         @set_time_limit(180);
         $arch=(string)($in['arch']??'');
-        $arches=$arch==='all'?['armv7','arm64','amd64','386','mips','mipsle']:[$arch];
+        $arches=$arch==='all'?['armv5','armv6','armv7','arm64','amd64','386','mips','mipsle','mips64','mips64le','riscv64','loong64','ppc64le']:[$arch];
         $results=[];$errors=[];
         foreach($arches as $a){
             try{$results[]=pw_release_sync_arch(dirname(__DIR__),app_version(),$a);}
