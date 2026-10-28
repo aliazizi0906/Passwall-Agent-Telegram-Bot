@@ -20,7 +20,7 @@ Current development branch: `feature/v1.4-secure-browser-control`. Published **L
 
 | # | Workstream | Current status |
 |---|---|---|
-| 1 | Installation, backend migration, updater and rollback | Signed first-time installer added; versioned backend migration and staged rollback pending |
+| 1 | Installation, backend migration, updater and rollback | Signed first install and additive/versioned MySQL migration ledger implemented; staged PHP backend upgrade and full rollback still pending |
 | 2 | Per-client blocking, quotas and schedules | Client discovery only; safe nftables/tc policy engine pending |
 | 3 | Wi-Fi password, SSID, channel, guest and QR | Named UCI SSID diff/dry-run form added, without applying changes; independent timed rollback still pending |
 | 4 | VPN kill switch, Iran/direct split, DNS/IPv6 leak | Read-only IPv6/DNS risk indicators added; actual leak verification, kill switch and policy engine pending |
