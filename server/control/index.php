@@ -250,15 +250,23 @@ function showDNS(){
  ],say('DNS رمزنگاری‌شده، تفکیک ترافیک ایران، نشت DNS/IPv6 و Kill Switch تا زمان تست بسته‌ها و مسیرها فعلاً فقط در برنامه توسعه هستند.','Encrypted/split DNS, IPv6 leak blocking and kill switch need validated packet-path tests.'));
 }
 function showLED(){
- readPanel(say('چراغ Google WiFi','Google WiFi LED'),say('تشخیص کانال‌های RGB و وضعیت سرویس GoogleWifiLED؛ فقط روی روترهایی که این پکیج نصب است.','Detect RGB channels and the installed GoogleWifiLED service; unsupported routers will report unavailable.'),[
-  ['led.status','بررسی وضعیت LED','Read LED state','system.read'],
-  ['agent.capabilities','شناسایی سخت‌افزار','Read capabilities','system.read']
- ],say('تنظیم رنگ و روشنایی و زمان‌بندی چراغ به Adapter تست‌شده نیاز دارد. این نسخه از طریق Agent تغییری در LED ایجاد نمی‌کند.','Changing color/brightness and scheduling needs a tested adapter; no LED mutations are exposed yet.'));
+ readPanel(say('چراغ‌های روتر','Router LEDs'),say('نمایش چراغ‌های عمومی sysfs در همه مدل‌های دارای LED و شناسایی اختصاصی GoogleWifiLED؛ بدون تغییر در کنترلر سخت‌افزار.','Read-only sysfs LED discovery on any OpenWrt board, plus GoogleWifiLED detection. No write operations.'),[
+  ['system.leds','چراغ‌های sysfs','Read sysfs LEDs','system.read'],
+  ['led.status','وضعیت GoogleWifiLED','GoogleWifiLED status','system.read'],
+  ['agent.capabilities','شناسایی سخت‌افزار','Hardware capabilities','system.read']
+ ],say('تغییر رنگ، روشنایی، الگوها و زمان‌بندی فقط پس از ساخت Adapter ایمن برای سخت‌افزار مربوطه فعال می‌شود.','RGB, brightness, patterns and scheduling require model-specific verified drivers before being enabled.'));
+}
+function showCellular(){
+ readPanel(say('مودم و سیم‌کارت','Cellular modem'),say('کشف مودم‌های جانبی با ModemManager یا uqmi و نمایش فقط شدت سیگنال؛ شناسه سیم‌کارت، IMSI و IMEI ارسال نمی‌شوند.','Read-only ModemManager/uqmi discovery and whitelisted signal metrics. No subscriber identifiers are sent.'),[
+  ['cellular.status','بررسی مودم و سیگنال','Check modem and signal','network.read'],
+  ['agent.capabilities','قابلیت‌های سخت‌افزار','Hardware capabilities','system.read']
+ ],say('قفل باند، Cell Lock، SMS و USSD نیازمند Adapter تست‌شده مخصوص مودم‌اند؛ در دستگاه‌های بدون مودم این کنترل‌ها غیرفعال‌اند.','Band/cell locking and SMS/USSD need tested modem-specific adapters and remain disabled without them.'));
 }
 function showGaming(){
  readPanel(say('بازی و کیفیت اتصال','Gaming & quality'),say('تست‌های تشخیصی شبکه برای بررسی کیفیت پایه؛ مقادیر فعلی جایگزین تست واقعی Bufferbloat نیستند.','Network diagnostics are available; these do not replace a true bufferbloat test.'),[
  ['network.internet_test','آزمایش اتصال','Connectivity test','network.read'],
  ['network.doctor','عیب‌یابی شبکه','Network doctor','network.read'],
+ ['network.policy_status','وضعیت SQM و UPnP','SQM and UPnP inventory','network.read'],
  ['system.interfaces','وضعیت اینترفیس‌ها','Interfaces','system.read']
  ],say('SQM، QoS، UPnP و اولویت دستگاه‌ها پس از تشخیص قابلیت واقعی سخت‌افزار و طراحی تنظیمات برگشت‌پذیر فعال می‌شوند.','SQM/QoS, UPnP and prioritization require capability discovery and recoverable configuration.'));
 }
@@ -343,7 +351,7 @@ function render(){
  nav();
  if(!state.fleet){$('page').innerHTML='<div class="empty">'+say('برای ورود از حساب وب یا مینی‌اپ تلگرام استفاده کن.','Sign in with your web account or Telegram Mini App.')+'</div>';return;}
  if(!state.active){$('page').innerHTML='<div class="empty">'+say('هیچ روتر فعالی وجود ندارد.','No active router.')+'</div>';return;}
- if(state.page==='home')home();else if(state.page==='internet')internet();else if(state.page==='proxy')proxy();else if(state.page==='routers')routers();else if(state.page==='clients')showClients();else if(state.page==='wifi')showWifi();else if(state.page==='dns')showDNS();else if(state.page==='gaming')showGaming();else if(state.page==='led')showLED();else if(state.page==='system')system();else if(state.page==='automation'){automation();}else{
+ if(state.page==='home')home();else if(state.page==='internet')internet();else if(state.page==='proxy')proxy();else if(state.page==='routers')routers();else if(state.page==='clients')showClients();else if(state.page==='wifi')showWifi();else if(state.page==='dns')showDNS();else if(state.page==='gaming')showGaming();else if(state.page==='led')showLED();else if(state.page==='cellular')showCellular();else if(state.page==='system')system();else if(state.page==='automation'){automation();}else{
  var plans={
   clients:[say('مدیریت دستگاه‌های شبکه','LAN client management'),say('فهرست کلاینت‌ها، محدودیت سرعت، مسدودسازی، زمان‌بندی و اولویت‌بندی پس از توسعه API مجاز نمایش داده می‌شود.','Live client list, rate limits, blocking, schedules and priorities require an authorized agent API.'),['DHCP / ARP','MAC identity','Live RX/TX','Rate limit','Block / unblock','Parental schedules']],
   wifi:[say('مدیریت Wi-Fi','Wi-Fi management'),say('مدیریت SSID، رمز، ۲٫۴/۵ گیگاهرتز، شبکه مهمان، QR و انتخاب کانال ایمن همراه با Rollback.','SSID, password, 2.4/5 GHz, guest Wi-Fi, QR, safe channel selection and rollback.'),['SSID & WPA2/WPA3','Guest isolation','Channel scan','QR codes','Safe rollback']],
