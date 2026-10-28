@@ -5,7 +5,7 @@ Current development branch: `feature/v1.4-secure-browser-control`. Published **L
 ## Implemented and under CI
 
 - Security hardening: device detail and update API responses now use a strict public-field allowlist rather than exposing `secret_sealed` or raw metadata; CI validates redaction.
-- Secure independent web username/password set by cPanel Web Setup; hashed credentials, HTTPS session, CSRF, RBAC/device scoping, rate-limited login, idle timeout, credential reset/revocation by Telegram Owner.
+- Secure independent web username/password set by cPanel Web Setup; hashed credentials, HTTPS session, CSRF, RBAC/device scoping, rate-limited login, idle timeout, credential reset/revocation by Telegram Owner. Sessions without their original password fingerprint now fail closed, including after password rotation.
 - Refreshed RTL/LTR web UI and inline SVG navigation icons.
 - Pinned Vazirmatn font with local verified WOFF2 inside the cPanel build, pinned CDN fallback and system-font final fallback. No runtime Node.js.
 - More OpenWrt CPU targets; Passwall2 optional for generic OpenWrt functions, hardware capabilities explicitly checked.
@@ -23,7 +23,7 @@ Current development branch: `feature/v1.4-secure-browser-control`. Published **L
 
 | # | Workstream | Current status |
 |---|---|---|
-| 1 | Installation, backend migration, updater and rollback | Signed first install and additive/versioned MySQL migration ledger implemented; staged PHP backend upgrade and full rollback still pending |
+| 1 | Installation, backend migration, updater and rollback | Signed first install, guarded initial OpenWrt preflight, staged Agent/init/config replacement with error rollback, and additive/versioned MySQL migration ledger implemented; power-loss recovery, LuCI rollback, staged PHP backend upgrade and full rollback still pending |
 | 2 | Per-client blocking, quotas and schedules | Validated MAC-based Block/Unblock/Rate-limit dry-run form and command added; real nftables/tc enforcement, schedules and local timed rollback still pending |
 | 3 | Wi-Fi password, SSID, channel, guest and QR | Named UCI SSID diff/dry-run form added, without applying changes; independent timed rollback still pending |
 | 4 | VPN kill switch, Iran/direct split, DNS/IPv6 leak | Read-only IPv6/DNS risk indicators added; actual leak verification, kill switch and policy engine pending |
