@@ -158,7 +158,7 @@ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&isset($_POST['install'])){
                         'drop_pending_updates'=>'true',
                     ]);
                 }catch(Throwable $e){
-                    $warnings[]='Backend was installed, but Telegram Webhook registration failed: '.$e->getMessage().'. You can delete config.php in File Manager and rerun setup after fixing outbound HTTPS/cURL connectivity.';
+                    $warnings[]='Backend was installed, but Telegram Webhook registration failed: '.$e->getMessage().'. Preserve config.php and the generated database keys; do not rerun Setup. Repair outbound HTTPS/cURL and re-register this existing Bot webhook using the stored secret.';
                 }
 
                 $release=null;
