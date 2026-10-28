@@ -258,6 +258,7 @@ async function loadRollouts(){
     if(status==='draft')ops.push(['start',say('شروع Canary','Start canary')]);
     if(status==='awaiting_approval')ops.push(['approve_next',say('تأیید موج بعد','Approve next wave')]);
     if(status==='running'||status==='awaiting_approval')ops.push(['pause',say('توقف','Pause')]);
+    if(status==='paused'&&Number(x.failed_routers||0)===0)ops.push(['resume',say('ادامه پس از بررسی','Resume after review')]);
     if(['draft','running','awaiting_approval','paused'].includes(status))ops.push(['cancel',say('لغو برنامه','Cancel rollout')]);
     return '<div class="device-row"><div><strong>#'+id+' '+esc(x.command_action||'')+'</strong><small>'+say('وضعیت: ','Status: ')+esc(status)+' · '+esc(x.completed_routers||0)+' / '+esc(x.total_routers||0)+' · '+esc(x.last_error||'')+'</small></div><div class="actions">'+
        ops.map(function(op){return '<button type="button" class="action" data-rollout-control="'+op[0]+'" data-rollout-id="'+id+'">'+op[1]+'</button>';}).join('')+'</div></div>';
@@ -466,7 +467,7 @@ document.addEventListener('click',function(ev){
  var button=ev.target.closest('[data-rollout-control]');if(!button)return;
  if(state.role!=='owner')return;
  var id=Number(button.dataset.rolloutId),operation=String(button.dataset.rolloutControl||'');
- if(!Number.isInteger(id)||id<=0||!['start','approve_next','pause','cancel'].includes(operation))return;
+ if(!Number.isInteger(id)||id<=0||!['start','approve_next','pause','resume','cancel'].includes(operation))return;
  if(!window.confirm(say('این عملیات ممکن است روی روترهای گروه اثر بگذارد. ادامه می‌دهی؟','This may affect routers in your group. Continue?')))return;
  button.disabled=true;
  api('rollout_control',{id:id,operation:operation,confirmed:true}).then(loadRollouts)
