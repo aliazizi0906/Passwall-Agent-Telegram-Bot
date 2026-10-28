@@ -63,7 +63,7 @@ func capabilityReportV13() map[string]interface{} {
 			"passwall2":        exists("/etc/config/passwall2"),
 			"wifi_radios":      radios,
 			"guest_network":    false,
-			"cellular":         modemProviderV14() != "none",
+			"cellular":         false, // Vendor/provider present does not prove an attached modem; consult cellular.status.
 			"cell_lock":        false,
 			"sms":              false,
 			"led_rgb":          hasGoogleWifiLEDProviderV13(),
