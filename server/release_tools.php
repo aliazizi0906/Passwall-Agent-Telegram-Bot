@@ -1,6 +1,26 @@
 <?php
 declare(strict_types=1);
 
+// Pinned to UPDATE_PUBLIC_KEY.b64 in the source repository and to OpenWrt's bootstrap.
+// A SHA256 checksum from the same release is not an authenticity proof.
+const PW_RELEASE_ED25519_PUBLIC_KEY_B64 = 'fDiTaZG26qn3BCI3c8cFiO0KdqMW561w6JSaMwXCecw=';
+
+function pw_release_verify_signature_with_key(string $bundle,string $signature,string $key): bool {
+    if(!function_exists('sodium_crypto_sign_verify_detached'))return false;
+    if(strlen($signature)!==64||strlen($key)!==32)return false;
+    return sodium_crypto_sign_verify_detached($signature,$bundle,$key);
+}
+
+function pw_release_verify_signature(string $bundle,string $signature): void {
+    if(!function_exists('sodium_crypto_sign_verify_detached')){
+        throw new RuntimeException('sodium PHP extension is needed for signed release caching (enable ext-sodium in cPanel).');
+    }
+    $key=base64_decode(PW_RELEASE_ED25519_PUBLIC_KEY_B64,true);
+    if(!is_string($key)||!pw_release_verify_signature_with_key($bundle,$signature,$key)){
+        throw new RuntimeException('Ed25519 signature verification failed for downloaded Agent release');
+    }
+}
+
 function pw_release_download_bytes(string $url): string {
     if(!function_exists('curl_init'))throw new RuntimeException('PHP cURL extension is required');
     $ch=curl_init($url);
@@ -9,7 +29,7 @@ function pw_release_download_bytes(string $url): string {
         CURLOPT_FOLLOWLOCATION=>true,
         CURLOPT_CONNECTTIMEOUT=>15,
         CURLOPT_TIMEOUT=>180,
-        CURLOPT_USERAGENT=>'pw-agent-release-sync/0.6',
+        CURLOPT_USERAGENT=>'pw-agent-release-sync/signed',
         CURLOPT_MAXREDIRS=>5,
     ]);
     $raw=curl_exec($ch);
@@ -41,7 +61,7 @@ function pw_release_sync_arch(string $root,string $version,string $arch): array 
     }
 
     $sig=pw_release_download_bytes($base.'/'.$asset.'.sig');
-    if(strlen($sig)!==64)throw new RuntimeException('Invalid Ed25519 signature length for '.$asset);
+    pw_release_verify_signature($bundle,$sig);
 
     $dir=rtrim($root,'/').'/releases';
     if(!is_dir($dir)&&!mkdir($dir,0750,true)&&!is_dir($dir))throw new RuntimeException('Could not create releases directory');
