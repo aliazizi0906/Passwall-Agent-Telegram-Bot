@@ -124,11 +124,16 @@ function v050_monitoring_summary(string $deviceId): string {
 function v050_normalize_arch(string $arch): string {
     $arch=strtolower(trim($arch));
     $map=[
-        'armv7l'=>'armv7','armv7'=>'armv7','arm'=>'armv7',
+        'armv5tel'=>'armv5','armv5l'=>'armv5','armv5'=>'armv5',
+        'armv6l'=>'armv6','armv6'=>'armv6',
+        'armv8l'=>'armv7','armv7l'=>'armv7','armv7'=>'armv7','arm'=>'armv7',
         'aarch64'=>'arm64','arm64'=>'arm64',
         'x86_64'=>'amd64','amd64'=>'amd64',
         'i386'=>'386','i486'=>'386','i586'=>'386','i686'=>'386','386'=>'386',
         'mips'=>'mips','mipsel'=>'mipsle','mipsle'=>'mipsle',
+        'mips64'=>'mips64','mips64el'=>'mips64le','mips64le'=>'mips64le',
+        'riscv64'=>'riscv64','loongarch64'=>'loong64','loong64'=>'loong64',
+        'ppc64le'=>'ppc64le',
     ];
     $out=$map[$arch]??'';
     if($out==='') throw new RuntimeException('Unsupported router architecture: '.$arch);
