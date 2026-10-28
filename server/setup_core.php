@@ -13,7 +13,7 @@ function pw_setup_valid_device_id(string $v): bool {
 }
 
 function pw_setup_normalize_arch(string $arch): string {
-    $archMap=['armv5tel'=>'armv5','armv5l'=>'armv5','armv6l'=>'armv6','armv7l'=>'armv7','armv7'=>'armv7','aarch64'=>'arm64','arm64'=>'arm64','x86_64'=>'amd64','amd64'=>'amd64','i386'=>'386','i686'=>'386','386'=>'386','mips'=>'mips','mipsel'=>'mipsle','mipsle'=>'mipsle','mips64el'=>'mips64le','mips64le'=>'mips64le','mips64'=>'mips64','riscv64'=>'riscv64','loongarch64'=>'loong64','loong64'=>'loong64','ppc64le'=>'ppc64le'];
+    $archMap=['armv5tel'=>'armv5','armv5l'=>'armv5','armv6l'=>'armv6','armv8l'=>'armv7','armv7l'=>'armv7','armv7'=>'armv7','aarch64'=>'arm64','arm64'=>'arm64','x86_64'=>'amd64','amd64'=>'amd64','i386'=>'386','i686'=>'386','386'=>'386','mips'=>'mips','mipsel'=>'mipsle','mipsle'=>'mipsle','mips64el'=>'mips64le','mips64le'=>'mips64le','mips64'=>'mips64','riscv64'=>'riscv64','loongarch64'=>'loong64','loong64'=>'loong64','ppc64le'=>'ppc64le'];
     $key=strtolower(trim($arch));
     $out=$archMap[$key]??$key;
     if(!in_array($out,['armv5','armv6','armv7','arm64','amd64','386','mips','mipsle','mips64','mips64le','riscv64','loong64','ppc64le'],true))throw new RuntimeException('Unsupported router architecture.');
