@@ -13,7 +13,12 @@ function pw_install_fail(int $code,string $message): never {
     exit($message);
 }
 if(($_SERVER['REQUEST_METHOD']??'')!=='POST')pw_install_fail(405,'POST is required.');
-if(!str_starts_with((string)(cfg()['base_url']??''),'https://'))pw_install_fail(403,'HTTPS required.');
+$requestHttps=(!empty($_SERVER['HTTPS'])&&strtolower((string)$_SERVER['HTTPS'])!=='off')
+    ||strtolower((string)($_SERVER['REQUEST_SCHEME']??''))==='https'
+    ||(string)($_SERVER['SERVER_PORT']??'')==='443';
+if(!str_starts_with((string)(cfg()['base_url']??''),'https://')||!$requestHttps)
+    pw_install_fail(403,'HTTPS required for provisioning asset transfer.');
+header('Strict-Transport-Security: max-age=31536000');
 
 $token=(string)($_POST['token']??'');
 $arch=(string)($_POST['arch']??'');
