@@ -137,12 +137,19 @@ jobs:
               -out "dist/$asset_name.sig"
           }
 
+          build_bundle armv5 arm 5
+          build_bundle armv6 arm 6
           build_bundle armv7 arm 7
           build_bundle arm64 arm64
           build_bundle amd64 amd64
           build_bundle 386 386
           build_bundle mips mips "" softfloat
           build_bundle mipsle mipsle "" softfloat
+          build_bundle mips64 mips64
+          build_bundle mips64le mips64le
+          build_bundle riscv64 riscv64
+          build_bundle loong64 loong64
+          build_bundle ppc64le ppc64le
 
           bash scripts/package_cpanel.sh
           CPANEL_ZIP="dist/pw-agent-cpanel-${RELEASE_TAG}.zip"
