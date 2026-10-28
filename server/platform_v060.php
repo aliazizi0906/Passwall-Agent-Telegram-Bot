@@ -544,8 +544,8 @@ function v060_add_alert(int $uid,string $deviceId,string $metric,string $op,floa
 
 function v060_dashboard_command_allowed(string $action): bool {
     return in_array($action,[
-      'system.status','agent.diagnose','agent.capabilities','network.doctor','led.status','led.identify','system.clients','wifi.list','wifi.plan_ssid','wifi.radios','wifi.stations',
-      'network.wan','network.dns','network.routes','network.internet_test','network.speed_probe','network.policy_status','cellular.status','system.leds','system.interfaces',
+      'system.status','agent.diagnose','agent.capabilities','network.doctor','network.path_audit','led.status','led.identify','system.clients','wifi.list','wifi.plan_ssid','wifi.radios','wifi.stations',
+      'network.wan','network.dns','network.routes','network.internet_test','network.speed_probe','network.path_audit','network.policy_status','cellular.status','system.leds','system.interfaces',
       'passwall2.status','passwall2.nodes.list','passwall2.nodes.relay_ranking',
       'passwall2.failover.list','passwall2.failover.run','passwall2.restart',
       'passwall2.subscriptions.list','passwall2.shunt.list','passwall2.log',
