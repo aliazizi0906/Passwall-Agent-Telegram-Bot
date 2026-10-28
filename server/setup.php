@@ -311,7 +311,7 @@ Initial router: <code><?=setup_h($success['device_id'])?></code> — <?=setup_h(
 <div><label>Display Name</label><input name="device_name" required value="<?=setup_h((string)$form['device_name'])?>"></div>
 <div><label>Architecture</label>
 <select name="arch">
-<?php foreach(['armv7','arm64','amd64','386','mips','mipsle'] as $a): ?><option value="<?=$a?>" <?=$form['arch']===$a?'selected':''?>><?=$a?></option><?php endforeach; ?>
+<?php foreach(['armv5','armv6','armv7','arm64','amd64','386','mips','mipsle','mips64','mips64le','riscv64','loong64','ppc64le'] as $a): ?><option value="<?=$a?>" <?=$form['arch']===$a?'selected':''?>><?=$a?></option><?php endforeach; ?>
 </select></div>
 <div class="check"><input id="syncRelease" type="checkbox" name="sync_release" value="1" <?=!empty($form['sync_release'])?'checked':''?>><label for="syncRelease" style="margin:0">Download signed self-update bundle now</label></div>
 </div>
