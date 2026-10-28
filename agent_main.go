@@ -288,6 +288,8 @@ func (a *Agent) execute(c *Command) (interface{}, error) {
 		return scheduleReboot()
 	case "wifi.list":
 		return listWiFi()
+	case "wifi.plan_ssid":
+		return planSSIDV14(params)
 	case "wifi.set_ssid":
 		section, e1 := stringParam(params, "section")
 		ssid, e2 := stringParam(params, "ssid")
