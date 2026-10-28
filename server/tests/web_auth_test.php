@@ -35,7 +35,7 @@ expect_web(!pw_web_auth_csrf_ok('bad'),'CSRF invalid');
 $_SESSION['pw_uid']=123456;
 $_SESSION['pw_touch']=time();
 $_SESSION['pw_ua']=hash('sha256','PW-Agent-CI');
-expect_web(pw_web_auth_user()===123456,'Valid browser session');
+expect_web(pw_web_auth_user()===null,'Sessions without a password fingerprint must be rejected');
 $_SESSION['pw_touch']=time()-1900;
 expect_web(pw_web_auth_user()===null,'Expired browser session');
 pw_web_auth_logout();
@@ -58,6 +58,9 @@ if($dsn!==''){
     expect_web(!pw_web_auth_login($pdo,'admin','bad','127.0.0.1'),'Wrong password refused');
     expect_web(pw_web_auth_login($pdo,'admin','Testing-Unique-Password_123','127.0.0.1'),'Right password accepted');
     expect_web(pw_web_auth_user()===123456,'Authenticated browser session persisted');
+    $_SESSION['pw_auth_fingerprint']='not-the-authenticated-hash';
+    expect_web(pw_web_auth_user()===null,'Forged session fingerprint must be refused');
+    expect_web(pw_web_auth_login($pdo,'admin','Testing-Unique-Password_123','127.0.0.1'),'Re-login after rejected fingerprint');
     pw_web_auth_logout();
     for($i=0;$i<7;$i++){expect_web(!pw_web_auth_login($pdo,'admin','bad','127.0.0.2'),'Brute-force rejection');}
     expect_web(!pw_web_auth_login($pdo,'admin','Testing-Unique-Password_123','127.0.0.2'),'Lockout enforced');
