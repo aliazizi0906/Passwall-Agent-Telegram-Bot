@@ -2,6 +2,7 @@ package main
 
 import "testing"
 
+// This is an offline validation test: no UCI state or router configuration is touched.
 func TestSSIDPlanValidationV14(t *testing.T) {
 	good := []string{"OpenWrt", "شبکه", "Cafe-WiFi", "a"}
 	for _, ssid := range good {
