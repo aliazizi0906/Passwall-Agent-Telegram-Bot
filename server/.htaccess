@@ -1,5 +1,5 @@
 Options -Indexes
-<FilesMatch "^(config|config\.example|lib|hardening_v050|platform_v060|setup_core|release_tools|web_auth|fleet_rollout|schema_migrations|v130_command_validation)\.php$|\.sql$|\.lock$">
+<FilesMatch "^(config|config\.example|lib|hardening_v050|platform_v060|setup_core|release_tools|web_auth|fleet_rollout|schema_migrations|bundle_core|v130_command_validation)\.php$|\.sql$|\.lock$">
     Require all denied
 </FilesMatch>
 
