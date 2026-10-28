@@ -23,6 +23,8 @@ header('Strict-Transport-Security: max-age=31536000');
 $token=(string)($_POST['token']??'');
 $arch=(string)($_POST['arch']??'');
 $part=(string)($_POST['part']??'');
+$requestedVersion=(string)($_POST['version']??'');
+if($requestedVersion!=='v'.app_version())pw_install_fail(400,'Requested release does not match the backend.');
 if(!preg_match('/^[A-Za-z0-9_-]{32,128}$/D',$token))pw_install_fail(403,'Invalid token.');
 if(strlen($arch)>32||strlen($part)>16)pw_install_fail(400,'Invalid asset request.');
 
