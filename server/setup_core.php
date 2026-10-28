@@ -168,9 +168,18 @@ function pw_setup_write_config(string $path,array $config): void {
 }
 
 function pw_setup_router_command(string $base,string $token): string {
-    $raw='https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh';
+    // Immutable release tag + explicit downloaded-file check; no sh -c "$(wget)" ambiguity.
+    $raw='https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/v'.pw_setup_version().'/openwrt/install-remote.sh';
     $quote=static fn(string $v): string => "'".str_replace("'","'\\''",$v)."'";
-    return 'PW_SERVER_BASE='.$quote($base).' PW_PROVISION_TOKEN='.$quote($token).' PW_AGENT_VERSION='.$quote('v'.pw_setup_version()).' sh -c "$(wget -qO- '.$quote($raw).')"';
+    $script='set -eu; tmp=$(mktemp /tmp/pw-installer.XXXXXX); '
+        .'trap '. $quote('rm -f "$tmp"').' EXIT INT TERM; '
+        .'if command -v curl >/dev/null 2>&1; then '
+        .'curl -4 -fLsS --connect-timeout 10 --max-time 60 -o "$tmp" '.$quote($raw)
+        .' || wget -O "$tmp" '.$quote($raw).'; '
+        .'else wget -O "$tmp" '.$quote($raw).'; fi; '
+        .'test -s "$tmp"; sh "$tmp"';
+    return 'PW_SERVER_BASE='.$quote($base).' PW_PROVISION_TOKEN='.$quote($token)
+        .' PW_AGENT_VERSION='.$quote('v'.pw_setup_version()).' sh -c '.$quote($script);
 }
 
 function pw_setup_cron_command(string $root): string {
