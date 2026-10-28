@@ -194,7 +194,8 @@ function internet(){
  statCard(say('پایداری ۲۴ساعته','24h heartbeat'),safeNum(h.heartbeat_coverage,1)+'%',say('از داده‌های ثبت‌شده','From recorded samples'))+'</div>'+
  '<div class="stack">'+chartHtml('latency-chart',say('تأخیر Relay (نمونه‌های موجود)','Relay latency (recorded samples)'))+
  chartHtml('loss-chart',say('افت بسته (نمونه‌های موجود)','Packet loss (recorded samples)'))+
- '<div class="card"><p class="warn-note">'+say('تست سرعت واقعی از خود روتر، اندازه‌گیری جداگانه شبکه داخلی/بین‌الملل و عیب‌یابی ریشه‌ای به Agent/API نسخه جدید نیاز دارند.','Router-based speed tests, separate domestic/foreign checks and root-cause analysis need new Agent/API capabilities.')+'</p></div></div>';
+ '<section class="card"><div class="section-title">'+say('آزمون محدود دانلود','Capped router download probe')+'</div><p class="muted">'+say('اندازه‌گیری اختیاری ۲ مگابایت از Cloudflare. IP عمومی روتر با Cloudflare به اشتراک گذاشته می‌شود؛ این نتیجه سرعت نهایی ISP یا Bufferbloat نیست. حداکثر هر ۱۰ دقیقه یک بار.','Optional 2 MiB Cloudflare download. Your router public IP is disclosed to Cloudflare; result is not line-rate or bufferbloat. At most once per 10 minutes.')+'</p><div class="actions">'+action('network.speed_probe',say('اجرای تست ۲ مگابایتی','Run 2 MiB probe'),'network.read',true)+'</div></section>'+resultBox()+
+ '<div class="card"><p class="warn-note">'+say('سنجش مستقل ایران/خارج و تست Bufferbloat همچنان به پیاده‌سازی و تست نیاز دارند.','Independent regional speed measurements and bufferbloat testing remain unimplemented.')+'</p></div></div>';
  drawChart('latency-chart','node_relay_ms');drawChart('loss-chart','packet_loss');
 }
 function proxy(){
@@ -372,7 +373,7 @@ async function refresh(){
 }
 async function command(id,confirmNeeded,params){
  if(state.busy)return;
- if(confirmNeeded&&!window.confirm(say('این عملیات ممکن است ارتباط روتر را تغییر دهد. مطمئنی؟','This action may affect router connectivity. Continue?')))return;
+ if(confirmNeeded&&!window.confirm(id==='network.speed_probe'?say('این آزمون حدود ۲ مگابایت داده از Cloudflare دانلود می‌کند و IP عمومی روتر قابل مشاهده خواهد بود. اجرا شود؟','This probe downloads 2 MiB from Cloudflare, exposing your router public IP. Continue?'):say('این عملیات ممکن است ارتباط روتر را تغییر دهد. مطمئنی؟','This action may affect router connectivity. Continue?')))return;
  state.busy=true;var buttons=document.querySelectorAll('[data-command]');buttons.forEach(function(b){b.disabled=true;});
  var out=$('feedback');if(out)out.textContent=say('در حال ارسال فرمان…','Submitting command…');
  try{
