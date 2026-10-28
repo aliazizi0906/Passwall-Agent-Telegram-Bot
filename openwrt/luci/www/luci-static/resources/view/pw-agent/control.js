@@ -10,7 +10,10 @@ var OPERATIONS = {
     wifi: ['wifi-json', 'Wi-Fi'],
     doctor: ['network-doctor-json', 'Network doctor'],
     capability: ['capabilities-json', 'Hardware'],
-    led: ['led-json', 'LED']
+    led: ['led-json', 'GoogleWifiLED'],
+    led_inventory: ['led-inventory-json', 'Board LEDs'],
+    cellular: ['cellular-json', 'Cellular modem'],
+    sqm: ['network-policies-json', 'SQM &amp; UPnP']
 };
 
 function card(label, children) {
@@ -92,6 +95,30 @@ function renderLED(data) {
     Object.keys(channels).forEach(function(color){body.push(kv(color+' channel',channels[color]+' · brightness '+(brightness[color]||'—')));});
     return [card('GoogleWifiLED · read-only',body)];
 }
+function renderCellular(data) {
+    var body = [kv('Provider', data.provider || 'none'), kv('Modem detected', label(data.available)),
+        kv('Modem count', data.modem_count || 0)];
+    var signal = data.signal || {};
+    Object.keys(signal).sort().forEach(function(name) { body.push(kv(name.toUpperCase(), signal[name])); });
+    if (data.reason) body.push(E('p',{'style':'color:'+COLOR.muted},[data.reason]));
+    body.push(E('p',{'style':'color:'+COLOR.muted},['Read-only. No SIM identifiers, SMS, USSD or band-lock controls.']));
+    return [card('Cellular modem discovery',body)];
+}
+function renderNetworkPolicies(data) {
+    var body = [kv('SQM installed',label(data.sqm_installed)),kv('UPnP installed',label(data.upnp_installed)),
+        kv('UPnP enabled',label(data.upnp_enabled)),kv('UPnP secure mode',label(data.upnp_secure_mode))];
+    (data.sqm_interfaces || []).forEach(function(row) {
+        body.push(kv('SQM '+(row.interface||'interface'),(row.enabled?'On':'Off')+' · Down '+row.download_kbit+' kbit/s · Up '+row.upload_kbit+' kbit/s · '+row.qdisc));
+    });
+    body.push(E('p',{'style':'color:'+COLOR.muted},['Read-only inventory. No traffic shaping or NAT changes performed.']));
+    return [card('SQM / UPnP capabilities',body)];
+}
+function renderLEDInventory(data) {
+    var body = [kv('Sysfs LED count',(data.leds || []).length)];
+    (data.leds || []).forEach(function(item) {body.push(kv(item.name,item.brightness+' / '+item.max_brightness));});
+    body.push(E('p',{'style':'color:'+COLOR.muted},['Read-only. Color and LED pattern controls require board-specific drivers.']));
+    return [card('Local sysfs LED status',body)];
+}
 function renderCapability(data) {
     var caps = data.capabilities || {}, hw = data.hardware || {};
     var body = [kv('OpenWrt', data.openwrt_version), kv('Hardware model', hw.model), kv('Board', hw.board)];
@@ -112,6 +139,9 @@ return view.extend({
         if (name === 'wifi') return renderWiFi(data);
         if (name === 'doctor') return renderDoctor(data);
         if (name === 'led') return renderLED(data);
+        if (name === 'led_inventory') return renderLEDInventory(data);
+        if (name === 'cellular') return renderCellular(data);
+        if (name === 'sqm') return renderNetworkPolicies(data);
         return renderCapability(data);
     },
     refresh: function(name, btn) {
