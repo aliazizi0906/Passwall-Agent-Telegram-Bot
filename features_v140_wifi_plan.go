@@ -51,8 +51,8 @@ func planSSIDV14(params map[string]interface{}) (map[string]interface{}, error) 
 		"changes": []map[string]string{
 			{"option": "ssid", "before": current, "after": ssid},
 		},
-		"changed": current != ssid,
+		"changed":         current != ssid,
 		"apply_available": false,
-		"warning": "Preview only; no changes applied. Network writes need a timed local rollback and connectivity verification.",
+		"warning":         "Preview only; no changes applied. Network writes need a timed local rollback and connectivity verification.",
 	}, nil
 }
