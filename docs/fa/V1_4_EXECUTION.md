@@ -1,53 +1,57 @@
-# PW Agent v1.4 — execution and hardware compatibility matrix
+# وضعیت توسعه PW Agent v1.4
 
-**Status:** Development branch `feature/v1.4-secure-browser-control`. This is **not** a completed v1.4 release, and no existing deployment should replace its released binaries with this branch without staging.
+> این مستند وضعیت واقعی شاخه `feature/v1.4-secure-browser-control` را نشان می‌دهد. نسخه **Latest عمومی هنوز v1.3.0-rc.2 است**؛ نسخه ۱.۴ هنوز منتشر نشده و آماده Production نیست.
 
-## Implemented in this branch (pending CI and hardware verification)
+[English implementation status](../en/V1_4_EXECUTION.md) | [Pull Request #8](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/pull/8)
 
-- **No. 1 — setup/recovery (partial):** version-tag-pinned router bootstrap, nonempty download verification, curl IPv4/IPv6 + wget fallback, **fail-closed Ed25519 signature verification** with a pinned published public key before provisioning. Complete backend staged upgrade/migration rollback not yet implemented.
-- **No. 8 — local/web UI (partial):** updated PW Control Center design tokens, typography, responsive surfaces; LuCI remains read-only for risky mutations.
-- **No. 9 — browser login (implemented for staging):** independent owner username/password entered during fresh cPanel Web Setup; password hashed with Argon2id or bcrypt in MySQL; server-side sessions, SameSite/HttpOnly/Secure cookie, 30-minute idle timeout, CSRF, per-IP persistent lockout and existing RBAC/device scopes. Existing installs bootstrap via Telegram Owner (System page), never anonymous web signup.
-- **No. 6 / 10 / 12 — portability-first inventory (partial):** read-only SQM/UPnP UCI inspection, generic sysfs LED list, and ModemManager/uqmi signal inventory (RSRP/RSRQ/RSSI/SNR only; no SIM identity or control). Devices without adapters report unsupported safely.
-- **No. 7 — bounded speed probe (partial):** explicit opt-in 2 MiB download from the fixed Cloudflare endpoint with 10-minute Agent cooldown, strict network quota and a privacy notice. Does **not** measure actual ISP peak bandwidth, domestic routing, upload or bufferbloat.
-- **No. 14 — CI (partial):** PHP credential/session/lockout integration tests against MySQL, existing multi-architecture Go CI, version-consistency checks.
-- **Cross-router portability (partial):** Passwall2 made optional for OpenWrt-only controls; CPU build targets expanded to armv5, armv6, armv7, arm64, x86/386, amd64, mips/le, mips64/le, riscv64, loong64, ppc64le. Target support and actual compatibility differ: the target kernel, flash, library and package dependencies must be checked per router.
-- **Vazirmatn reliability:** pinned v33.0.3 stylesheet, runtime CDN fallback, build-time locally bundled verified WOFF2, font license bundled; system-font fallback if both unexpectedly fail.
+## موارد پیاده‌سازی‌شده در شاخه توسعه
 
-## Requested workstreams (1–14)
+- ورود مستقیم وب با نام کاربری و رمزی که در نصب تازه cPanel تنظیم می‌شود؛ رمز به‌صورت Hash، نشست HTTPS با کوکی امن، CSRF، محدودیت تلاش و RBAC. Owner می‌تواند از داخل Mini App رمز را برای نصب قبلی تنظیم یا بازنشانی کند. نشست‌های جدید بعد از تغییر رمز باطل می‌شوند.
+- بازطراحی ظاهر پنل وب با ناوبری SVG، راست‌چین و چپ‌چین، تم تیره و روشن و فونت Vazirmatn. فایل فونت در ZIP cPanel ذخیره می‌شود؛ نسخه مشخص‌شده در CDN و فونت سیستم مسیرهای جایگزین هستند.
+- توسعه Build برای معماری‌های بیشتر OpenWrt؛ Passwall2 برای امکانات عمومی Agent الزامی نیست. قابلیت‌ها براساس سخت‌افزار واقعی بررسی می‌شوند.
+- دانلود نصب با Curl و Wget، تشخیص فایل خالی، سورس نسخه مشخص و **بررسی امضای Ed25519** قبل از مصرف توکن Provisioning. روتر به `openssl`، `base64` و `sha256sum` نیاز دارد.
+- تست اختیاری دانلود حداکثر ۲ مگابایت از Cloudflare، با فاصله حداقل ۱۰ دقیقه و هشدار افشای IP عمومی به ارائه‌دهنده تست؛ این آزمایش سرعت نهایی اینترنت و Bufferbloat نیست.
+- نمایش صرفاً خواندنی تنظیمات SQM و UPnP، LEDهای sysfs و وضعیت مودم‌های ModemManager/uqmi. اطلاعات خصوصی سیم‌کارت شامل IMSI/IMEI گزارش نمی‌شوند.
+- افزودن تب‌های جدید LuCI و تست‌های Go، PHP، MySQL، JavaScript و امضای Installer در CI.
 
-| # | Module | Implementation level / missing gate |
+## وضعیت تکمیل ۱۴ قابلیت درخواستی
+
+| شماره | بخش | وضعیت واقعی |
 |---|---|---|
-| 1 | Installation, backend updater, migration and rollback | Bootstrap hardened; schema version ledger, staged backend release updater and live rollback remain |
-| 2 | Clients: block, quotas, speed, schedules | Existing read-only discovery; nftables + tc with safe persistence, per-device identity and verified rollback remain |
-| 3 | Wi-Fi SSID/pass/channel/guest QR | Read-only enumeration exists; prepare/diff/commit/timed rollback and guest isolation remain |
-| 4 | Iran/direct split, VPN kill switch, DNS/IPv6 leak | Not enabled; require audited nftables path policies, IPv4+IPv6 leak tests and connectivity rollback |
-| 5 | DoH/DoT, split DNS and ad-block | DNS view/tests exist; resolver-specific adapters and split-path proof remain |
-| 6 | SQM/QoS, NAT, UPnP, gaming | Read-only SQM queue and UPnP settings inventory available; controlled SQM tuning, bufferbloat measurements, UPnP permissions remain |
-| 7 | Router speed test, history and client traffic | Real 2 MiB capped download probe added; existing metrics/graphs kept. Full throughput/load testing, uploads and trustworthy per-client counters remain |
-| 8 | Full local LuCI and remote UI | Read-only local panel and redesigned remote UI; safe writes not released |
-| 9 | Independent browser username/password | Implemented for staging in v1.4 development, production hardening and live review pending |
-| 10 | RGB LED and time-of-day schedules | Generic sysfs LED inventory and provider detection/read-only; RGB mutation and nightly schedule require actual device tests |
-| 11 | VPN, Passwall2 health and failover | Existing node/subscription and failover; native WG/OpenVPN provider adapters and deeper probe/routing tests remain |
-| 12 | LTE/5G modem, tower/band lock, SMS/USSD | ModemManager/uqmi signal discovery is read-only and privacy-whitelisted; hardware-specific verified write adapters remain |
-| 13 | Fleet safe bulk rollouts | Existing groups/RBAC/alert/schedules; staged rollout/canary/suspend/rollback remain |
-| 14 | Security, real hardware tests, stable GA | CI expanded; OpenWrt 24/25 real router tests, staging upgrade drills and penetration review remain |
+| ۱ | نصب، آپدیت Backend، Migration و Rollback | نصب امضاشده اضافه شده؛ آپدیت مرحله‌ای و بازگشت Backend کامل نیست |
+| ۲ | کنترل دستگاه‌ها، سرعت، بلاک و زمان‌بندی | کشف کلاینت وجود دارد؛ سیاست‌های nftables/tc و بازگشت امن مانده‌اند |
+| ۳ | مدیریت Wi-Fi و شبکه مهمان | مشاهده و چند عملیات پایه موجود است؛ Safe Apply و Rollback زمان‌دار کامل نیست |
+| ۴ | Kill Switch، تفکیک ترافیک و نشت DNS/IPv6 | هنوز کنترل عملیاتی آزمایش‌شده وجود ندارد |
+| ۵ | DNS رمزنگاری‌شده و Ad-block | عیب‌یابی و مشاهده موجود است؛ Adapterهای تغییر تنظیمات مانده‌اند |
+| ۶ | QoS، SQM، UPnP و گیمینگ | وضعیت SQM/UPnP قابل مشاهده است؛ تنظیم و Bufferbloat مانده‌اند |
+| ۷ | Speed Test و مصرف ترافیک | تست محدود ۲ مگابایت اضافه شده؛ مصرف دقیق هر کاربر و تست کامل مانده‌اند |
+| ۸ | پنل LuCI و UI/UX | ظاهر وب و ابزارهای خواندنی LuCI توسعه یافته؛ کنترل ایمن همه ماژول‌ها کامل نیست |
+| ۹ | ورود مستقل با نام کاربری و رمز | پیاده‌سازی و تست اولیه انجام شده؛ تست عملی و بازبینی امنیتی مانده |
+| ۱۰ | کنترل RGB و چراغ‌ها | مشاهده LEDهای sysfs موجود است؛ کنترل عملی RGB و زمان‌بندی مانده |
+| ۱۱ | Passwall2 و VPN | قابلیت‌های قبلی حفظ شدند؛ Native WireGuard/OpenVPN و تست مسیرهای حساس مانده |
+| ۱۲ | مودم، باند، دکل و پیامک | نمایش وضعیت و سیگنال مودم اضافه شده؛ فرمان‌های سازگار سخت‌افزاری مانده |
+| ۱۳ | Fleet و اعمال گروهی | گروه‌بندی، RBAC و Schedule موجود است؛ انتشار Canary و Rollback گروهی مانده |
+| ۱۴ | امنیت، تست سخت‌افزار، Release نهایی | CI گسترش یافته؛ آزمون عملی AC1304 و چند مدل دیگر و Release نهایی مانده است |
 
-## Cross-model policy
+## اصل سازگاری روترها
 
-**Universal OpenWrt compatibility means graceful capability discovery and safe nonoperation**, not guaranteed availability of cellular modems, LED drivers, Wi-Fi radios, SQM, or Passwall2. Do not show controls as operational without a real verified capability provider. Router CPU families can be added only when the Go compiler, release packaging and target firmware support them.
+«سازگار با مدل‌های OpenWrt» به معنای تشخیص ویژگی‌های هر روتر، نمایش صحیح وضعیت و غیرفعال‌کردن فرمان‌های ناموجود است؛ نه امکان کنترل RGB، مودم سیم‌کارتی یا Wi-Fi در دستگاهی که این سخت‌افزار و درایور را ندارد.
 
-Every mutation touching WAN/Wi-Fi/firewall/DNS/routing must implement **snapshot → diff → explicit confirm → prepare → apply → connectivity/health check → commit or timed local rollback**, with independent local recovery when Backend is unreachable. If any step is not implemented, the mutation must remain disabled.
+پیش از فعال‌کردن هر عملیات تغییردهنده WAN، Firewall، Wi-Fi، DNS یا Routing باید این زنجیره برقرار شود: **Snapshot → Diff → تأیید صریح → Apply → بررسی سلامت → Commit یا Rollback محلی با زمان‌بندی مستقل**. تا زمان تکمیل این مسیر، کنترل خطرناک در رابط فعال نشود.
 
-## Deployment notes
+## نصب و اعتبارسنجی
 
-- Fresh cPanel setup asks for `web_username`, `web_password`, `web_password_confirm`; use unique long credentials and HTTPS.
-- Existing installations: only a verified Telegram **Owner** in the Mini App System page may set/reset web login. No reinstall or secret-key rotation.
-- Browser login URL: `<base_url>/auth/login.php`; same authorized Fleet/Queue, no bypass of RBAC.
-- New installer command pins the bootstrap script to `v<backend_version>`; it will not work until a matching signed release tag exists. **No v1.4 release has been published.**
-- **Installer prerequisite on OpenWrt:** `openssl` CLI (normally `openssl-util` package), `base64` and `sha256sum`. Missing verifier tools result in an error **before** the 30-minute provisioning token is submitted; install prerequisites using the firmware's package manager. The signed archive is rejected if the publisher's pinned Ed25519 public key does not verify its `.sig`.
-- cPanel ZIP production builds vendor the Vazirmatn binary; the source repository tracks the stylesheet, not bundled font binaries. No extra Node.js runtime is needed on cPanel.
-- Existing release `v1.3.0-rc.2` and production `main` stay unchanged during this review.
+نسخه ۱.۴ هنوز تگ Release ندارد. دستور نصب تولیدشده از Setup این نسخه به تگ متناظر نیاز خواهد داشت، بنابراین از سورس توسعه برای نصب روی روتر اصلی استفاده نکن. بعد از انتشار امضاشده، قبل از Provisioning ابزار `openssl-util` را از مخازن سازگار Firmware نصب کن.
 
-## Definition of done for full request
+برای بررسی سورس، تست‌ها و بسته آزمایشی:
 
-Stable release only after all 14 modules are genuinely implemented and tested with capability-dependent functionality verified on supported hardware families, including offline WAN cut recovery, fresh install, migration, downgrade, and at least one Google WiFi AC1304. Cross-compilation and screenshots alone are not acceptance evidence.
+```sh
+go test ./...
+go vet ./...
+python3 scripts/check_dashboard_js.py
+sh scripts/test_bootstrap_signature.sh
+php server/tests/web_auth_test.php
+bash scripts/package_cpanel.sh
+```
+
+**نتیجه تست نرم‌افزاری به‌تنهایی تضمین عملکرد همه روترهای OpenWrt نیست.** تست قطع ارتباط و بازگشت تنظیمات روی سخت‌افزار واقعی برای انتشار پایدار ضروری است.
