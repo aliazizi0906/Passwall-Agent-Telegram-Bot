@@ -19,7 +19,7 @@ Current development branch: `feature/v1.4-secure-browser-control`. Published **L
 |---|---|---|
 | 1 | Installation, backend migration, updater and rollback | Signed first-time installer added; versioned backend migration and staged rollback pending |
 | 2 | Per-client blocking, quotas and schedules | Client discovery only; safe nftables/tc policy engine pending |
-| 3 | Wi-Fi password, SSID, channel, guest and QR | Existing Wi-Fi viewing/limited operations; independent timed rollback still pending |
+| 3 | Wi-Fi password, SSID, channel, guest and QR | Named UCI SSID diff/dry-run form added, without applying changes; independent timed rollback still pending |
 | 4 | VPN kill switch, Iran/direct split, DNS/IPv6 leak | Policy engine and path-specific verification pending |
 | 5 | Split/encrypted DNS and ad blocking | DNS diagnostics only; safe resolver adapters pending |
 | 6 | SQM/QoS, UPnP, NAT and gaming | Read-only SQM/UPnP inventory added; safe configuration and bufferbloat pending |
