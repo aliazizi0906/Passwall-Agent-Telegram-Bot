@@ -286,6 +286,8 @@ func (a *Agent) execute(c *Command) (interface{}, error) {
 		return networkInterfaces()
 	case "system.clients":
 		return connectedClients()
+	case "clients.policy_plan":
+		return clientPolicyPlanV14(params)
 	case "system.backup.create":
 		return createSystemBackup()
 	case "system.backup.restore":
