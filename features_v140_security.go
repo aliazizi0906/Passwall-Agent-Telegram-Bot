@@ -70,18 +70,18 @@ func routeSecurityAuditV14() (map[string]interface{}, error) {
 	}
 	indicators = append(indicators, "Actual DNS/IPv6 leak prevention and kill-switch behavior require external path tests during VPN failure.")
 	return map[string]interface{}{
-		"read_only":                   true,
-		"verified_no_leak":            false,
-		"kill_switch_verified":        false,
-		"dns_leak_verified":           false,
-		"ipv6_disabled_globally":      ipv6Disabled,
-		"public_ipv6_address_count":   publicIPv6,
-		"ipv6_default_route_present":  ipv6Default,
-		"resolver_entries":            resolvers,
-		"local_dns_forwarder_only":    loopbackOnly,
-		"firewall_backend":            fw,
-		"configuration_indicators":    indicators,
-		"note":                        "Static configuration indicators only; no outbound leak-check requests were made.",
+		"read_only":                  true,
+		"verified_no_leak":           false,
+		"kill_switch_verified":       false,
+		"dns_leak_verified":          false,
+		"ipv6_disabled_globally":     ipv6Disabled,
+		"public_ipv6_address_count":  publicIPv6,
+		"ipv6_default_route_present": ipv6Default,
+		"resolver_entries":           resolvers,
+		"local_dns_forwarder_only":   loopbackOnly,
+		"firewall_backend":           fw,
+		"configuration_indicators":   indicators,
+		"note":                       "Static configuration indicators only; no outbound leak-check requests were made.",
 	}, nil
 }
 
@@ -90,7 +90,7 @@ func parseResolvV14(raw string) (count int, loopbackOnly bool) {
 	loopbackOnly = true
 	for _, line := range strings.Split(raw, "\n") {
 		fields := strings.Fields(strings.SplitN(line, "#", 2)[0])
-		if len(fields)!=2 || fields[0]!="nameserver" {
+		if len(fields) != 2 || fields[0] != "nameserver" {
 			continue
 		}
 		ip := net.ParseIP(fields[1])
@@ -99,14 +99,14 @@ func parseResolvV14(raw string) (count int, loopbackOnly bool) {
 		}
 		count++
 		if !ip.IsLoopback() {
-			loopbackOnly=false
+			loopbackOnly = false
 		}
-		if count==16 {
+		if count == 16 {
 			break
 		}
 	}
-	if count==0 {
-		loopbackOnly=false
+	if count == 0 {
+		loopbackOnly = false
 	}
-	return count,loopbackOnly
+	return count, loopbackOnly
 }
