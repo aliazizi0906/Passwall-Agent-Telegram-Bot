@@ -3,6 +3,13 @@ declare(strict_types=1);
 
 // Pure input validation: safe to use in PHPUnit/CLI without loading runtime secrets.
 function dash_v130_safe_params(string $action,array $params,bool $confirmed): array {
+    if($action==='led.identify'){
+        if(!$confirmed)throw new RuntimeException('LED identification requires explicit confirmation');
+        $name=(string)($params['name']??'');
+        if(!preg_match('/^[A-Za-z0-9:_+.-]{1,96}$/D',$name)||$name==='.'||$name==='..')
+            throw new RuntimeException('Invalid sysfs LED name');
+        return ['name'=>$name];
+    }
     if($action==='wifi.plan_ssid'){
         $section=(string)($params['section']??'');
         $ssid=(string)($params['ssid']??'');
