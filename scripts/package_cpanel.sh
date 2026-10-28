@@ -57,6 +57,11 @@ curl --fail --location --silent --show-error --max-time 45 \
   https://raw.githubusercontent.com/rastikerdar/vazirmatn/v33.003/OFL.txt \
   --output "$STAGE/backend/assets/fonts/OFL.txt"
 
+mkdir -p "$STAGE/backend/install"
+cp openwrt/install-remote.sh "$STAGE/backend/install/remote.sh"
+chmod 0644 "$STAGE/backend/install/remote.sh"
+[ -f "$STAGE/backend/install/bundle.php" ]
+[ -f "$STAGE/backend/install/bundle_core.php" ]
 [ -f "$STAGE/backend/auth/login.php" ]
 [ -f "$STAGE/backend/web_auth.php" ]
 [ -f "$STAGE/backend/assets/vazirmatn.css" ]
