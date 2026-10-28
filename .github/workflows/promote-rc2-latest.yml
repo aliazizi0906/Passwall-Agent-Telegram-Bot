@@ -39,11 +39,44 @@ jobs:
             and (.assets | any(.name == "pw-agent-cpanel-v1.3.0-rc.2.zip.sig"))
           ' <<< "$release" >/dev/null
 
-          # GitHub only selects non-prerelease, non-draft releases for /releases/latest.
+          # Update the original GitHub release description as well, so that
+          # the UI no longer contradicts its new regular-release classification.
+          release_file="$RUNNER_TEMP/pw-release.json"
+          payload_file="$RUNNER_TEMP/pw-promote.json"
+          printf '%s' "$release" > "$release_file"
+          python3 - "$release_file" "$payload_file" <<'PY'
+          import json
+          import sys
+
+          source, destination = sys.argv[1:]
+          with open(source, encoding="utf-8") as handle:
+              original = json.load(handle)
+          body = original.get("body") or ""
+          old = "> **PRE-RELEASE / نسخه آزمایشی**"
+          if old not in body:
+              raise SystemExit("Expected original Release Candidate description not found")
+          body = body.replace(old, "> **LATEST GITHUB RELEASE (RC-tagged) / آخرین Release گیت‌هاب**")
+          repo = "https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/blob/main"
+          body = body.replace(
+              "[فارسی: release notes](../fa/RELEASE_NOTES_V1_3_RC.md)",
+              f"[فارسی: release notes]({repo}/docs/fa/RELEASE_NOTES_V1_3_RC.md)"
+          ).replace(
+              "[Install](INSTALL_V1_3.md)",
+              f"[Install]({repo}/docs/en/INSTALL_V1_3.md)"
+          ).replace(
+              "[Upgrade](UPGRADE_V1_3.md)",
+              f"[Upgrade]({repo}/docs/en/UPGRADE_V1_3.md)"
+          )
+          with open(destination, "w", encoding="utf-8") as handle:
+              json.dump({
+                  "prerelease": False,
+                  "draft": False,
+                  "make_latest": "true",
+                  "body": body,
+              }, handle, ensure_ascii=False)
+          PY
           gh api --method PATCH "repos/$repo/releases/$id" \
-            -F prerelease=false \
-            -F draft=false \
-            -f make_latest=true \
+            --input "$payload_file" \
             --jq '{tag_name, prerelease, draft, html_url}'
 
           gh api "repos/$repo/releases/$id" --jq '.prerelease == false and .draft == false' | grep -qx true
