@@ -2,6 +2,24 @@
 
 All notable PW Agent changes are documented here. GitHub may classify an RC-tagged build as a regular Release for discoverability; this is not a claim of feature-complete, production-certified support.
 
+## [1.4.0-alpha.1] — Unreleased development branch
+
+**Status:** Work in progress in Pull Request #8. Not deployed, not production-certified, and not a published GitHub Release.
+
+### Added
+- Independent cPanel-installed browser username/password login, Argon2id/bcrypt hashing, secure cookie sessions, CSRF and rate-limit lockout; authorized Telegram Owner resets.
+- Persian control center styling, inline SVG navigation and pinned Vazirmatn with verified, bundled WOFF2 in the cPanel ZIP.
+- More OpenWrt Go CPU targets, optional Passwall2 support, hardware/service discovery, QMI/ModemManager status, SQM/UPnP/DNS/DDNS/MultiWAN inventory.
+- Signed bootstrap download with fallback and verification; bounded router download probes; read-only SSID change previews.
+- Owner-approved Fleet canary rollout engine with first-router-only wave, health verification, explicit continuation, pause/cancel and MySQL tests.
+- Temporary sysfs LED identification with restoration and managed-trigger refusal; static IPv6/DNS path risk inventory with no false no-leak guarantee.
+- Additive versioned MySQL migration ledger, CLI and Telegram Owner upgrade workflow (no data-destructive down migrations).
+- CI coverage for MySQL authentication, rollout and migrations, Go hardware-independent probes and additional CPU builds.
+
+### Not yet complete
+- Per-client firewall/traffic policies; safe network writes with router-independent reboot recovery; verified Kill Switch and split DNS; full SQM/Bufferbloat; vendor-specific modem/LED control; signed staged backend replacement and automatic rollback; real-device/production acceptance testing.
+- All above are documented in [v1.4 execution matrix](docs/en/V1_4_EXECUTION.md). No stable tag should be produced until required tests pass.
+
 ## [1.3.0-rc.2] — GitHub Latest Release (originally published 22 October 2026)
 
 **Status:** Promoted to GitHub Latest / regular Release on 28 October 2026, using existing signed assets. Version remains `v1.3.0-rc.2` and is not stable/GA `v1.3.0`.
