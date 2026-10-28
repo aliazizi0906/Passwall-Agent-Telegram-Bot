@@ -103,7 +103,7 @@ try{
 
     if($action==='device_detail'){
         dash_device($uid,$device);
-        $row=v060_device_row($device);
+        $row=v060_public_device_row($device);
         $m=db()->prepare('SELECT * FROM pw_metrics WHERE device_id=? ORDER BY captured_at DESC LIMIT 60');$m->execute([$device]);
         $metrics=array_reverse($m->fetchAll());
         $maint=v060_maintenance_row($device);
@@ -134,7 +134,7 @@ try{
         if($groupId!==null){$g=db()->prepare('SELECT id FROM pw_device_groups WHERE id=?');$g->execute([$groupId]);if(!$g->fetchColumn())throw new RuntimeException('Group not found');}
         db()->prepare('UPDATE pw_device_registry SET display_name=?,location=?,tags_json=?,group_id=? WHERE device_id=?')->execute([$name,$location,json_encode($tags,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$groupId,$device]);
         v060_audit_event($device,$uid,'dashboard','device.update','done',['display_name'=>$name,'location'=>$location,'tags'=>$tags,'group_id'=>$groupId]);
-        response_json(['ok'=>true,'device'=>v060_device_row($device)]);
+        response_json(['ok'=>true,'device'=>v060_public_device_row($device)]);
     }
 
     if($action==='groups'){
