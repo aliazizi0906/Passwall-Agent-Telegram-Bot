@@ -4,6 +4,7 @@ require dirname(__DIR__) . '/lib.php';
 require dirname(__DIR__) . '/release_tools.php';
 require dirname(__DIR__) . '/v130_command_validation.php';
 require dirname(__DIR__) . '/fleet_rollout.php';
+require dirname(__DIR__) . '/schema_migrations.php';
 header('Cache-Control: no-store');
 
 $in=json_decode_assoc(raw_body());
@@ -49,6 +50,20 @@ try{
         pw_web_auth_install(db(),$name,$pass,$uid);
         v060_audit_event($device?:'fleet',$uid,'dashboard','web.auth.configure','done',['username'=>$name]);
         response_json(['ok'=>true,'configured'=>true]);
+    }
+    if($action==='migration_status'){
+        $actor=v060_user($uid);
+        if(($actor['role']??'')!=='owner')throw new RuntimeException('Owner role is required');
+        response_json(['ok'=>true,'migration'=>pw_migrations_status(db())]);
+    }
+    if($action==='migration_apply'){
+        $actor=v060_user($uid);
+        if($isBrowser||($actor['role']??'')!=='owner'||empty($in['confirmed'])){
+            throw new RuntimeException('Confirmed Telegram Owner session required for migrations');
+        }
+        $applied=pw_migrations_apply(db());
+        v060_audit_event($device?:'fleet',$uid,'dashboard','schema.migrations','done',['applied'=>$applied]);
+        response_json(['ok'=>true,'applied'=>$applied,'migration'=>pw_migrations_status(db())]);
     }
     if($action==='rollout_list'){
         dash_need($uid,'agent.update');
