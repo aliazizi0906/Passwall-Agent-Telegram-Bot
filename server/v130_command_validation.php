@@ -3,6 +3,14 @@ declare(strict_types=1);
 
 // Pure input validation: safe to use in PHPUnit/CLI without loading runtime secrets.
 function dash_v130_safe_params(string $action,array $params,bool $confirmed): array {
+    if($action==='wifi.plan_ssid'){
+        $section=(string)($params['section']??'');
+        $ssid=(string)($params['ssid']??'');
+        if(!preg_match('/^[A-Za-z0-9_-]{1,64}$/D',$section))throw new RuntimeException('Invalid named Wi-Fi UCI section');
+        if($ssid===''||strlen($ssid)>32||trim($ssid)===''||!preg_match('//u',$ssid)||preg_match('/[\\x00-\\x1F\\x7F]/',$ssid))
+            throw new RuntimeException('SSID must be valid UTF-8 and 1-32 bytes');
+        return ['section'=>$section,'ssid'=>$ssid];
+    }
     $nodeIdActions=['passwall2.node.select','passwall2.node.test','passwall2.node.delete'];
     $subscriptionIdActions=['passwall2.subscription.update','passwall2.subscription.delete'];
     $mutations=['passwall2.node.select','passwall2.node.delete','passwall2.node.add_link',
