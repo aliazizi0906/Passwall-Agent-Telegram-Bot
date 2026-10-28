@@ -117,7 +117,7 @@ jobs:
               esac
             fi
 
-            env "${env_args[@]}" go build -trimpath -ldflags="-s -w" -o "$stage/pw-agent" .
+            env "${env_args[@]}" go build -trimpath -ldflags="-s -w -X main.releaseArchV14=$label" -o "$stage/pw-agent" .
 
             cp openwrt/install.sh "$stage/"
             cp openwrt/install-update.sh "$stage/"
