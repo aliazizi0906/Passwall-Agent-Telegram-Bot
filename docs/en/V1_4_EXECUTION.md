@@ -17,12 +17,14 @@ Current development branch: `feature/v1.4-secure-browser-control`. Published **L
 - **Static DNS/IPv6 egress audit:** checks public IPv6 route/address and resolver count, while explicitly returning `verified_no_leak=false` and `kill_switch_verified=false` until external path tests exist.
 - CI checks Go compilation and tests, PHP syntax, MySQL authentication and rollout behavior, JS, release signing fixture and cPanel packaging.
 
+- Safe per-client policy planning: validates unicast 48-bit MAC, requested block/unblock/speed-limit policy and numeric limits; **never** writes firewall or traffic shaping rules before recovery support exists.
+
 ## The 14 workstreams
 
 | # | Workstream | Current status |
 |---|---|---|
 | 1 | Installation, backend migration, updater and rollback | Signed first install and additive/versioned MySQL migration ledger implemented; staged PHP backend upgrade and full rollback still pending |
-| 2 | Per-client blocking, quotas and schedules | Client discovery only; safe nftables/tc policy engine pending |
+| 2 | Per-client blocking, quotas and schedules | Validated MAC-based Block/Unblock/Rate-limit dry-run form and command added; real nftables/tc enforcement, schedules and local timed rollback still pending |
 | 3 | Wi-Fi password, SSID, channel, guest and QR | Named UCI SSID diff/dry-run form added, without applying changes; independent timed rollback still pending |
 | 4 | VPN kill switch, Iran/direct split, DNS/IPv6 leak | Read-only IPv6/DNS risk indicators added; actual leak verification, kill switch and policy engine pending |
 | 5 | Split/encrypted DNS and ad blocking | DNS diagnostics and optional resolver/adblock service inventory; safe resolver adapters pending |
