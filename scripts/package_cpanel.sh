@@ -52,6 +52,9 @@ if len(data)<20000 or data[:4]!=b'wOF2':
 PY
 curl --fail --location --silent --show-error --max-time 45 \
   https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/OFL.txt \
+  --output "$STAGE/backend/assets/fonts/OFL.txt" || \
+curl --fail --location --silent --show-error --max-time 45 \
+  https://raw.githubusercontent.com/rastikerdar/vazirmatn/v33.003/OFL.txt \
   --output "$STAGE/backend/assets/fonts/OFL.txt"
 
 [ -f "$STAGE/backend/auth/login.php" ]
