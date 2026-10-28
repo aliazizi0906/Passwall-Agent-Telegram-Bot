@@ -4,7 +4,7 @@
 
 ## Implemented in this branch (pending CI and hardware verification)
 
-- **No. 1 — setup/recovery (partial):** safer, version-tag-pinned router bootstrap, nonempty download verification, curl/wget fallback. Complete backend staged upgrade/migration rollback not yet implemented.
+- **No. 1 — setup/recovery (partial):** version-tag-pinned router bootstrap, nonempty download verification, curl IPv4/IPv6 + wget fallback, **fail-closed Ed25519 signature verification** with a pinned published public key before provisioning. Complete backend staged upgrade/migration rollback not yet implemented.
 - **No. 8 — local/web UI (partial):** updated PW Control Center design tokens, typography, responsive surfaces; LuCI remains read-only for risky mutations.
 - **No. 9 — browser login (implemented for staging):** independent owner username/password entered during fresh cPanel Web Setup; password hashed with Argon2id or bcrypt in MySQL; server-side sessions, SameSite/HttpOnly/Secure cookie, 30-minute idle timeout, CSRF, per-IP persistent lockout and existing RBAC/device scopes. Existing installs bootstrap via Telegram Owner (System page), never anonymous web signup.
 - **No. 6 / 10 / 12 — portability-first inventory (partial):** read-only SQM/UPnP UCI inspection, generic sysfs LED list, and ModemManager/uqmi signal inventory (RSRP/RSRQ/RSSI/SNR only; no SIM identity or control). Devices without adapters report unsupported safely.
@@ -44,6 +44,7 @@ Every mutation touching WAN/Wi-Fi/firewall/DNS/routing must implement **snapshot
 - Existing installations: only a verified Telegram **Owner** in the Mini App System page may set/reset web login. No reinstall or secret-key rotation.
 - Browser login URL: `<base_url>/auth/login.php`; same authorized Fleet/Queue, no bypass of RBAC.
 - New installer command pins the bootstrap script to `v<backend_version>`; it will not work until a matching signed release tag exists. **No v1.4 release has been published.**
+- **Installer prerequisite on OpenWrt:** `openssl` CLI (normally `openssl-util` package), `base64` and `sha256sum`. Missing verifier tools result in an error **before** the 30-minute provisioning token is submitted; install prerequisites using the firmware's package manager. The signed archive is rejected if the publisher's pinned Ed25519 public key does not verify its `.sig`.
 - cPanel ZIP production builds vendor the Vazirmatn binary; the source repository tracks the stylesheet, not bundled font binaries. No extra Node.js runtime is needed on cPanel.
 - Existing release `v1.3.0-rc.2` and production `main` stay unchanged during this review.
 
