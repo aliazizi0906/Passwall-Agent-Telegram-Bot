@@ -105,9 +105,13 @@ function pw_rollout_detail(int $uid,int $id): array {
 function pw_rollout_control(int $uid,int $id,string $action): array {
     pw_rollout_actor($uid);
     if($id<=0||!in_array($action,['start','approve_next','pause','resume','cancel'],true))throw new RuntimeException('Invalid rollout operation');
-    // Only owner-created rollouts. Lock row to prevent concurrent owner clicks.
-    $pdo=db();$pdo->beginTransaction();
+    // Share an advisory lock with Cron: pause/cancel must never race a new wave.
+    $pdo=db();
+    $got=$pdo->query("SELECT GET_LOCK('pw_agent_fleet_rollout_v14',5)")->fetchColumn();
+    if((int)$got!==1)throw new RuntimeException('Rollout scheduler is busy; retry in a moment');
     try {
+      $pdo->beginTransaction();
+      try {
         $st=$pdo->prepare('SELECT status FROM pw_fleet_rollouts WHERE id=? AND created_by=? FOR UPDATE');
         $st->execute([$id,$uid]);$status=$st->fetchColumn();
         if($status===false)throw new RuntimeException('Rollout unavailable');
@@ -125,7 +129,8 @@ function pw_rollout_control(int $uid,int $id,string $action): array {
         $st=$pdo->prepare('UPDATE pw_fleet_rollouts SET status=?, approved_wave=approved_wave+?,last_error=NULL,started_at=COALESCE(started_at,NOW()) WHERE id=?');
         $st->execute([$next,in_array($action,['start','approve_next'],true)?1:0,$id]);
         $pdo->commit();
-    }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
+      }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
+    }finally{$pdo->query("SELECT RELEASE_LOCK('pw_agent_fleet_rollout_v14')");}
     v060_audit_event('fleet',$uid,'rollout','fleet.rollout.'.$action,'done',['id'=>$id,'status'=>$next]);
     return ['id'=>$id,'status'=>$next,
       'warning'=>$action==='cancel'?'Already queued router commands cannot be revoked here.':null];
