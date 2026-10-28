@@ -120,6 +120,16 @@ function renderLEDInventory(data) {
     body.push(E('p',{'style':'color:'+COLOR.muted},['Read-only. Color and LED pattern controls require board-specific drivers.']));
     return [card('Local sysfs LED status',body)];
 }
+function renderNetworkServices(data) {
+    var body = [kv('DDNS services',data.ddns_service_count || 0), kv('Multi-WAN interfaces',data.multiwan_interfaces || 0)];
+    var services=data.services || {};
+    Object.keys(services).sort().forEach(function(name) {body.push(kv(name,label(services[name])));});
+    (data.bridge_vlans || []).forEach(function(v) {
+        body.push(kv('Bridge VLAN '+v.vlan_id,v.device || '—'));
+    });
+    body.push(E('p',{'style':'color:'+COLOR.muted},['Read-only configuration discovery; installed does not mean running.']));
+    return [card('DNS / Adblock / DDNS / Multi-WAN / VLAN',body)];
+}
 function renderCapability(data) {
     var caps = data.capabilities || {}, hw = data.hardware || {};
     var body = [kv('OpenWrt', data.openwrt_version), kv('Hardware model', hw.model), kv('Board', hw.board)];
@@ -143,6 +153,7 @@ return view.extend({
         if (name === 'led_inventory') return renderLEDInventory(data);
         if (name === 'cellular') return renderCellular(data);
         if (name === 'sqm') return renderNetworkPolicies(data);
+        if (name === 'services') return renderNetworkServices(data);
         return renderCapability(data);
     },
     refresh: function(name, btn) {
