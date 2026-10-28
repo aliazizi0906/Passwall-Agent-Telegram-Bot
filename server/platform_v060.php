@@ -316,10 +316,10 @@ function v060_action_permission(string $action): string {
 function isMutationActionPHPV6(string $a): bool {
     $read=[
       'system.status','system.interfaces','system.clients','wifi.list','passwall2.status','passwall2.log',
-      'agent.capabilities','network.doctor','led.status',
+      'agent.capabilities','network.doctor','network.speed_probe','led.status',
       'passwall2.nodes.list','passwall2.node.test','passwall2.nodes.test_all','passwall2.shunt.list',
       'passwall2.shunt.options','system.time','system.log','system.klog','system.processes','system.services',
-      'system.packages','system.package_updates','network.wan','network.internet_test','network.routes','network.dns',
+      'system.packages','system.package_updates','network.wan','network.internet_test','network.speed_probe','network.routes','network.dns',
       'network.dhcp_leases','network.wireguard','wifi.radios','wifi.stations','firewall.zones','firewall.redirects',
       'diag.ping','diag.traceroute','passwall2.failover.list','passwall2.subscriptions.list',
       'passwall2.nodes.relay_ranking','passwall2.nodes.dead_candidates','agent.update.check','agent.diagnose'
@@ -545,7 +545,7 @@ function v060_add_alert(int $uid,string $deviceId,string $metric,string $op,floa
 function v060_dashboard_command_allowed(string $action): bool {
     return in_array($action,[
       'system.status','agent.diagnose','agent.capabilities','network.doctor','led.status','system.clients','wifi.list','wifi.radios','wifi.stations',
-      'network.wan','network.dns','network.routes','network.internet_test','system.interfaces',
+      'network.wan','network.dns','network.routes','network.internet_test','network.speed_probe','system.interfaces',
       'passwall2.status','passwall2.nodes.list','passwall2.nodes.relay_ranking',
       'passwall2.failover.list','passwall2.failover.run','passwall2.restart',
       'passwall2.subscriptions.list','passwall2.shunt.list','passwall2.log',
