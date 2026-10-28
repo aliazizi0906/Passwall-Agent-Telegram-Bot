@@ -103,7 +103,7 @@ input[name=username],input[name=password]{background:var(--soft);color:var(--ink
   <div id="notice" role="status" aria-live="polite"></div>
   <div class="headline"><div><h2 id="pageTitle"></h2><p id="pageDesc"></p></div><select id="devicePicker" class="select" aria-label="Router" hidden></select></div>
   <section id="page" aria-live="polite"><div class="empty">Connecting…</div></section>
-  <footer>PW Control Center · v1.3 release candidate · Legacy dashboard also available</footer>
+  <footer>PW Control Center · v1.4 development preview · Legacy dashboard also available</footer>
  </main>
 </div></div>
 <script>
