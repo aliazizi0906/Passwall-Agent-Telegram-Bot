@@ -1,14 +1,14 @@
 # Changelog
 
-All notable PW Agent changes are documented here. Release candidates are pre-releases and are not claims of feature-complete, production-certified stable support.
+All notable PW Agent changes are documented here. GitHub may classify an RC-tagged build as a regular Release for discoverability; this is not a claim of feature-complete, production-certified support.
 
-## [1.3.0-rc.2] — Public pre-release (22 October 2026)
+## [1.3.0-rc.2] — GitHub Latest Release (originally published 22 October 2026)
 
-**Status:** Published GitHub pre-release with signed assets. Not stable/GA `v1.3.0`.
+**Status:** Promoted to GitHub Latest / regular Release on 28 October 2026, using existing signed assets. Version remains `v1.3.0-rc.2` and is not stable/GA `v1.3.0`.
 
 ### Changed
 - Aligned Go Agent, PHP Setup and Backend version identifiers to `1.3.0-rc.2` so provisioning, health checks and generated package names agree.
-- Reworked the root README to distinguish the latest public pre-release from the latest stable release and link to the real cPanel ZIP.
+- Reworked the root README to highlight GitHub Latest and distinguish it from the previous production baseline, with a direct link to the real cPanel ZIP.
 - Updated bilingual documentation landing pages, install/update guides, migration guidance, release notes and feature-status pages. The v0.6 docs are explicitly marked legacy where appropriate.
 - Updated CI artifact names and versioned release documentation.
 - Published cPanel ZIP and six OpenWrt architecture bundles, with SHA256 files and Ed25519 signatures.

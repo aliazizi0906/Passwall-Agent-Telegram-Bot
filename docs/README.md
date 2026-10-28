@@ -1,6 +1,6 @@
 # PW Agent Documentation
 
-**Latest public pre-release:** [v1.3.0-rc.2](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.3.0-rc.2) · **Latest stable:** [v0.6.0](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0)
+**Latest GitHub Release:** [v1.3.0-rc.2](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/latest) · **Previous production baseline:** [v0.6.0](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0)
 
 Choose a language:
 - [English](en/README.md)
@@ -23,4 +23,4 @@ Choose a language:
 - [Development](en/DEVELOPMENT.md) / [توسعه](fa/DEVELOPMENT.md)
 - [Troubleshooting](en/TROUBLESHOOTING.md) / [رفع اشکال](fa/TROUBLESHOOTING.md)
 
-The v1.3.0-rc.2 package is a public pre-release for staging, not production-certified stable v1.3.0. References to v0.6 in historical guides describe the stable baseline and old migration path.
+The v1.3.0-rc.2 package is designated GitHub Latest (regular Release), but the RC tag and staging/production-readiness caveats remain; it is not a production-certified stable v1.3.0. References to v0.6 in historical guides describe the stable baseline and old migration path.

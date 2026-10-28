@@ -2,7 +2,7 @@
 
 [Home](../../README.md) · [فارسی](../fa/INSTALL_V1_3.md) · [Upgrade](UPGRADE_V1_3.md) · [Implementation matrix](CONTROL_CENTER_PROGRESS.md)
 
-> **Published pre-release, staging only.** Matching signed assets for `v1.3.0-rc.2` are available from [GitHub Releases](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.3.0-rc.2). This is not production certification; do not install onto a critical production router.
+> **GitHub Latest Release, RC-tagged; staging recommended.** Matching signed assets for `v1.3.0-rc.2` are available from [GitHub Latest](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/latest). The regular GitHub Release designation does not imply production certification; do not install onto a critical production router.
 
 ## 1. Prerequisites
 

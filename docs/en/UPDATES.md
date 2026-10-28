@@ -1,10 +1,10 @@
 # Updates and Releases
 
-> **Latest public pre-release: v1.3.0-rc.2.** This page documents the legacy v0.6 update model; for the new control center use [Install v1.3 RC](INSTALL_V1_3.md), [Upgrade v0.6 → v1.3 RC](UPGRADE_V1_3.md) and [Implementation status](CONTROL_CENTER_PROGRESS.md). RC is not production-certified.
+> **Latest GitHub Release: v1.3.0-rc.2 (RC-tagged, not production-certified).** This page documents the legacy v0.6 update model; for the new control center use [Install v1.3 RC](INSTALL_V1_3.md), [Upgrade v0.6 → v1.3 RC](UPGRADE_V1_3.md) and [Implementation status](CONTROL_CENTER_PROGRESS.md). RC is not production-certified.
 
 [Documentation Home](README.md) · [فارسی](../fa/UPDATES.md)
 
-This page documents the legacy v0.6 stable update workflow. The latest public pre-release is v1.3.0-rc.2; use [its install guide](INSTALL_V1_3.md) and [upgrade guide](UPGRADE_V1_3.md) for the new control center. SSH, Git and cPanel Terminal remain optional.
+This page documents the legacy v0.6 stable update workflow. The latest GitHub Release is v1.3.0-rc.2; use [its install guide](INSTALL_V1_3.md) and [upgrade guide](UPGRADE_V1_3.md) for the new control center. SSH, Git and cPanel Terminal remain optional.
 
 ## What is updated
 

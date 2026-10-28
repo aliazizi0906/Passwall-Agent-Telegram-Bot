@@ -1,6 +1,6 @@
 # PW Agent Documentation — English
 
-> **Latest public pre-release: v1.3.0-rc.2.** Use the [RC install guide](INSTALL_V1_3.md), [upgrade guide](UPGRADE_V1_3.md) and [implementation status](CONTROL_CENTER_PROGRESS.md). Historical sections below document v0.6 stable behavior; RC is not production-certified.
+> **Latest GitHub Release: v1.3.0-rc.2.** This release is marked Latest, while retaining the RC tag and its not-production-certified status. Use the [installation guide](INSTALL_V1_3.md), [upgrade guide](UPGRADE_V1_3.md) and [implementation status](CONTROL_CENTER_PROGRESS.md). Historical sections document the v0.6 baseline.
 
 [← Project README](../../README.md) · [فارسی](../fa/README.md)
 
@@ -8,7 +8,7 @@
 
 | Section | Description |
 |---|---|
-| [Install v1.3 RC](INSTALL_V1_3.md) | Current public pre-release installation |
+| [Install v1.3 RC](INSTALL_V1_3.md) | Current GitHub Latest release (RC-tagged) installation |
 | [Legacy install](INSTALL.md) | Stable v0.6.0 installation guide |
 | [Release notes](RELEASE_NOTES_V1_3_RC.md) | v1.3.0-rc.2 changes and limitations |
 | [Features](FEATURES.md) | Complete feature overview |
@@ -39,7 +39,7 @@ The design is suitable for routers behind CGNAT or without a public/static IP be
 
 Passwall2 must already be installed on the router.
 
-**Next:** [Install current public pre-release v1.3.0-rc.2](INSTALL_V1_3.md) · [Legacy v0.6.0 installer](INSTALL.md)
+**Next:** [Install current GitHub Latest v1.3.0-rc.2](INSTALL_V1_3.md) · [Legacy v0.6.0 installer](INSTALL.md)
 
 
 ## cPanel installation model
