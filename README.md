@@ -6,6 +6,12 @@
 
 > **Release status:** GitHub's **Latest** release points to `v1.3.0-rc.2` (classified as a regular GitHub Release). The tag intentionally retains `-rc.2`: the software has **not** been certified as feature-complete / production-ready `v1.3.0`. `v0.6.0` remains the previous production baseline. Historical v0.6 code and migration files are preserved where still required.
 
+## v1.4.0-alpha.1 development (not yet released)
+
+The next implementation branch adds **independent web username/password login** during cPanel setup, hardened session/CSRF protection, Owner-only credential recovery from Telegram, redesigned control-center surfaces, pinned Vazirmatn with a self-hosted font in packaged ZIPs, safer bootstrap download, and broader OpenWrt CPU builds. These changes are undergoing CI and are **not included** in the currently published `v1.3.0-rc.2` release. **Do not install the development version as production.**
+
+[Full 14-workstream implementation matrix / وضعیت اجرایی همه ۱۴ بخش](docs/fa/V1_4_EXECUTION.md).
+
 ## What is PW Agent?
 
 PW Agent is a self-hosted management stack for OpenWrt routers running Passwall2. The router initiates authenticated outbound HTTPS/HMAC requests to a PHP/MySQL backend, so no public IP or WAN management port is required. The backend can run on cPanel shared hosting without a Node.js runtime or hosting-side SSH.
