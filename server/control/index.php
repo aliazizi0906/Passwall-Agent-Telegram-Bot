@@ -265,6 +265,7 @@ function showDNS(){
  readPanel(say('DNS و امنیت','DNS & security'),say('مشاهده Resolver و Route و اجرای آزمایش اتصال بدون تغییر تنظیمات فعلی.','Read resolver configuration and routing; test connectivity without altering settings.'),[
  ['network.dns','مشاهده DNS روتر','Read DNS','network.read'],
  ['network.routes','جدول مسیریابی','Routing table','network.read'],
+ ['network.services','سرویس‌های DNS، Adblock، DDNS، MultiWAN و VLAN','DNS, Adblock, DDNS, MultiWAN and VLAN','network.read']
  ['network.internet_test','تست اینترنت','Internet probes','network.read'],
  ['network.doctor','عیب‌یابی مرحله‌ای','Network doctor','network.read']
  ],say('DNS رمزنگاری‌شده، تفکیک ترافیک ایران، نشت DNS/IPv6 و Kill Switch تا زمان تست بسته‌ها و مسیرها فعلاً فقط در برنامه توسعه هستند.','Encrypted/split DNS, IPv6 leak blocking and kill switch need validated packet-path tests.'));
