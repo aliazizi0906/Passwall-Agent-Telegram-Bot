@@ -50,6 +50,28 @@ try{
         v060_audit_event($device?:'fleet',$uid,'dashboard','web.auth.configure','done',['username'=>$name]);
         response_json(['ok'=>true,'configured'=>true]);
     }
+    if($action==='rollout_list'){
+        dash_need($uid,'agent.update');
+        response_json(['ok'=>true,'rollouts'=>pw_rollout_list($uid)]);
+    }
+    if($action==='rollout_detail'){
+        dash_need($uid,'agent.update');
+        response_json(['ok'=>true]+pw_rollout_detail($uid,(int)($in['id']??0)));
+    }
+    if($action==='rollout_create'){
+        dash_need($uid,'agent.update');
+        if(empty($in['confirmed']))throw new RuntimeException('Explicit rollout creation confirmation required');
+        $groupId=(int)($in['group_id']??0);
+        $commandAction=(string)($in['command_action']??'agent.update.check');
+        $waveSize=(int)($in['wave_size']??1);
+        response_json(['ok'=>true,'rollout'=>pw_rollout_create($uid,$groupId,$commandAction,$waveSize)]);
+    }
+    if($action==='rollout_control'){
+        dash_need($uid,'agent.update');
+        if(empty($in['confirmed']))throw new RuntimeException('Explicit rollout operation confirmation required');
+        $result=pw_rollout_control($uid,(int)($in['id']??0),(string)($in['operation']??''));
+        response_json(['ok'=>true,'rollout'=>$result]);
+    }
     if($action==='summary'){
         dash_need($uid,'device.read');
         $fleet=v060_fleet_summary($uid);
