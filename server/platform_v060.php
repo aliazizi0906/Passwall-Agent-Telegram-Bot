@@ -326,7 +326,7 @@ function v060_action_permission(string $action): string {
 }
 function isMutationActionPHPV6(string $a): bool {
     $read=[
-      'system.status','system.interfaces','system.clients','wifi.list','wifi.plan_ssid','passwall2.status','passwall2.log',
+      'system.status','system.interfaces','system.clients','clients.policy_plan','wifi.list','wifi.plan_ssid','passwall2.status','passwall2.log',
       'agent.capabilities','network.doctor','network.speed_probe','network.policy_status','network.services','cellular.status','system.leds','led.status',
       'passwall2.nodes.list','passwall2.node.test','passwall2.nodes.test_all','passwall2.shunt.list',
       'passwall2.shunt.options','system.time','system.log','system.klog','system.processes','system.services',
