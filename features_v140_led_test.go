@@ -1,4 +1,5 @@
 // Hardware-independent LED unit tests; no physical sysfs modifications.
+// Bounded temporary LED changes must always restore the original brightness.
 package main
 
 import (
