@@ -1,3 +1,4 @@
+// Hardware-independent LED unit tests; no physical sysfs modifications.
 package main
 
 import (
