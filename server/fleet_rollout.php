@@ -104,7 +104,7 @@ function pw_rollout_detail(int $uid,int $id): array {
 }
 function pw_rollout_control(int $uid,int $id,string $action): array {
     pw_rollout_actor($uid);
-    if($id<=0||!in_array($action,['start','approve_next','pause','cancel'],true))throw new RuntimeException('Invalid rollout operation');
+    if($id<=0||!in_array($action,['start','approve_next','pause','resume','cancel'],true))throw new RuntimeException('Invalid rollout operation');
     // Only owner-created rollouts. Lock row to prevent concurrent owner clicks.
     $pdo=db();$pdo->beginTransaction();
     try {
@@ -114,6 +114,12 @@ function pw_rollout_control(int $uid,int $id,string $action): array {
         if($action==='start'&&$status==='draft')$next='running';
         elseif($action==='approve_next'&&$status==='awaiting_approval')$next='running';
         elseif($action==='pause'&&in_array($status,['running','awaiting_approval'],true))$next='paused';
+        elseif($action==='resume'&&$status==='paused'){
+            $ck=$pdo->prepare("SELECT COUNT(*) FROM pw_fleet_rollout_targets WHERE rollout_id=? AND status='failed'");
+            $ck->execute([$id]);
+            if((int)$ck->fetchColumn()>0)throw new RuntimeException('Failed router commands require a new rollout, not resume');
+            $next='running';
+        }
         elseif($action==='cancel'&&in_array($status,['draft','running','awaiting_approval','paused'],true))$next='cancelled';
         else throw new RuntimeException('Invalid status transition: '.$status.' -> '.$action);
         $st=$pdo->prepare('UPDATE pw_fleet_rollouts SET status=?, approved_wave=approved_wave+?,last_error=NULL,started_at=COALESCE(started_at,NOW()) WHERE id=?');
