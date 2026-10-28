@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__.'/setup_core.php'; // Shared versioned CPU-family resolver for Setup and Dashboard.
+
 // Pinned to UPDATE_PUBLIC_KEY.b64 in the source repository and to OpenWrt's bootstrap.
 // A SHA256 checksum from the same release is not an authenticity proof.
 const PW_RELEASE_ED25519_PUBLIC_KEY_B64 = 'fDiTaZG26qn3BCI3c8cFiO0KdqMW561w6JSaMwXCecw=';
