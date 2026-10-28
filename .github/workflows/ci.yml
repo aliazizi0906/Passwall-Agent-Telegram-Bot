@@ -92,6 +92,9 @@ jobs:
           PW_TEST_MYSQL_PASSWORD: ci-test-only
         run: php server/tests/schema_migrations_test.php
 
+      - name: Self-update architecture consistency (13 CPU variants)
+        run: php server/tests/update_arch_test.php
+
       - name: Public device fields and API secret redaction
         run: php server/tests/public_device_test.php
 
