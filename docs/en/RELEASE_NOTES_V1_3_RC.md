@@ -1,6 +1,6 @@
 # PW Agent v1.3.0-rc.2 — Release Candidate
 
-> **PRE-RELEASE / نسخه آزمایشی** — Do not deploy to a critical production router. This is **not** a feature-complete WRTPro replacement or a stable v1.3.0 release.
+> **GITHUB LATEST RELEASE (RC-tagged build)** — The existing signed `v1.3.0-rc.2` assets are marked as a regular GitHub Release, not Pre-release. Do not deploy to a critical production router: this is **not** a feature-complete WRTPro replacement or a certified stable `v1.3.0` release.
 
 [فارسی: release notes](../fa/RELEASE_NOTES_V1_3_RC.md) · [Install](INSTALL_V1_3.md) · [Upgrade](UPGRADE_V1_3.md)
 
