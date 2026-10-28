@@ -24,7 +24,7 @@ echo "$TOKEN" | grep -Eq '^[A-Za-z0-9_-]{32,128}$' || {
 case "$(uname -m)" in
     armv5*|armv5tel) ARCH=armv5 ;;
     armv6*|armv6l) ARCH=armv6 ;;
-    armv7l|armv7*) ARCH=armv7 ;;
+    armv8l|armv7l|armv7*) ARCH=armv7 ;;
     aarch64|arm64) ARCH=arm64 ;;
     x86_64|amd64) ARCH=amd64 ;;
     i386|i486|i586|i686) ARCH=386 ;;
