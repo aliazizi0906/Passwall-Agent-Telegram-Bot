@@ -7,6 +7,17 @@ header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
 header('Content-Security-Policy: default-src \'self\'; style-src \'self\' \'unsafe-inline\' https://cdn.jsdelivr.net; font-src \'self\' https://cdn.jsdelivr.net; form-action \'self\'; base-uri \'none\'; frame-ancestors \'none\'');
+$secure=(!empty($_SERVER['HTTPS'])&&strtolower((string)$_SERVER['HTTPS'])!=='off')
+    ||strtolower((string)($_SERVER['REQUEST_SCHEME']??''))==='https'
+    ||strtolower(trim(explode(',',(string)($_SERVER['HTTP_X_FORWARDED_PROTO']??''))[0]))==='https';
+if(!$secure){
+    if(($_SERVER['REQUEST_METHOD']??'GET')!=='GET'){
+        http_response_code(403);exit('HTTPS is required for password submission.');
+    }
+    header('Location: '.rtrim((string)(cfg()['base_url']??''),'/').'/auth/login.php',true,302);
+    exit;
+}
+header('Strict-Transport-Security: max-age=31536000');
 pw_web_auth_begin();
 $error='';
 if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'){
