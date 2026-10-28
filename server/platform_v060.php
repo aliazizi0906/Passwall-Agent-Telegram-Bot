@@ -316,10 +316,10 @@ function v060_action_permission(string $action): string {
 function isMutationActionPHPV6(string $a): bool {
     $read=[
       'system.status','system.interfaces','system.clients','wifi.list','wifi.plan_ssid','passwall2.status','passwall2.log',
-      'agent.capabilities','network.doctor','network.speed_probe','network.policy_status','cellular.status','system.leds','led.status',
+      'agent.capabilities','network.doctor','network.speed_probe','network.policy_status','network.services','cellular.status','system.leds','led.status',
       'passwall2.nodes.list','passwall2.node.test','passwall2.nodes.test_all','passwall2.shunt.list',
       'passwall2.shunt.options','system.time','system.log','system.klog','system.processes','system.services',
-      'system.packages','system.package_updates','cellular.status','system.leds','network.wan','network.internet_test','network.speed_probe','network.policy_status','network.routes','network.dns',
+      'system.packages','system.package_updates','cellular.status','system.leds','network.wan','network.internet_test','network.speed_probe','network.policy_status','network.services','network.routes','network.dns',
       'network.dhcp_leases','network.wireguard','wifi.radios','wifi.stations','firewall.zones','firewall.redirects',
       'diag.ping','diag.traceroute','passwall2.failover.list','passwall2.subscriptions.list',
       'passwall2.nodes.relay_ranking','passwall2.nodes.dead_candidates','agent.update.check','agent.diagnose'
