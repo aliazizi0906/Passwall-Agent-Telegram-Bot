@@ -177,9 +177,15 @@ jobs:
           fi
           release_args=()
           notes_args=(--generate-notes)
-          if [[ "$RELEASE_TAG" == *-rc.* || "$RELEASE_TAG" == *-beta.* ]]; then
+          if [[ "$RELEASE_TAG" == *-rc.* || "$RELEASE_TAG" == *-beta.* || "$RELEASE_TAG" == *-alpha.* ]]; then
             release_args+=(--prerelease)
-            notes_args=(--notes-file docs/en/RELEASE_NOTES_V1_3_RC.md)
+            if [[ "$RELEASE_TAG" == v1.3.0-rc.* ]]; then
+              notes_args=(--notes-file docs/en/RELEASE_NOTES_V1_3_RC.md)
+            fi
+          fi
+          if [[ "$RELEASE_TAG" == v1.4.0 && ! -f docs/GA_V1_4_APPROVED.md ]]; then
+            echo "Stable v1.4 requires reviewed hardware/security acceptance document" >&2
+            exit 1
           fi
           gh release create "$RELEASE_TAG" dist/* \
             --target "$GITHUB_SHA" \
