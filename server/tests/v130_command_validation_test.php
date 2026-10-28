@@ -27,4 +27,9 @@ expectOkay('https subscription','passwall2.subscription.add',['url'=>'https://ex
 expectFailure('reject http','passwall2.subscription.add',['url'=>'http://example.com/sub','remark'=>'test'],true);
 expectFailure('reject credentials in URL','passwall2.subscription.add',['url'=>'https://user:password@example.com/sub','remark'=>'test'],true);
 expectFailure('missing remark','passwall2.subscription.add',['url'=>'https://example.com/sub','remark'=>''],true);
+expectOkay('SSID read-only preview','wifi.plan_ssid',['section'=>'default_radio0','ssid'=>'شبکه'],false,['section'=>'default_radio0','ssid'=>'شبکه']);
+expectFailure('SSID too long','wifi.plan_ssid',['section'=>'default_radio0','ssid'=>str_repeat('A',33)],false);
+expectFailure('SSID newline','wifi.plan_ssid',['section'=>'default_radio0','ssid'=>"evil\nname"],false);
+expectFailure('SSID injection section','wifi.plan_ssid',['section'=>'radio0;reboot','ssid'=>'Valid'],false);
+expectFailure('SSID empty','wifi.plan_ssid',['section'=>'default_radio0','ssid'=>''],false);
 echo "All v1.3 parameter validation checks passed.".PHP_EOL;
