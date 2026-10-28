@@ -1,3 +1,4 @@
+// Resolver tests use synthetic data and never query external DNS.
 package main
 
 import "testing"
