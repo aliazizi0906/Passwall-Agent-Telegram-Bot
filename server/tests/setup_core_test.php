@@ -31,7 +31,7 @@ foreach($cases as [$server,$expected]){
 expect_true(pw_setup_validate_base_url('https://example.com/a/b')==='https://example.com/a/b','valid HTTPS subpath rejected');
 try{pw_setup_validate_base_url('http://example.com/a');expect_true(false,'HTTP base URL was accepted');}catch(RuntimeException $e){}
 
-foreach(['armv7','armv7l','aarch64','x86_64','i686','mips','mipsel'] as $a){
+foreach(['armv5','armv5tel','armv6','armv7','armv7l','armv8l','aarch64','x86_64','i686','mips','mipsel','mips64','mips64le','riscv64','loong64','ppc64le'] as $a){
     expect_true(pw_setup_normalize_arch($a)!=='','architecture normalization failed for '.$a);
 }
 
