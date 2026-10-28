@@ -169,7 +169,7 @@ function pw_setup_write_config(string $path,array $config): void {
 
 function pw_setup_router_command(string $base,string $token): string {
     // Immutable release tag + explicit downloaded-file check; no sh -c "$(wget)" ambiguity.
-    $raw='https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/v'.pw_setup_version().'/openwrt/install-remote.sh';
+    $raw=rtrim($base,'/').'/install/remote.sh';
     $quote=static fn(string $v): string => "'".str_replace("'","'\\''",$v)."'";
     $script='set -eu; tmp=$(mktemp /tmp/pw-installer.XXXXXX); '
         .'trap '. $quote('rm -f "$tmp"').' EXIT INT TERM; '
