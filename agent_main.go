@@ -123,7 +123,11 @@ func main() {
 		client: &http.Client{Timeout: time.Duration(cfg.RequestTimeoutSec) * time.Second},
 	}
 	fmt.Printf("pw-agent %s started for %s\n", agentVersion, cfg.DeviceID)
-	go a.failoverLoopV4()
+	// A generic OpenWrt device can run the core Agent without Passwall2.
+	// Do not start a Passwall2-specific background worker on unsupported routers.
+	if _, err := os.Stat("/etc/config/passwall2"); err == nil {
+		go a.failoverLoopV4()
+	}
 	go healthTelemetryLoopV6()
 	a.loop()
 }
