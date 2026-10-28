@@ -266,6 +266,8 @@ func (a *Agent) execute(c *Command) (interface{}, error) {
 		return capabilityReportV13(), nil
 	case "led.status":
 		return ledStatusV13()
+	case "led.identify":
+		return identifyLEDV14(params)
 	case "network.doctor":
 		return networkDoctorV13()
 	case "network.speed_probe":
