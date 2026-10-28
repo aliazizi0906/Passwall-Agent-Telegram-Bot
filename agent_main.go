@@ -274,6 +274,8 @@ func (a *Agent) execute(c *Command) (interface{}, error) {
 		return cellularStatusV14()
 	case "network.policy_status":
 		return networkPoliciesV14()
+	case "network.services":
+		return networkServiceInventoryV14()
 	case "system.leds":
 		return ledInventoryV14()
 	case "system.interfaces":
