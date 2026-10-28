@@ -31,6 +31,10 @@ These **documentation-only static previews** follow the actual PW Control Center
 |:---:|:---:|
 | ![Passwall2 UI — example data](docs/assets/previews/control-center-passwall2.svg) | ![Clients UI — example data](docs/assets/previews/control-center-clients.svg) |
 
+**Local LuCI preview / پیش‌نمایش پنل محلی:**
+
+![PW Control Center running as a local LuCI read-only panel — illustrative sample data](docs/assets/previews/luci-local-panel.svg)
+
 ### Known release limits
 
 This is a release candidate. Per-client traffic shaping/blocking, robust WAN/Wi-Fi/firewall safe-apply rollback, leak-proof IPv6/DNS kill switch, cellular tower/band lock and SMS/USSD, RGB LED writes, production SQM/UPnP controls, native VPN adapters and standalone browser login are **not complete or hardware-certified**. Do not infer these capabilities from a roadmap or UI mockup. See the [implementation matrix](docs/en/CONTROL_CENTER_PROGRESS.md).
