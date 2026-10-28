@@ -1,6 +1,6 @@
 # PW Control Center — v1.3 development status
 
-> **v1.3.0-rc.2 is published as a public pre-release, not final/stable v1.3.0.** The code is available in the repository and the release assets are downloadable; existing deployed v0.6 installations remain unchanged until explicitly upgraded.
+> **v1.3.0-rc.2 is GitHub's Latest regular Release, but remains an RC-tagged, non-GA build.** Signed assets are downloadable; deployment/hardware certification is not implied and existing v0.6 installations remain unchanged until explicitly upgraded.
 
 ## Implemented for staging verification
 - Independent `server/control/` Mini App preview with FA/EN, RTL/LTR and light/dark modes.
