@@ -4,6 +4,9 @@
 
 [← Project README](../../README.md) · [فارسی](../fa/README.md)
 
+## Unreleased v1.4 development
+- [All 14 workstreams and test gates](V1_4_EXECUTION.md)
+
 ## Menu
 
 | Section | Description |
