@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__).'/lib.php';
+require_once dirname(__DIR__).'/web_auth.php';
+$browserUid=pw_web_auth_user();
+$browserCsrf=$browserUid?pw_web_auth_csrf():'';
 header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
@@ -14,13 +17,14 @@ if(!str_starts_with(rtrim((string)(cfg()['base_url']??''),'/'),'https://')){
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>PW Control Center — Preview</title>
+<title>PW Control Center — OpenWrt Management</title>
+<link rel="stylesheet" href="../assets/vazirmatn.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{--bg:#f7f8fc;--panel:#fff;--soft:#f0f4fa;--border:#dde5ef;--ink:#10233c;--muted:#72829a;--nav:#101f3b;--accent:#2666da;--accent2:#39a6a0;--good:#00856d;--bad:#c64154;--warn:#ac742a;--shadow:0 14px 35px rgba(23,46,85,.05);color-scheme:light}
 :root[data-theme=dark]{--bg:#0d1523;--panel:#142237;--soft:#1b2e48;--border:#2a3b55;--ink:#e8effb;--muted:#9cafc8;--nav:#08101f;--accent:#75a6ff;--accent2:#6fddcf;--good:#70d7b8;--bad:#ff9cab;--warn:#ffce86;--shadow:none;color-scheme:dark}
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;font:14px/1.65 Tahoma,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+html,body{margin:0;min-height:100%;font:14px/1.75 'Vazirmatn',Tahoma,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--ink)}
 button,select{font:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.5}
 .shell{display:flex;min-height:100vh}.sidebar{width:250px;flex:none;background:var(--nav);color:#f2f6ff;padding:25px 15px;position:sticky;top:0;height:100vh;overflow:auto}
 .brand{display:flex;gap:13px;align-items:center;padding:7px 12px 28px;border-bottom:1px solid #ffffff16;margin-bottom:19px}.brand-logo{width:45px;height:45px;display:grid;place-items:center;background:linear-gradient(140deg,#407eff,#23b6c0);border-radius:15px;font-weight:900;font-size:18px}.brand b{display:block;font-size:17px;letter-spacing:.2px}.brand small{color:#adbfda;font-size:11px}
@@ -58,6 +62,23 @@ a{color:var(--accent)}
 @media(max-width:1100px){.sidebar{width:202px}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}}
 @media(max-width:740px){.shell{display:block}.sidebar{position:sticky;top:0;width:100%;height:auto;z-index:4;padding:9px 12px;overflow-x:auto;display:flex;align-items:center;gap:10px}.brand{padding:0;margin:0;border:0;white-space:nowrap}.brand-logo{width:32px;height:32px;border-radius:10px;font-size:12px}.brand small,.nav-title,.nav-foot{display:none}.nav{display:flex;flex:none;gap:3px}.nav-btn{white-space:nowrap;width:auto;margin:0;font-size:12px;padding:7px 9px}.nav-symbol{display:none}.topbar{padding:12px 16px}.topbar h1{font-size:15px}.content{padding:20px 15px 35px}.headline h2{font-size:23px}.hero h3{font-size:18px}.hero-status{width:55px;height:55px;border-radius:15px;font-size:22px}.grid{grid-template-columns:1fr}.summary{gap:10px}.card{padding:16px}}
 @media(prefers-reduced-motion:no-preference){button,.nav-btn{transition:background .15s,border-color .15s}}
+
+/* Original PW Agent design system: network operations control deck. */
+:root{--bg:#f2f5fb;--nav:#0b1a32;--accent:#2b66df;--accent2:#14a6a1;--shadow:0 12px 38px rgba(16,35,60,.065)}
+:root[data-theme=dark]{--bg:#071326;--nav:#09152a;--panel:#10233a;--soft:#182e47;--accent:#79a7ff;--shadow:0 12px 32px #0003}
+body{letter-spacing:0;-webkit-font-smoothing:antialiased}
+.sidebar{background:radial-gradient(ellipse at 0% 0%,#203d6a 0%,transparent 44%),linear-gradient(170deg,var(--nav),#081429);box-shadow:12px 0 40px #0a204014}
+.brand-logo{box-shadow:0 9px 22px #204dbc44;border:1px solid #ffffff5c}
+.nav-btn{font-weight:600;border:1px solid transparent}.nav-btn.selected{background:linear-gradient(115deg,#2f6be1,#2256aa);border-color:#ffffff20;box-shadow:0 5px 15px #0b224522;color:#fff}
+.card{border:1px solid var(--border);box-shadow:var(--shadow);background:var(--panel);border-radius:17px}
+.hero{border:1px solid #cbd8ec;background:linear-gradient(115deg,var(--panel),var(--soft));box-shadow:var(--shadow)}
+.topbar{backdrop-filter:blur(16px);background:color-mix(in srgb,var(--panel),transparent 6%)}
+.summary .stat{position:relative;overflow:hidden}.summary .stat:before{content:"";position:absolute;inset-block:0;inset-inline-start:0;width:3px;background:var(--accent2)}
+.action:not(.danger),.chip-btn{transition:box-shadow .15s,transform .15s,background .15s}
+.action:hover:not(:disabled),.chip-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 17px #1b56b31c}
+.content{max-width:1550px}input,textarea,select{font-family:inherit}
+input[name=username],input[name=password]{background:var(--soft);color:var(--ink);border:1px solid var(--border);border-radius:11px;padding:12px;width:100%;max-width:500px}
+@media(prefers-reduced-motion:reduce){.action,.chip-btn{transition:none}}
 </style>
 </head>
 <body>
@@ -72,6 +93,7 @@ a{color:var(--accent)}
  <header class="topbar">
   <div><h1 id="topTitle">PW Control Center</h1><small id="identity">Telegram authentication required</small></div>
   <div class="topbar-actions">
+   <?php if($browserUid): ?><form method="post" action="../auth/login.php" style="margin:0"><input type="hidden" name="csrf" value="<?=htmlspecialchars($browserCsrf,ENT_QUOTES,'UTF-8')?>"><button class="chip-btn" name="logout" value="1" type="submit" title="خروج از پنل">خروج</button></form><?php else: ?><a class="chip-btn" href="../auth/login.php" title="ورود مستقل پنل وب">ورود وب</a><?php endif; ?>
    <button type="button" class="chip-btn" id="refreshBtn" aria-label="Refresh">↻</button>
    <button type="button" class="chip-btn" id="langBtn">EN</button>
    <button type="button" class="chip-btn" id="themeBtn" aria-label="Toggle color theme">◐</button>
@@ -90,6 +112,9 @@ a{color:var(--accent)}
 var tg=window.Telegram && window.Telegram.WebApp;
 if(tg){tg.ready();tg.expand();}
 var init=tg && tg.initData ? tg.initData : '';
+var webAuth=<?= $browserUid?'true':'false' ?>;
+var webCsrf=<?= json_encode($browserCsrf,JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_AMP|JSON_HEX_QUOT) ?>;
+if(!init&&!webAuth){window.location.replace('../auth/login.php');return;}
 var state={fleet:null,active:'',role:'viewer',permissions:[],detail:null,page:'home',lang:'fa',theme:'light',busy:false};
 try{state.lang=localStorage.getItem('pwcontrol-lang')==='en'?'en':'fa';state.theme=localStorage.getItem('pwcontrol-theme')==='dark'?'dark':'light';}catch(e){}
 var menu=[
@@ -119,7 +144,7 @@ function applyTheme(){document.documentElement.dataset.theme=state.theme;documen
 function nav(){
  $('navigation').innerHTML=menu.map(function(m){return '<button type="button" class="nav-btn '+(m[0]===state.page?'selected':'')+'" data-nav="'+esc(m[0])+'"><span class="nav-symbol">'+m[1]+'</span>'+esc(say(m[2],m[3]))+'</button>';}).join('');
  var p=current();$('pageTitle').textContent=say(p[2],p[3]);$('pageDesc').textContent=say(p[4],p[5]);$('topTitle').textContent=say('مرکز کنترل شبکه','Network Control Center');
- $('identity').textContent=(state.fleet?say('نقش کاربری: ','Role: ')+state.role:say('ورود از تلگرام الزامی است','Open through Telegram'));
+ $('identity').textContent=(state.fleet?say('نقش کاربری: ','Role: ')+state.role:say('ورود به پنل الزامی است','Authentication required'))+(webAuth?' · Web':'');
  var select=$('devicePicker');var ds=state.fleet && state.fleet.devices || [];
  select.hidden=!ds.length;
  select.innerHTML=ds.map(function(d){return '<option value="'+esc(d.device_id)+'" '+(d.device_id===state.active?'selected':'')+'>'+esc(d.display_name||d.device_id)+'</option>';}).join('');
@@ -298,6 +323,7 @@ function system(){
  action('system.backup.create',say('ارسال بکاپ در تلگرام','Send backup to Telegram'),'backup.create',true)+
  action('agent.update.check',say('بررسی آپدیت','Check updates'),'system.read',false)+
  action('agent.update.apply',say('نصب آپدیت Agent','Update agent'),'agent.update',true)+'</div></section>'+resultBox()+
+ (state.role==='owner'&&init?'<section class="card"><div class="section-title">'+say('تنظیم ورود مستقل وب','Configure browser login')+'</div><p class="muted">'+say('فقط Owner از داخل Telegram Mini App می‌تواند نام کاربری و رمز پنل را ایجاد یا بازنشانی کند.','Only a Telegram Owner can create or reset the web login credentials.')+'</p><form data-web-admin class="stack"><input required name="username" placeholder="admin" autocomplete="username" pattern="[a-z][a-z0-9._-]{2,31}" minlength="3" maxlength="32"><input required type="password" name="password" autocomplete="new-password" minlength="12" maxlength="256" placeholder="Password (12+ characters)"><button type="submit" class="action primary">'+say('ثبت نام کاربری و رمز','Save login credentials')+'</button></form></section>':'')+
  '<section class="card"><div class="section-title">'+say('بخش‌های آماده توسعه','Planned integration')+'</div><p class="muted">'+say('مدیریت LED، سرویس‌ها، آپدیت PHP Backend و کنسول پیشرفته بعد از توسعه Adapter و مسیر بازیابی اضافه می‌شوند.','LED control, service operations, staged backend updates and advanced console will require adapters and recovery paths.')+'</p></section></div>';
 }
 async function automation(){
@@ -314,7 +340,7 @@ async function automation(){
 }
 function render(){
  nav();
- if(!state.fleet){$('page').innerHTML='<div class="empty">'+say('برای مشاهده داده‌های روتر، پنل را از دکمه Mini App در تلگرام باز کن. ورود مستقیم مرورگر در این پیش‌نمایش پشتیبانی نمی‌شود.','Open this preview from the Telegram Mini App button. Direct browser authentication is not available.')+'</div>';return;}
+ if(!state.fleet){$('page').innerHTML='<div class="empty">'+say('برای ورود از حساب وب یا مینی‌اپ تلگرام استفاده کن.','Sign in with your web account or Telegram Mini App.')+'</div>';return;}
  if(!state.active){$('page').innerHTML='<div class="empty">'+say('هیچ روتر فعالی وجود ندارد.','No active router.')+'</div>';return;}
  if(state.page==='home')home();else if(state.page==='internet')internet();else if(state.page==='proxy')proxy();else if(state.page==='routers')routers();else if(state.page==='clients')showClients();else if(state.page==='wifi')showWifi();else if(state.page==='dns')showDNS();else if(state.page==='gaming')showGaming();else if(state.page==='led')showLED();else if(state.page==='system')system();else if(state.page==='automation'){automation();}else{
  var plans={
@@ -329,14 +355,14 @@ function render(){
  }
 }
 async function api(action,data){
- if(!init)throw new Error(say('احراز هویت Telegram Mini App وجود ندارد.','Telegram Mini App authorization is missing.'));
- var r=await fetch('../dashboard/api.php',{method:'POST',cache:'no-store',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({init_data:init,action:action},data||{}))});
+ if(!init&&!webAuth)throw new Error(say('ورود امن لازم است','Authentication required'));
+ var r=await fetch('../dashboard/api.php',{method:'POST',cache:'no-store',credentials:'same-origin',headers:{'Content-Type':'application/json','X-PW-CSRF':webCsrf},body:JSON.stringify(Object.assign({init_data:init,action:action},data||{}))});
  var payload=await r.json().catch(function(){return {ok:false,error:'Invalid API response'};});
  if(!r.ok||!payload.ok)throw new Error(payload.error||'API '+r.status);
  return payload;
 }
 async function refresh(){
- if(!init){state.fleet=null;render();return;}
+ if(!init&&!webAuth){window.location.replace('../auth/login.php');return;}
  $('notice').textContent=say('در حال همگام‌سازی اطلاعات روتر…','Syncing router data…');
  try{
   var r=await api('summary');state.fleet=r.fleet;state.active=r.active_device_id||'';state.role=r.role||'viewer';state.permissions=r.permissions||[];
@@ -365,6 +391,15 @@ async function command(id,confirmNeeded,params){
  }catch(e){if(out)out.textContent=e.message;else $('notice').textContent=e.message;}
  finally{state.busy=false;buttons.forEach(function(b){b.disabled=false;});}
 }
+document.addEventListener('submit',function(ev){
+ var form=ev.target.closest('form[data-web-admin]');if(!form)return;
+ ev.preventDefault();if(!init||state.role!=='owner')return;
+ var fd=new FormData(form),username=String(fd.get('username')||''),password=String(fd.get('password')||'');
+ api('web_credentials_set',{username:username,password:password}).then(function(){
+   $('notice').textContent=say('ورود وب فعال شد.','Browser login configured.');
+   form.reset();
+ }).catch(function(e){$('notice').textContent=e.message;});
+});
 document.addEventListener('submit',function(ev){
  var f=ev.target.closest('form[data-passwall-form]');if(!f)return;
  ev.preventDefault();
