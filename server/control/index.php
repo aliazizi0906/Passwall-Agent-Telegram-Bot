@@ -235,8 +235,39 @@ function routers(){
  var devices=state.fleet&&state.fleet.devices||[];
  $('page').innerHTML='<section class="card"><div class="section-title">'+say('روترهای ثبت‌شده','Registered routers')+' <span class="pill">'+devices.length+'</span></div>'+
  (devices.map(function(d){return '<div class="device-row"><div><strong>'+esc(d.display_name||d.device_id)+' '+(d.device_id===state.active?'●':'')+'</strong><small>'+esc(d.device_id)+' · '+esc(d.hostname||'—')+' · Agent '+esc(d.agent_version||'—')+'</small></div><button type="button" class="action" data-router="'+esc(d.device_id)+'" '+(d.device_id===state.active?'disabled':'')+'>'+say('انتخاب','Select')+'</button></div>';}).join('')||'<div class="empty">'+say('روتری ثبت نشده است.','No registered routers.')+'</div>')+
- '</section><p class="muted" style="margin-top:14px">'+say('این بخش مربوط به Fleet روترها است؛ دستگاه‌های متصل به وای‌فای/LAN در بخش «دستگاه‌ها» قرار می‌گیرند.','This section manages routers; Wi-Fi/LAN clients have a separate page.')+'</p>';
+ '</section><p class="muted" style="margin-top:14px">'+say('این بخش مربوط به Fleet روترها است؛ دستگاه‌های متصل به وای‌فای/LAN در بخش «دستگاه‌ها» قرار می‌گیرند.','This section manages routers; Wi-Fi/LAN clients have a separate page.')+'</p>'+
+ (state.role==='owner'?'<section class="card" style="margin-top:18px" id="rolloutBoard"><div class="section-title">'+say('انتشار مرحله‌ای با تأیید Owner','Owner-approved canary rollout')+'</div><p class="muted">'+say('هر موج پس از اتمام و تأیید سلامت دستگاه‌ها متوقف می‌شود و برای موج بعدی به تأیید Owner نیاز دارد.','Each wave halts for fresh health verification and explicit Owner approval before the next wave.')+'</p><div class="empty">'+say('در حال دریافت برنامه‌ها…','Loading rollouts…')+'</div></section>':'');
+ if(state.role==='owner')loadRollouts();
 }
+async function loadRollouts(){
+ if(state.page!=='routers'||state.role!=='owner')return;
+ var target=$('rolloutBoard');if(!target)return;
+ try {
+  var [g,r]=await Promise.all([api('groups'),api('rollout_list')]);
+  if(state.page!=='routers'||!target.isConnected)return;
+  var groups=Array.isArray(g.groups)?g.groups:[];
+  var rollouts=Array.isArray(r.rollouts)?r.rollouts:[];
+  var options=groups.map(function(x){return '<option value="'+Number(x.id)+'">'+esc(x.name||('Group '+x.id))+'</option>';}).join('');
+  var create=groups.length?'<form data-rollout-create class="stack"><label>'+say('گروه روترها','Router group')+' <select name="group_id" required class="select">'+options+'</select></label>'+
+   '<label>'+say('فرمان مرحله‌ای','Staged action')+' <select name="command_action" class="select"><option value="agent.update.check">'+say('بررسی آپدیت','Check updates')+'</option><option value="agent.update.apply">'+say('نصب آپدیت امضاشده','Apply signed update')+'</option></select></label>'+
+   '<label>'+say('تعداد روتر هر موج بعد از Canary','Subsequent wave size')+' <input name="wave_size" type="number" min="1" max="5" value="2" required style="width:85px"></label>'+
+   '<button class="action primary" type="submit">'+say('ساخت برنامه (بدون اجرا)','Create rollout draft')+'</button></form>':'<p class="warn-note">'+say('ابتدا یک گروه روتر در Dashboard ایجاد کن.','Create a router group in the Fleet Dashboard first.')+'</p>';
+  var rows=rollouts.map(function(x){
+    var status=String(x.status||''),id=Number(x.id);
+    var ops=[];
+    if(status==='draft')ops.push(['start',say('شروع Canary','Start canary')]);
+    if(status==='awaiting_approval')ops.push(['approve_next',say('تأیید موج بعد','Approve next wave')]);
+    if(status==='running'||status==='awaiting_approval')ops.push(['pause',say('توقف','Pause')]);
+    if(['draft','running','awaiting_approval','paused'].includes(status))ops.push(['cancel',say('لغو برنامه','Cancel rollout')]);
+    return '<div class="device-row"><div><strong>#'+id+' '+esc(x.command_action||'')+'</strong><small>'+say('وضعیت: ','Status: ')+esc(status)+' · '+esc(x.completed_routers||0)+' / '+esc(x.total_routers||0)+' · '+esc(x.last_error||'')+'</small></div><div class="actions">'+
+       ops.map(function(op){return '<button type="button" class="action" data-rollout-control="'+op[0]+'" data-rollout-id="'+id+'">'+op[1]+'</button>';}).join('')+'</div></div>';
+  }).join('');
+  target.innerHTML='<div class="section-title">'+say('انتشار مرحله‌ای و کنترل موج‌ها','Staged router rollouts')+'</div>'+
+   '<p class="warn-note">'+say('نسخه توسعه: ابتدا روی روتر آزمایشی. توقف برنامه، فرمانی را که قبلاً در صف قرار گرفته لغو نمی‌کند.','Development: use test routers only. Cancelling a rollout cannot undo already queued commands.')+'</p>'+create+
+   '<div class="section-title" style="margin-top:23px">'+say('برنامه‌های قبلی','Recent rollouts')+'</div>'+(rows||'<p class="muted">—</p>');
+ }catch(e){if(target.isConnected)target.innerHTML='<p class="warn-note">'+esc(e.message)+'</p>';}
+}
+
 
 function readPanel(title,desc,items,planned){
  $('page').innerHTML='<div class="stack"><section class="card"><div class="section-title">'+esc(title)+'</div><p class="muted" style="margin-bottom:14px">'+esc(desc)+'</p><div class="actions">'+
@@ -421,6 +452,26 @@ async function command(id,confirmNeeded,params){
  }catch(e){if(out)out.textContent=e.message;else $('notice').textContent=e.message;}
  finally{state.busy=false;buttons.forEach(function(b){b.disabled=false;});}
 }
+document.addEventListener('submit',function(ev){
+ var form=ev.target.closest('form[data-rollout-create]');if(!form)return;
+ ev.preventDefault();if(state.role!=='owner')return;
+ var fd=new FormData(form),group=Number(fd.get('group_id')),wave=Number(fd.get('wave_size')),commandAction=String(fd.get('command_action')||'');
+ if(!Number.isInteger(group)||group<=0||!Number.isInteger(wave)||wave<1||wave>5)return;
+ if(!['agent.update.check','agent.update.apply'].includes(commandAction))return;
+ if(!window.confirm(say('برنامه ساخته شود؟ اجرای آن بعداً نیازمند تأیید مستقل است.','Create this rollout? Start requires separate approval.')))return;
+ api('rollout_create',{group_id:group,wave_size:wave,command_action:commandAction,confirmed:true})
+ .then(loadRollouts).catch(function(e){$('notice').textContent=e.message;});
+});
+document.addEventListener('click',function(ev){
+ var button=ev.target.closest('[data-rollout-control]');if(!button)return;
+ if(state.role!=='owner')return;
+ var id=Number(button.dataset.rolloutId),operation=String(button.dataset.rolloutControl||'');
+ if(!Number.isInteger(id)||id<=0||!['start','approve_next','pause','cancel'].includes(operation))return;
+ if(!window.confirm(say('این عملیات ممکن است روی روترهای گروه اثر بگذارد. ادامه می‌دهی؟','This may affect routers in your group. Continue?')))return;
+ button.disabled=true;
+ api('rollout_control',{id:id,operation:operation,confirmed:true}).then(loadRollouts)
+ .catch(function(e){$('notice').textContent=e.message;button.disabled=false;});
+});
 document.addEventListener('submit',function(ev){
  var form=ev.target.closest('form[data-web-admin]');if(!form)return;
  ev.preventDefault();if(!init||state.role!=='owner')return;
