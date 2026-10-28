@@ -1,0 +1,55 @@
+name: Promote v1.3 RC2 to Latest GitHub Release
+
+# One-time, auditable promotion of an ALREADY PUBLISHED, signed release.
+# Changing GitHub's release classification does not claim hardware certification.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/promote-rc2-latest.yml
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    if: contains(github.event.head_commit.message, '[promote-rc2-latest]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Promote existing signed v1.3.0-rc.2 release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          tag="v1.3.0-rc.2"
+          release="$(gh api "repos/$repo/releases/tags/$tag")"
+          id="$(jq -r '.id' <<< "$release")"
+          [ "$id" != "null" ] && [ -n "$id" ] || { echo "Release not found" >&2; exit 1; }
+
+          # Do not promote a draft, an empty release or an incorrect tag.
+          jq -e --arg tag "$tag" '
+            .tag_name == $tag
+            and .draft == false
+            and (.assets | length >= 21)
+            and (.assets | any(.name == "pw-agent-cpanel-v1.3.0-rc.2.zip"))
+            and (.assets | any(.name == "pw-agent-cpanel-v1.3.0-rc.2.zip.sha256"))
+            and (.assets | any(.name == "pw-agent-cpanel-v1.3.0-rc.2.zip.sig"))
+          ' <<< "$release" >/dev/null
+
+          # GitHub only selects non-prerelease, non-draft releases for /releases/latest.
+          gh api --method PATCH "repos/$repo/releases/$id" \
+            -F prerelease=false \
+            -F draft=false \
+            -f make_latest=true \
+            --jq '{tag_name, prerelease, draft, html_url}'
+
+          gh api "repos/$repo/releases/$id" --jq '.prerelease == false and .draft == false' | grep -qx true
+          actual="$(gh api "repos/$repo/releases/latest" --jq .tag_name)"
+          [ "$actual" = "$tag" ] || {
+            echo "Expected latest=$tag but got latest=$actual" >&2
+            exit 1
+          }
+          echo "GitHub latest release verified: $actual"
