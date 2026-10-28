@@ -10,7 +10,7 @@ Current development branch: `feature/v1.4-secure-browser-control`. Published **L
 - More OpenWrt CPU targets; Passwall2 optional for generic OpenWrt functions, hardware capabilities explicitly checked.
 - Safer bootstrap: curl/wget fallback, empty-download detection, release-tag pinning and **Ed25519 archive signature verification** with a pinned key, before consuming a provisioning token. `openssl`, `base64` and `sha256sum` are required on the router.
 - Fixed-provider opt-in download probe capped at 2 MiB per run, cooldown enforced; provider receives router public IP. Not a real full-speed or bufferbloat measurement.
-- Read-only ModemManager/uqmi signal discovery (no IMEI/IMSI/SMS), UCI SQM/UPnP status, generic sysfs LED inventory, and local LuCI tabs.
+- Read-only ModemManager/uqmi signal discovery (no IMEI/IMSI/SMS), UCI SQM/UPnP status, generic sysfs LED inventory, and local LuCI tabs. DNS encryption tools, Adblock, DDNS, mwan3 and VLAN configurations are also discovered without exposing credentials.
 - CI checks Go compilation and tests, PHP syntax, MySQL authentication behavior, JS, release signing fixture and cPanel packaging.
 
 ## The 14 workstreams
@@ -21,7 +21,7 @@ Current development branch: `feature/v1.4-secure-browser-control`. Published **L
 | 2 | Per-client blocking, quotas and schedules | Client discovery only; safe nftables/tc policy engine pending |
 | 3 | Wi-Fi password, SSID, channel, guest and QR | Named UCI SSID diff/dry-run form added, without applying changes; independent timed rollback still pending |
 | 4 | VPN kill switch, Iran/direct split, DNS/IPv6 leak | Policy engine and path-specific verification pending |
-| 5 | Split/encrypted DNS and ad blocking | DNS diagnostics only; safe resolver adapters pending |
+| 5 | Split/encrypted DNS and ad blocking | DNS diagnostics and optional resolver/adblock service inventory; safe resolver adapters pending |
 | 6 | SQM/QoS, UPnP, NAT and gaming | Read-only SQM/UPnP inventory added; safe configuration and bufferbloat pending |
 | 7 | Speed tests, bandwidth history and per-client usage | Capped 2 MiB download probe added; upload, full-speed and per-client counters pending |
 | 8 | LuCI and responsive PW Control UI | Enhanced web UI, new read-only LuCI tabs; safe hardware writes pending |
@@ -29,7 +29,7 @@ Current development branch: `feature/v1.4-secure-browser-control`. Published **L
 | 10 | Router LED / RGB | Generic sysfs inventory added; device-specific tested RGB controls pending |
 | 11 | Passwall2, WireGuard, OpenVPN and failover | Existing Passwall2 tools preserved; native VPN-provider and route tests pending |
 | 12 | Cellular, band/cell lock and SMS/USSD | Read-only QMI/ModemManager signal inventory added; privileged modem adapters pending |
-| 13 | Fleet canary, rollout and rollback | Existing fleet/group/schedules preserved; staged fleet upgrade pending |
+| 13 | Fleet canary, rollout and rollback | Existing fleet/group/schedules plus read-only MultiWAN/mwan3 inventory; staged fleet upgrade pending |
 | 14 | CI, incident recovery, security review and stable release | Automated tests expanded; real multi-router upgrade/recovery acceptance testing pending |
 
 ## Cross-device compatibility policy
