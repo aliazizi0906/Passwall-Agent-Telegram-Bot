@@ -1,3 +1,4 @@
+// Bounded local HTTP test server; no external traffic or real routers required.
 package main
 
 import (
