@@ -282,6 +282,9 @@ function showClients(){
   ['system.interfaces','اینترفیس‌های شبکه','Network interfaces','system.read'],
   ['network.dhcp_leases','اجاره‌های DHCP','DHCP leases','network.read']
  ],say('مسدودسازی دستگاه، محدودیت سرعت، زمان‌بندی و اولویت‌دهی به قوانین nftables/tc آزمایش‌شده روی روتر نیاز دارند. فعلاً غیرفعال‌اند.','Blocking, limits, schedules and priorities require tested nftables/tc policies; not active yet.'));
+ if(has('system.read')){
+  $('page').innerHTML+='<section class="card"><div class="section-title">'+say('پیش‌نمایش سیاست دستگاه (بدون اجرا)','Client policy dry run (no changes)')+'</div><p class="muted">'+say('MAC دستگاه و نوع سیاست را وارد کن. این فرم هیچ اتصال یا تنظیمی را تغییر نمی‌دهد.','Enter a client MAC and policy. No firewall, connection or configuration is changed.')+'</p><form class="stack" data-client-policy><input name="mac" maxlength="24" required placeholder="02:11:22:33:44:55" dir="ltr" aria-label="Client MAC"><select name="mode" aria-label="Policy"><option value="block">Block</option><option value="unblock">Unblock</option><option value="limit">Speed limit (kbit/s)</option></select><input name="limit_kbit" type="number" min="64" max="1000000" step="1" placeholder="1024 (only for limit)" aria-label="Speed limit"><button class="action" type="submit">'+say('نمایش پیش‌نمایش','Preview policy')+'</button></form></section>';
+ }
 }
 function showWifi(){
  readPanel(say('مدیریت وای‌فای','Wi-Fi control'),say('مشاهده SSID و رادیوها و کلاینت‌های وای‌فای. رمزهای فعلی هیچ‌وقت در خروجی نمایش داده نمی‌شوند.','Discover SSIDs, radios and stations. Existing Wi-Fi passwords are never returned.'),[
@@ -510,6 +513,20 @@ document.addEventListener('submit',function(ev){
    $('notice').textContent=say('ورود وب فعال شد.','Browser login configured.');
    form.reset();
  }).catch(function(e){$('notice').textContent=e.message;});
+});
+document.addEventListener('submit',function(ev){
+ var f=ev.target.closest('form[data-client-policy]');if(!f)return;
+ ev.preventDefault();if(!has('system.read'))return;
+ var fd=new FormData(f),mac=String(fd.get('mac')||'').trim(),mode=String(fd.get('mode')||'');
+ var raw=String(fd.get('limit_kbit')||'');
+ if(!/^[a-fA-F0-9:-]{11,24}$/.test(mac)||!['block','unblock','limit'].includes(mode))return;
+ var params={mac:mac,mode:mode};
+ if(mode==='limit'){
+  var limit=Number(raw);
+  if(!Number.isInteger(limit)||limit<64||limit>1000000){$('notice').textContent='Invalid kbit/s limit';return;}
+  params.limit_kbit=limit;
+ }
+ command('clients.policy_plan',false,params).catch(function(e){$('notice').textContent=e.message;});
 });
 document.addEventListener('submit',function(ev){
  var f=ev.target.closest('form[data-ssid-plan]');if(!f)return;
