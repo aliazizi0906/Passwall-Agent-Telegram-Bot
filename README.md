@@ -8,7 +8,7 @@
 
 ## v1.4.0-alpha.1 development (not yet released)
 
-The next implementation branch adds **independent web username/password login** during cPanel setup, hardened session/CSRF protection, Owner-only credential recovery from Telegram, redesigned control-center surfaces, pinned Vazirmatn with a self-hosted font in packaged ZIPs, safer bootstrap download, and broader OpenWrt CPU builds. These changes are undergoing CI and are **not included** in the currently published `v1.3.0-rc.2` release. **Do not install the development version as production.**
+The next implementation branch adds **independent web username/password login** during cPanel setup, hardened session/CSRF protection, Owner-only credential recovery from Telegram, redesigned control-center surfaces, pinned Vazirmatn with a self-hosted font in packaged ZIPs, safer bootstrap download, broader OpenWrt CPU builds, **Owner-approved staged Fleet rollouts, an additive MySQL migration ledger, reversible LED identification**, and a **read-only DNS/IPv6 egress audit**. These changes are undergoing CI and are **not included** in the currently published `v1.3.0-rc.2` release. **Do not install the development version as production.**
 
 [Full 14-workstream implementation matrix](docs/en/V1_4_EXECUTION.md) / [وضعیت اجرایی همه ۱۴ بخش](docs/fa/V1_4_EXECUTION.md).
 
