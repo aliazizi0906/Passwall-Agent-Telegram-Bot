@@ -23,6 +23,15 @@
         ],
         "/usr/bin/pw-agent led-json": [
           "exec"
+        ],
+        "/usr/bin/pw-agent cellular-json": [
+          "exec"
+        ],
+        "/usr/bin/pw-agent network-policies-json": [
+          "exec"
+        ],
+        "/usr/bin/pw-agent led-inventory-json": [
+          "exec"
         ]
       }
     }
