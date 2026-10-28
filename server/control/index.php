@@ -31,7 +31,9 @@ button,select{font:inherit}button{cursor:pointer}button:disabled{cursor:default;
 .nav-title{padding:11px 12px;color:#8a9eba;font-size:11px;letter-spacing:1.1px}
 .nav-btn{display:flex;align-items:center;gap:11px;width:100%;padding:12px 11px;border:0;border-radius:12px;color:#b8c8de;background:transparent;text-align:start;margin-bottom:4px;font-weight:550}
 .nav-btn:hover,.nav-btn:focus-visible{background:#ffffff0b;color:white}.nav-btn.selected{background:#315b9d66;color:white;box-shadow:inset -3px 0 #7db3ff}
-.nav-symbol{width:29px;height:29px;border:1px solid #ffffff20;border-radius:9px;display:grid;place-items:center;font-size:11px;letter-spacing:-.5px;font-weight:800;color:#c7deff}
+.nav-symbol{width:31px;height:31px;flex:none;border:1px solid #ffffff20;border-radius:10px;display:grid;place-items:center;color:#c7deff}
+.nav-symbol svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.nav-btn.selected .nav-symbol{background:#ffffff22;border-color:#ffffff4a;color:#fff}
 .nav-foot{border-top:1px solid #ffffff16;margin-top:20px;padding:18px 12px 6px;color:#8ea4c5;font-size:11px}
 .main{flex:1;min-width:0}.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px clamp(18px,3.5vw,46px);background:var(--panel);border-bottom:1px solid var(--border)}
 .topbar h1{font-size:18px;margin:0}.topbar small{color:var(--muted)}.topbar-actions{display:flex;gap:8px;align-items:center}
@@ -141,8 +143,23 @@ var metric=function(r,k){return r && Object.prototype.hasOwnProperty.call(r,k)?r
 var has=function(p){return state.permissions.includes('*')||state.permissions.includes(p);};
 var current=function(){return menu.find(function(m){return m[0]===state.page;})||menu[0];};
 function applyTheme(){document.documentElement.dataset.theme=state.theme;document.documentElement.dir=state.lang==='fa'?'rtl':'ltr';document.documentElement.lang=state.lang;$('langBtn').textContent=state.lang==='fa'?'EN':'فا';}
+var navArt={
+ home:'<path d="m3 10 9-7 9 7v11H3z"/><path d="M9 21v-8h6v8"/>',
+ internet:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c5 5 5 13 0 18M12 3c-5 5-5 13 0 18"/>',
+ proxy:'<path d="M12 2 20 6v6c0 5-3 8-8 10-5-2-8-5-8-10V6z"/><path d="m9 12 2 2 4-4"/>',
+ routers:'<rect x="3" y="7" width="18" height="11" rx="2"/><path d="M7 12h.01M11 12h.01M7 18v3M17 18v3"/>',
+ clients:'<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+ wifi:'<path d="M2 9a16 16 0 0 1 20 0M5 12a11 11 0 0 1 14 0M8 15a6 6 0 0 1 8 0"/><circle cx="12" cy="19" r="1"/>',
+ cellular:'<path d="M12 20V4M7 20h10M7 7a7 7 0 0 0 0 10M17 7a7 7 0 0 1 0 10M3 3a13 13 0 0 0 0 18M21 3a13 13 0 0 1 0 18"/>',
+ dns:'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0"/>',
+ gaming:'<path d="M6 8h12c2 0 3 2 4 7l-1 4c-1 2-3 1-5-1H8c-2 2-4 3-5 1l-1-4c1-5 2-7 4-7z"/><path d="M7 12v5M4.5 14.5h5M16 13h.01M19 15h.01"/>',
+ system:'<circle cx="12" cy="12" r="3"/><path d="M10 2h4l1 3 2 1 3-1 2 4-2 2v2l2 2-2 4-3-1-2 1-1 3h-4l-1-3-2-1-3 1-2-4 2-2v-2L2 9l2-4 3 1 2-1z"/>',
+ led:'<path d="M9 18h6M10 21h4M9 15c-5-3-5-10 0-12a7 7 0 0 1 6 12l-1 3h-4z"/>',
+ automation:'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>'
+};
+function navIcon(key){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+(navArt[key]||navArt.system)+'</svg>';}
 function nav(){
- $('navigation').innerHTML=menu.map(function(m){return '<button type="button" class="nav-btn '+(m[0]===state.page?'selected':'')+'" data-nav="'+esc(m[0])+'"><span class="nav-symbol">'+m[1]+'</span>'+esc(say(m[2],m[3]))+'</button>';}).join('');
+ $('navigation').innerHTML=menu.map(function(m){return '<button type="button" class="nav-btn '+(m[0]===state.page?'selected':'')+'" data-nav="'+esc(m[0])+'" '+(m[0]===state.page?'aria-current="page"':'')+'><span class="nav-symbol">'+navIcon(m[0])+'</span>'+esc(say(m[2],m[3]))+'</button>';}).join('');
  var p=current();$('pageTitle').textContent=say(p[2],p[3]);$('pageDesc').textContent=say(p[4],p[5]);$('topTitle').textContent=say('مرکز کنترل شبکه','Network Control Center');
  $('identity').textContent=(state.fleet?say('نقش کاربری: ','Role: ')+state.role:say('ورود به پنل الزامی است','Authentication required'))+(webAuth?' · Web':'');
  var select=$('devicePicker');var ds=state.fleet && state.fleet.devices || [];
