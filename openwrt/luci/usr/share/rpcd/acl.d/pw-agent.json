@@ -30,6 +30,9 @@
         "/usr/bin/pw-agent network-policies-json": [
           "exec"
         ],
+        "/usr/bin/pw-agent network-services-json": [
+          "exec"
+        ],
         "/usr/bin/pw-agent led-inventory-json": [
           "exec"
         ]
