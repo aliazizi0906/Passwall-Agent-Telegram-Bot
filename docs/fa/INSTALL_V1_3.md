@@ -2,7 +2,7 @@
 
 [صفحه اصلی](../../README.md) · [English](../en/INSTALL_V1_3.md) · [ارتقا از v0.6](UPGRADE_V1_3.md) · [وضعیت قابلیت‌ها](CONTROL_CENTER_PROGRESS.md)
 
-> **نسخه آزمایشی منتشرشده — فقط برای Staging:** بسته‌های امضاشده `v1.3.0-rc.2` در [GitHub Release](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.3.0-rc.2) موجودند. این انتشار تأیید Production نیست و نصب روی روتر حیاتی توصیه نمی‌شود.
+> **آخرین Release گیت‌هاب، با نام RC — ابتدا برای Staging:** بسته‌های امضاشده `v1.3.0-rc.2` از [GitHub Latest](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/latest) قابل دریافت‌اند. این وضعیت به‌معنی تأیید Production نیست و نصب روی روتر حیاتی توصیه نمی‌شود.
 
 ## ۱. پیش‌نیازها
 
