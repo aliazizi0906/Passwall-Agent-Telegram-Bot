@@ -22,6 +22,7 @@ function pw_rollout_schema(PDO $pdo): void {
       created_by BIGINT NOT NULL,
       command_action VARCHAR(48) NOT NULL,
       wave_size TINYINT UNSIGNED NOT NULL DEFAULT 1,
+      approved_wave SMALLINT UNSIGNED NOT NULL DEFAULT 0,
       status ENUM('draft','running','awaiting_approval','paused','failed','completed','cancelled') NOT NULL DEFAULT 'draft',
       last_error VARCHAR(255) NULL,
       started_at DATETIME NULL,
@@ -115,8 +116,8 @@ function pw_rollout_control(int $uid,int $id,string $action): array {
         elseif($action==='pause'&&in_array($status,['running','awaiting_approval'],true))$next='paused';
         elseif($action==='cancel'&&in_array($status,['draft','running','awaiting_approval','paused'],true))$next='cancelled';
         else throw new RuntimeException('Invalid status transition: '.$status.' -> '.$action);
-        $st=$pdo->prepare('UPDATE pw_fleet_rollouts SET status=?,last_error=NULL,started_at=COALESCE(started_at,NOW()) WHERE id=?');
-        $st->execute([$next,$id]);
+        $st=$pdo->prepare('UPDATE pw_fleet_rollouts SET status=?, approved_wave=approved_wave+?,last_error=NULL,started_at=COALESCE(started_at,NOW()) WHERE id=?');
+        $st->execute([$next,in_array($action,['start','approve_next'],true)?1:0,$id]);
         $pdo->commit();
     }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
     v060_audit_event('fleet',$uid,'rollout','fleet.rollout.'.$action,'done',['id'=>$id,'status'=>$next]);
@@ -139,11 +140,11 @@ function pw_rollout_tick(): void {
     $got=$pdo->query("SELECT GET_LOCK('pw_agent_fleet_rollout_v14',0)")->fetchColumn();
     if((int)$got!==1)return;
     try {
-        $rollouts=$pdo->query("SELECT id,created_by,command_action,wave_size
+        $rollouts=$pdo->query("SELECT id,created_by,command_action,wave_size,approved_wave
                               FROM pw_fleet_rollouts WHERE status='running' ORDER BY id LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
         foreach($rollouts as $rollout) {
             $rid=(int)$rollout['id'];$uid=(int)$rollout['created_by'];
-            try{pw_rollout_tick_one($rid,$uid,(string)$rollout['command_action'],(int)$rollout['wave_size']);}
+            try{pw_rollout_tick_one($rid,$uid,(string)$rollout['command_action'],(int)$rollout['wave_size'],(int)$rollout['approved_wave']);}
             catch(Throwable $e){
                 $st=$pdo->prepare("UPDATE pw_fleet_rollouts SET status='paused',last_error=? WHERE id=? AND status='running'");
                 $st->execute([substr($e->getMessage(),0,255),$rid]);
@@ -151,7 +152,7 @@ function pw_rollout_tick(): void {
         }
     }finally{$pdo->query("SELECT RELEASE_LOCK('pw_agent_fleet_rollout_v14')");}
 }
-function pw_rollout_tick_one(int $id,int $uid,string $action,int $waveSize): void {
+function pw_rollout_tick_one(int $id,int $uid,string $action,int $waveSize,int $approvedWave): void {
     $pdo=db();
     pw_rollout_actor($uid);
     if(!pw_rollout_action_allowed($action))throw new RuntimeException('Rollout action was revoked');
@@ -161,9 +162,10 @@ function pw_rollout_tick_one(int $id,int $uid,string $action,int $waveSize): voi
        LEFT JOIN pw_devices d ON d.device_id=t.device_id WHERE t.rollout_id=? ORDER BY t.sequence_number");
     $st->execute([$id]);$targets=$st->fetchAll(PDO::FETCH_ASSOC);
     if(!$targets)throw new RuntimeException('Rollout has no target rows');
-    $now=time();$active=0;$done=0;$pending=[];
+    $now=time();$active=0;$done=0;$pending=[];$highestQueuedWave=0;
     foreach($targets as $target){
         $state=(string)$target['status'];$device=(string)$target['device_id'];
+        $highestQueuedWave=max($highestQueuedWave,(int)($target['wave_number']??0));
         if($state==='done'){$done++;continue;}
         if($state==='failed')throw new RuntimeException('Router '.$device.' failed; approval required');
         if($state==='pending'){$pending[]=$target;continue;}
@@ -191,12 +193,13 @@ function pw_rollout_tick_one(int $id,int $uid,string $action,int $waveSize): voi
         $pdo->prepare("UPDATE pw_fleet_rollouts SET status='completed' WHERE id=? AND status='running'")->execute([$id]);
         return;
     }
-    if($done>0){
+    if($highestQueuedWave >= $approvedWave){
         // Never dispatch the next group without an explicit owner approval.
         $pdo->prepare("UPDATE pw_fleet_rollouts SET status='awaiting_approval' WHERE id=? AND status='running'")->execute([$id]);
         return;
     }
-    $batch=array_slice($pending,0,$done===0?1:pw_rollout_wave_size($waveSize));
+    if($approvedWave<=0)throw new RuntimeException('A wave must be approved by the Owner');
+    $batch=array_slice($pending,0,$approvedWave===1?1:pw_rollout_wave_size($waveSize));
     // Every wave requires fresh heartbeat and per-router RBAC recheck.
     foreach($batch as $target){
         $device=(string)$target['device_id'];
@@ -217,7 +220,7 @@ function pw_rollout_tick_one(int $id,int $uid,string $action,int $waveSize): voi
             $st=$pdo->prepare("UPDATE pw_fleet_rollout_targets
               SET status='queued',command_id=?,queued_at=NOW(),wave_number=?
               WHERE rollout_id=? AND device_id=? AND status='pending'");
-            $st->execute([$cid,$done===0?1:2,$id,$device]);
+            $st->execute([$cid,$approvedWave,$id,$device]);
             if($st->rowCount()!==1)throw new RuntimeException('Rollout state conflict');
             $pdo->commit();
         }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
