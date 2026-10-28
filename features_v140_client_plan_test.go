@@ -1,5 +1,6 @@
 package main
 
+// Fixed fixtures; no host firewall or OpenWrt configuration is modified.
 import "testing"
 
 func TestClientPolicyPlanV14(t *testing.T) {
