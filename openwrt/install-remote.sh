@@ -45,14 +45,24 @@ trap 'rm -rf "$TMP"' EXIT INT TERM
 download() {
     url="$1"
     out="$2"
+    rm -f "$out"
     if command -v curl >/dev/null 2>&1; then
-        curl -fL --connect-timeout 15 --max-time 180 "$url" -o "$out"
-    elif command -v wget >/dev/null 2>&1; then
-        wget -O "$out" "$url"
-    else
-        echo "ERROR: curl or wget is required." >&2
-        exit 1
+        if curl -4 -fLsS --connect-timeout 15 --max-time 180 "$url" -o "$out"; then
+            [ -s "$out" ] && return 0
+        fi
+        rm -f "$out"
+        if curl -fLsS --connect-timeout 15 --max-time 180 "$url" -o "$out"; then
+            [ -s "$out" ] && return 0
+        fi
     fi
+    rm -f "$out"
+    if command -v wget >/dev/null 2>&1; then
+        if wget -O "$out" "$url"; then
+            [ -s "$out" ] && return 0
+        fi
+    fi
+    echo "ERROR: release download failed or was empty; verify DNS, WAN and router TLS." >&2
+    return 1
 }
 
 post_json() {
@@ -82,6 +92,7 @@ echo "Detected architecture: $ARCH"
 echo "Downloading PW Agent release: $VERSION"
 download "$BASE_URL/$ASSET" "$TMP/bundle.tar.gz"
 download "$BASE_URL/$ASSET.sha256" "$TMP/bundle.sha256"
+download "$BASE_URL/$ASSET.sig" "$TMP/bundle.sig"
 
 command -v sha256sum >/dev/null 2>&1 || {
     echo "ERROR: sha256sum is required." >&2
@@ -94,6 +105,37 @@ ACTUAL="$(sha256sum "$TMP/bundle.tar.gz" | awk '{print $1}' | tr 'A-F' 'a-f')"
     exit 1
 }
 
+# Independently verify Ed25519 over the actual archive before touching
+# provisioning credentials or running any downloaded installer.
+# The raw 32-byte public key is pinned in this release bootstrap.
+PUBLIC_KEY_B64='fDiTaZG26qn3BCI3c8cFiO0KdqMW561w6JSaMwXCecw='
+if ! command -v openssl >/dev/null 2>&1; then
+    echo "ERROR: OpenSSL CLI is required to verify the signed initial install." >&2
+    echo "Install the OpenWrt openssl-util package (opkg or apk) and retry; no credentials have been consumed." >&2
+    exit 1
+fi
+if ! command -v base64 >/dev/null 2>&1; then
+    echo "ERROR: base64 is required to decode the pinned Ed25519 key." >&2
+    exit 1
+fi
+# Ed25519 DER SubjectPublicKeyInfo prefix: 30 2a 30 05 06 03 2b 65 70 03 21 00
+# Octal escapes work with BusyBox ash printf without needing xxd.
+printf '\060\052\060\005\006\003\053\145\160\003\041\000' > "$TMP/key.der"
+printf '%s' "$PUBLIC_KEY_B64" | base64 -d >> "$TMP/key.der" || {
+    echo "ERROR: invalid embedded Ed25519 verification key." >&2
+    exit 1
+}
+[ "$(wc -c < "$TMP/key.der" | tr -d ' ')" = 44 ] || {
+    echo "ERROR: invalid verifier key length." >&2
+    exit 1
+}
+if ! openssl pkeyutl -verify -rawin -pubin -keyform DER \
+    -inkey "$TMP/key.der" -in "$TMP/bundle.tar.gz" \
+    -sigfile "$TMP/bundle.sig" >/dev/null 2>&1; then
+    echo "ERROR: Ed25519 signature verification FAILED; refusing installation." >&2
+    exit 1
+fi
+echo "SHA256 and Ed25519 signature verified."
 tar -xzf "$TMP/bundle.tar.gz" -C "$TMP"
 [ -f "$TMP/install.sh" ] || {
     echo "ERROR: release installer missing." >&2
