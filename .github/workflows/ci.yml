@@ -95,6 +95,9 @@ jobs:
       - name: Public device fields and API secret redaction
         run: php server/tests/public_device_test.php
 
+      - name: Signed cPanel installer asset path tests
+        run: php server/tests/install_asset_test.php
+
       - name: Shell syntax
         run: |
           sh -n openwrt/install.sh
