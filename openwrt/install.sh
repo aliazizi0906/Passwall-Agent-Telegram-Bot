@@ -11,8 +11,8 @@ if [ ! -f "$BIN" ]; then
     exit 1
 fi
 if [ ! -f /etc/config/passwall2 ]; then
-    echo "ERROR: /etc/config/passwall2 not found. PW Agent requires Passwall2." >&2
-    exit 1
+    echo "INFO: Passwall2 not installed; OpenWrt system/network functions remain available." >&2
+    echo "INFO: Passwall2-specific commands will be unavailable until its package is installed." >&2
 fi
 
 /etc/init.d/pw-agent stop 2>/dev/null || true
