@@ -917,6 +917,8 @@ func runCLIIfRequestedV4() bool {
 			value, execErr = cellularStatusV14()
 		case "network-policies-json":
 			value, execErr = networkPoliciesV14()
+		case "network-services-json":
+			value, execErr = networkServiceInventoryV14()
 		case "led-inventory-json":
 			value, execErr = ledInventoryV14()
 		case "led-json":
