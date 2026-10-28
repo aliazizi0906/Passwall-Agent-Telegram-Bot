@@ -90,9 +90,43 @@ ASSET="pw-agent-openwrt-$ARCH.tar.gz"
 
 echo "Detected architecture: $ARCH"
 echo "Downloading PW Agent release: $VERSION"
-download "$BASE_URL/$ASSET" "$TMP/bundle.tar.gz"
-download "$BASE_URL/$ASSET.sha256" "$TMP/bundle.sha256"
-download "$BASE_URL/$ASSET.sig" "$TMP/bundle.sig"
+# The cPanel server may cache signed bundles; this allows OpenWrt routers
+# without access to GitHub to install directly through their backend domain.
+# No provisioning token is consumed until local SHA256+Ed25519 verification.
+backend_asset() {
+    part="$1"
+    out="$2"
+    endpoint="$SERVER_BASE/install/bundle.php"
+    form="token=$TOKEN&arch=$ARCH&version=$VERSION&part=$part"
+    rm -f "$out"
+    if command -v curl >/dev/null 2>&1; then
+        if curl -4 -fsS --connect-timeout 15 --max-time 180 \
+             -H 'Content-Type: application/x-www-form-urlencoded' \
+             --data "$form" "$endpoint" -o "$out" && [ -s "$out" ]; then
+            return 0
+        fi
+    fi
+    rm -f "$out"
+    if command -v wget >/dev/null 2>&1; then
+        if wget -qO "$out" --header='Content-Type: application/x-www-form-urlencoded' \
+            --post-data="$form" "$endpoint" && [ -s "$out" ]; then
+            return 0
+        fi
+    fi
+    rm -f "$out"
+    return 1
+}
+
+if backend_asset bundle "$TMP/bundle.tar.gz" && \
+   backend_asset sha256 "$TMP/bundle.sha256" && \
+   backend_asset signature "$TMP/bundle.sig"; then
+    echo "Downloaded signed Agent assets from the cPanel backend."
+else
+    echo "Backend cache unavailable; downloading the signed GitHub release."
+    download "$BASE_URL/$ASSET" "$TMP/bundle.tar.gz"
+    download "$BASE_URL/$ASSET.sha256" "$TMP/bundle.sha256"
+    download "$BASE_URL/$ASSET.sig" "$TMP/bundle.sig"
+fi
 
 command -v sha256sum >/dev/null 2>&1 || {
     echo "ERROR: sha256sum is required." >&2
