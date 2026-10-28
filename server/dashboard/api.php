@@ -3,6 +3,7 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/lib.php';
 require dirname(__DIR__) . '/release_tools.php';
 require dirname(__DIR__) . '/v130_command_validation.php';
+require dirname(__DIR__) . '/fleet_rollout.php';
 header('Cache-Control: no-store');
 
 $in=json_decode_assoc(raw_body());
