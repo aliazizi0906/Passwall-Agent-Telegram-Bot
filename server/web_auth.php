@@ -75,6 +75,22 @@ function pw_web_auth_user(): ?int {
         if($uid>0){unset($_SESSION['pw_uid'],$_SESSION['pw_touch'],$_SESSION['pw_ua']);}
         return null;
     }
+    // Password rotation revokes logged-in browsers without deleting unrelated PHP sessions.
+    // Sessions issued by versions without a fingerprint expire by the existing 30m timer.
+    $fingerprint=(string)($_SESSION['pw_auth_fingerprint']??'');
+    if($fingerprint!==''){
+        try{
+            $q=db()->query('SELECT password_hash,telegram_user_id FROM pw_web_accounts WHERE id=1');
+            $row=$q->fetch(PDO::FETCH_ASSOC);
+            if(!$row||(int)$row['telegram_user_id']!==$uid||!hash_equals($fingerprint,hash('sha256',(string)$row['password_hash']))){
+                unset($_SESSION['pw_uid'],$_SESSION['pw_touch'],$_SESSION['pw_ua'],$_SESSION['pw_auth_fingerprint']);
+                return null;
+            }
+        }catch(Throwable $e){
+            unset($_SESSION['pw_uid'],$_SESSION['pw_touch'],$_SESSION['pw_ua'],$_SESSION['pw_auth_fingerprint']);
+            return null;
+        }
+    }
     $_SESSION['pw_touch']=time();
     return $uid;
 }
@@ -103,6 +119,7 @@ function pw_web_auth_login(PDO $pdo,string $username,string $password,string $re
     pw_web_auth_begin();
     session_regenerate_id(true);
     $_SESSION['pw_uid']=(int)$account['telegram_user_id'];
+    $_SESSION['pw_auth_fingerprint']=hash('sha256',(string)$account['password_hash']);
     $_SESSION['pw_touch']=time();
     $_SESSION['pw_ua']=hash('sha256',(string)($_SERVER['HTTP_USER_AGENT']??''));
     $_SESSION['pw_csrf']=bin2hex(random_bytes(32));
