@@ -11,6 +11,7 @@ Choose a language:
 - [Upgrade from v0.6](en/UPGRADE_V1_3.md) / [ارتقا](fa/UPGRADE_V1_3.md)
 - [Implementation status](en/CONTROL_CENTER_PROGRESS.md) / [وضعیت پیاده‌سازی](fa/CONTROL_CENTER_PROGRESS.md)
 - [Release notes (EN)](en/RELEASE_NOTES_V1_3_RC.md) / [یادداشت انتشار فارسی](fa/RELEASE_NOTES_V1_3_RC.md)
+- [Repository structure / ساختار مخزن](REPOSITORY_STRUCTURE.md)
 - [Changelog](../CHANGELOG.md)
 
 ## Baseline and legacy guides
