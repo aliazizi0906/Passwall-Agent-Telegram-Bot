@@ -81,7 +81,7 @@ input[name=username],input[name=password]{background:var(--soft);color:var(--ink
 @media(prefers-reduced-motion:reduce){.action,.chip-btn{transition:none}}
 </style>
 </head>
-<body>
+<body data-web-auth="<?= $browserUid?'1':'0' ?>" data-web-csrf="<?=htmlspecialchars($browserCsrf,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')?>">
 <div class="shell">
 <aside class="sidebar">
  <div class="brand"><div class="brand-logo">PW</div><div><b>PW Control</b><small>Network Control Center</small></div></div>
@@ -112,8 +112,8 @@ input[name=username],input[name=password]{background:var(--soft);color:var(--ink
 var tg=window.Telegram && window.Telegram.WebApp;
 if(tg){tg.ready();tg.expand();}
 var init=tg && tg.initData ? tg.initData : '';
-var webAuth=<?= $browserUid?'true':'false' ?>;
-var webCsrf=<?= json_encode($browserCsrf,JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_AMP|JSON_HEX_QUOT) ?>;
+var webAuth=document.body.dataset.webAuth==='1';
+var webCsrf=document.body.dataset.webCsrf||'';
 if(!init&&!webAuth){window.location.replace('../auth/login.php');return;}
 var state={fleet:null,active:'',role:'viewer',permissions:[],detail:null,page:'home',lang:'fa',theme:'light',busy:false};
 try{state.lang=localStorage.getItem('pwcontrol-lang')==='en'?'en':'fa';state.theme=localStorage.getItem('pwcontrol-theme')==='dark'?'dark':'light';}catch(e){}
