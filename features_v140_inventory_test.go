@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+// Whitelisted metrics must not reveal subscriber identifiers.
 func TestModemSignalSanitizerV14(t *testing.T) {
 	raw := "imei: 352099000000000\nimsi: 202000000000000\nlte rsrp: -104.25 dBm\nrsrq: -11.5 dB\nsnr: 8.2 dB\napn: private.carrier"
 	got := signalValuesV14(raw)
