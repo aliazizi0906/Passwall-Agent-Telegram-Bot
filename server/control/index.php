@@ -256,7 +256,10 @@ function showWifi(){
  ['wifi.list','شبکه‌های وای‌فای','Wi-Fi networks','wifi.read'],
  ['wifi.radios','رادیوهای ۲٫۴/۵/۶','Wi-Fi radios','wifi.read'],
  ['wifi.stations','دستگاه‌های وای‌فای','Wi-Fi stations','wifi.read']
- ],say('تغییر رمز و کانال تنها بعد از فعال‌شدن Apply با Rollback زمان‌دار ارائه خواهد شد تا دسترسی به روتر از دست نرود.','Mutating SSID/password/channel settings await timed safe-apply rollback.'));
+ ],say('اعمال تغییرات شبکه فقط پس از پیاده‌سازی Rollback زمان‌دار فعال می‌شود؛ پیش‌نمایش SSID هیچ تغییری ایجاد نمی‌کند.','Changes will be enabled only after timed safe-apply rollback; an SSID preview never changes the router.'));
+ if(has('wifi.read')){
+  $('page').innerHTML+='<section class="card"><div class="section-title">'+say('پیش‌نمایش تغییر نام شبکه','SSID change preview')+'</div><p class="muted">'+say('ابتدا از «شبکه‌های وای‌فای» شناسه Section را پیدا کن. این فرم فقط تفاوت مقدار فعلی و پیشنهادی را نشان می‌دهد.','Retrieve a named Wi-Fi section from Wi-Fi networks first. This form only compares the current and desired SSID.')+'</p><form data-ssid-plan class="stack"><label>'+say('نام Section','UCI section')+'<input name="section" required pattern="[A-Za-z0-9_-]{1,64}" maxlength="64" autocomplete="off" placeholder="default_radio0"></label><label>'+say('نام جدید Wi-Fi','Desired SSID')+'<input name="ssid" required maxlength="32" autocomplete="off" placeholder="My-WiFi"></label><button class="action primary" type="submit">'+say('پیش‌نمایش بدون تغییر','Preview only (no changes)')+'</button></form></section>';
+ }
 }
 function showDNS(){
  readPanel(say('DNS و امنیت','DNS & security'),say('مشاهده Resolver و Route و اجرای آزمایش اتصال بدون تغییر تنظیمات فعلی.','Read resolver configuration and routing; test connectivity without altering settings.'),[
@@ -425,6 +428,16 @@ document.addEventListener('submit',function(ev){
    $('notice').textContent=say('ورود وب فعال شد.','Browser login configured.');
    form.reset();
  }).catch(function(e){$('notice').textContent=e.message;});
+});
+document.addEventListener('submit',function(ev){
+ var f=ev.target.closest('form[data-ssid-plan]');if(!f)return;
+ ev.preventDefault();
+ if(!has('wifi.read'))return;
+ var fd=new FormData(f),section=String(fd.get('section')||''),ssid=String(fd.get('ssid')||'');
+ if(!/^[A-Za-z0-9_-]{1,64}$/.test(section)||!ssid||new TextEncoder().encode(ssid).length>32){
+   $('notice').textContent=say('Section یا SSID معتبر نیست.','Invalid section or SSID.');return;
+ }
+ command('wifi.plan_ssid',false,{section:section,ssid:ssid}).catch(function(e){$('notice').textContent=e.message;});
 });
 document.addEventListener('submit',function(ev){
  var f=ev.target.closest('form[data-passwall-form]');if(!f)return;
