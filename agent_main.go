@@ -270,6 +270,8 @@ func (a *Agent) execute(c *Command) (interface{}, error) {
 		return identifyLEDV14(params)
 	case "network.doctor":
 		return networkDoctorV13()
+	case "network.path_audit":
+		return routeSecurityAuditV14()
 	case "network.speed_probe":
 		return speedProbeV14()
 	case "cellular.status":
