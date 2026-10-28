@@ -33,3 +33,13 @@ expectFailure('SSID newline','wifi.plan_ssid',['section'=>'default_radio0','ssid
 expectFailure('SSID injection section','wifi.plan_ssid',['section'=>'radio0;reboot','ssid'=>'Valid'],false);
 expectFailure('SSID empty','wifi.plan_ssid',['section'=>'default_radio0','ssid'=>''],false);
 echo "All v1.3 parameter validation checks passed.".PHP_EOL;
+
+
+$validLed=dash_v130_safe_params('led.identify',['name'=>'blue:status'],true);
+if($validLed!==['name'=>'blue:status'])throw new RuntimeException('Valid sysfs LED name rejected');
+foreach(['../bad','bad/name','..','name;reboot',''] as $name){
+    try{dash_v130_safe_params('led.identify',['name'=>$name],true);throw new RuntimeException('Unsafe LED name accepted');}
+    catch(RuntimeException $e){if($e->getMessage()==='Unsafe LED name accepted')throw $e;}
+}
+try{dash_v130_safe_params('led.identify',['name'=>'blue:status'],false);throw new RuntimeException('LED identify without confirmation accepted');}
+catch(RuntimeException $e){if($e->getMessage()==='LED identify without confirmation accepted')throw $e;}
