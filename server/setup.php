@@ -33,6 +33,7 @@ $defaults=[
     'db_name'=>'',
     'db_user'=>'',
     'admin_id'=>'',
+    'web_username'=>'admin',
     'device_id'=>'router-01',
     'device_name'=>'Main Router',
     'arch'=>'armv7',
@@ -81,6 +82,11 @@ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&isset($_POST['install'])){
 
     $admin=trim((string)$form['admin_id']);
     if(!ctype_digit($admin)||$admin==='0')$errors[]='Telegram Admin ID must be a positive numeric user ID.';
+    $webName=trim((string)($_POST['web_username']??''));
+    $webPass=(string)($_POST['web_password']??'');
+    if($webPass!==(string)($_POST['web_password_confirm']??''))$errors[]='Web passwords do not match.';
+    require_once __DIR__.'/web_auth.php';
+    try{pw_web_auth_validate_credentials($webName,$webPass);}catch(Throwable $e){$errors[]=$e->getMessage();}
 
     try{$arch=pw_setup_normalize_arch((string)$form['arch']);$form['arch']=$arch;}catch(Throwable $e){$errors[]=$e->getMessage();}
 
@@ -137,6 +143,7 @@ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&isset($_POST['install'])){
                 require_once $root.'/lib.php';
                 ensure_v060_schema();
                 $pdo=db();
+                pw_web_auth_install($pdo,$webName,$webPass,(int)$admin);
                 $pdo->prepare('UPDATE pw_device_registry SET display_name=? WHERE device_id=?')->execute([$deviceName,$deviceId]);
 
                 $provisionToken=rtrim(strtr(base64_encode(random_bytes(36)),'+/','-_'),'=');
@@ -172,6 +179,7 @@ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&isset($_POST['install'])){
                     'health_url'=>rtrim((string)$form['base_url'],'/').'/health.php',
                     'release'=>$release,
                 ];
+                unset($webPass);
                 $_SESSION['pw_setup_complete']=true;
                 $installed=true;
             }catch(Throwable $e){
@@ -244,6 +252,7 @@ Initial router: <code><?=setup_h($success['device_id'])?></code> — <?=setup_h(
 <div class="card">
 <h2>3. Finish in Telegram</h2>
 <p>Open your bot and send <code>/start</code>. Fleet, Dashboard, Monitoring, RBAC, Audit, Alerts, Maintenance and Schedules are then available.</p>
+<p>Independent web panel: <a href="auth/login.php">Sign in with the web username and password</a>.</p>
 <p class="warning">For security, this installer is now locked because <code>config.php</code> exists. Do not leave backup copies of config.php in the public directory.</p>
 </div>
 
@@ -308,7 +317,16 @@ Initial router: <code><?=setup_h($success['device_id'])?></code> — <?=setup_h(
 </div>
 
 <div class="card">
-<h2>5. Install</h2>
+<h2>5. Independent web login / ورود مستقل پنل وب</h2>
+<p class="muted">These credentials are configured now and stored as a one-way password hash in MySQL. They inherit the Telegram Owner's device scope and RBAC permissions.</p>
+<div class="grid">
+<div class="full"><label>Web username</label><input name="web_username" autocomplete="username" minlength="3" maxlength="32" pattern="[a-z][a-z0-9._-]{2,31}" required value="<?=setup_h((string)$form['web_username'])?>" placeholder="admin"></div>
+<div><label>Web password (12+ characters)</label><input type="password" name="web_password" autocomplete="new-password" minlength="12" maxlength="256" required></div>
+<div><label>Repeat web password</label><input type="password" name="web_password_confirm" autocomplete="new-password" minlength="12" maxlength="256" required></div>
+</div></div>
+
+<div class="card">
+<h2>6. Install</h2>
 <p class="muted">Setup creates/upgrades the schema, generates secrets, writes config.php, creates the Owner RBAC record, registers the Telegram webhook, creates a 30-minute provisioning token and optionally syncs the signed Agent release.</p>
 <button type="submit" <?=(!$req['php_ok']||$req['missing_extensions'])?'disabled':''?>>Install PW Agent</button>
 </div>
