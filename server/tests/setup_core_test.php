@@ -40,7 +40,17 @@ expect_true(str_contains($cmd,"PW_SERVER_BASE='https://example.com/network/contr
 expect_true(str_contains($cmd,"PW_AGENT_VERSION='v".pw_setup_version()."'"),'router command is not pinned to the backend Agent version');
 expect_true(!str_contains($cmd,'/home/'),'router command contains a hardcoded home path');
 expect_true(str_contains($cmd,'https://example.com/network/control/install/remote.sh'),'bootstrap must use the configured cPanel domain');
-expect_true(str_contains($cmd,'curl -4 -fLsS')&&str_contains($cmd,'wget -O'), 'download fallback is missing');
+$steps=pw_setup_router_steps('https://example.com/network/control','abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-');
+expect_true(count($steps)===6,'expected six individually executable commands');
+foreach($steps as $i=>$step){
+    expect_true(strlen($step)<120,'OpenWrt paste line too long: '.($i+1));
+    expect_true(!str_contains($step,"\\n")&&!str_contains($step,'sh -c'),'nested bootstrap unexpectedly reintroduced');
+}
+expect_true(str_starts_with($steps[0],'export PW_SERVER_BASE='),'base not exported');
+expect_true(str_starts_with($steps[1],'export PW_PROVISION_TOKEN='),'token not exported');
+expect_true(str_contains($steps[3],'wget -O /tmp/pw.sh'),'wget bootstrap missing');
+expect_true(str_contains($steps[4],'sh -n /tmp/pw.sh'),'shell syntax validation missing');
+expect_true($steps[5]==='unset PW_PROVISION_TOKEN','token cleanup missing');
 expect_true(str_contains($cmd,'test -s'), 'bootstrap can execute empty downloads');
 
 $cron=pw_setup_cron_command('/home/demo/public_html/arbitrary/nested/path');
