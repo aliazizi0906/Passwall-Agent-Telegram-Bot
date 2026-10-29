@@ -276,6 +276,8 @@ func (a *Agent) execute(c *Command) (interface{}, error) {
 		return identifyLEDV14(params)
 	case "led.brightness.set":
 		return setLEDBrightnessV14(params)
+	case "led.rgb.set":
+		return setRGBLEDV16(params)
 	case "openvpn.status":
 		return openvpnStatusV15()
 	case "openvpn.service.control":
