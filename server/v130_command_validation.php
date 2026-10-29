@@ -46,7 +46,7 @@ function dash_v130_safe_params(string $action,array $params,bool $confirmed): ar
     }
     $nodeIdActions=['passwall2.node.select','passwall2.node.test','passwall2.node.delete'];
     $subscriptionIdActions=['passwall2.subscription.update','passwall2.subscription.delete'];
-    $mutations=['passwall2.node.select','passwall2.node.delete','passwall2.node.add_link',
+    $mutations=['passwall2.node.select','passwall2.node.delete','passwall2.node.add_link','passwall2.enable','passwall2.disable',
                 'passwall2.subscription.add','passwall2.subscription.update','passwall2.subscription.delete'];
     if(in_array($action,$mutations,true)&&!$confirmed)throw new RuntimeException('Explicit confirmation is required');
     if(in_array($action,$nodeIdActions,true)||in_array($action,$subscriptionIdActions,true)){
