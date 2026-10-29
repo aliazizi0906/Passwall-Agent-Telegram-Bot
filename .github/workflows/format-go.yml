@@ -34,3 +34,5 @@ jobs:
 # Formatting Go sources before validating Wi-Fi safe-apply alpha.3.
 
 # Normalize the finalized safe Wi-Fi worker before alpha.3 release.
+
+# gofmt for extended safe network control actions.
