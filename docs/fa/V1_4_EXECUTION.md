@@ -1,6 +1,6 @@
 # وضعیت توسعه PW Agent v1.4
 
-> این مستند وضعیت واقعی شاخه `feature/v1.4-secure-browser-control` را نشان می‌دهد. نسخه **Latest عمومی هنوز v1.3.0-rc.2 است**؛ نسخه ۱.۴ هنوز منتشر نشده و آماده Production نیست.
+> این مستند وضعیت شاخه `feature/v1.4-secure-browser-control` را نشان می‌دهد. نسخه **v1.4.0-alpha.1 برای GitHub Latest انتخاب شده، اما همچنان آزمایشی و نامناسب برای Production بدون تست و بکاپ است**. عنوان Latest به معنی تکمیل ۱۴ قابلیت یا تأیید همه سخت‌افزارها نیست.
 
 [English implementation status](../en/V1_4_EXECUTION.md) | [Pull Request #8](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/pull/8)
 
@@ -47,7 +47,7 @@
 
 ## نصب و اعتبارسنجی
 
-نسخه ۱.۴ هنوز تگ Release ندارد. دستور نصب تولیدشده از Setup این نسخه به تگ متناظر نیاز خواهد داشت، بنابراین از سورس توسعه برای نصب روی روتر اصلی استفاده نکن. بعد از انتشار امضاشده، قبل از Provisioning ابزار `openssl-util` را از مخازن سازگار Firmware نصب کن.
+نسخه ۱.۴ به‌صورت Alpha و تحت برچسب GitHub Latest منتشر می‌شود؛ استفاده تنها در Staging و روتر غیرحیاتی توصیه می‌شود و نصب روی روتر اصلی بدون نسخه پشتیبان و تست Rollback مجاز نیست. بعد از انتشار امضاشده، قبل از Provisioning ابزار `openssl-util` را از مخازن سازگار Firmware نصب کن.
 
 برای بررسی سورس، تست‌ها و بسته آزمایشی:
 
