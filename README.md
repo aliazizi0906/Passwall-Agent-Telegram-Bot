@@ -2,24 +2,29 @@
 
 **OpenWrt + Passwall2 · Telegram Mini App · Local LuCI · cPanel PHP/MySQL**
 
-[GitHub Latest: v1.4.0-alpha.2 (NOT stable)](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/latest) · [Previous production baseline: v0.6.0](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0) · [فارسی](#فارسی) · [Install v1.3 RC](docs/en/INSTALL_V1_3.md) · [Upgrade from v0.6](docs/en/UPGRADE_V1_3.md) · [Implementation status](docs/en/CONTROL_CENTER_PROGRESS.md) · [Changelog](CHANGELOG.md)
+[GitHub Latest: v1.4.0-alpha.3 (NOT stable)](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/latest) · [Previous production baseline: v0.6.0](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0) · [فارسی](#فارسی) · [Install v1.3 RC](docs/en/INSTALL_V1_3.md) · [Upgrade from v0.6](docs/en/UPGRADE_V1_3.md) · [Implementation status](docs/en/CONTROL_CENTER_PROGRESS.md) · [Changelog](CHANGELOG.md)
 
-> **Public release status:** `v1.4.0-alpha.2` is deliberately published as **GitHub Latest**, but its `alpha.1` label means it is **NOT Stable/GA or production-certified**. Do not deploy it on essential routers without an isolated staging setup, verified backups, and a tested recovery path. The `v0.6.0` release remains the previous stable baseline; `v1.3.0-rc.2` is an older release candidate.
+> **Public release status:** `v1.4.0-alpha.3` is deliberately published as **GitHub Latest**, but its `alpha.3` label means it is **NOT Stable/GA or production-certified**. Do not deploy it on essential routers without an isolated staging setup, verified backups, and a tested recovery path. The `v0.6.0` release remains the previous stable baseline; `v1.3.0-rc.2` is an older release candidate.
 
-## v1.4.0-alpha.2 — public Alpha (GitHub Latest)
+## v1.4.0-alpha.3 — public Alpha (GitHub Latest)
 
-The v1.4 implementation branch includes **independent web username/password login** during cPanel setup, hardened session/CSRF protection, Owner-only credential recovery from Telegram, redesigned control-center surfaces, pinned Vazirmatn with a self-hosted font in packaged ZIPs, safer bootstrap download, broader OpenWrt CPU builds, **Owner-approved staged Fleet rollouts, an additive MySQL migration ledger, reversible LED identification**, and a **read-only DNS/IPv6 egress audit**. These changes are included in the **signed v1.4.0-alpha.2 public download**. **Latest is not Stable:** use staging and a noncritical router, and do not assume full 14-feature or all-hardware support.
+**What changed in alpha.3:** OpenWrt Setup/Provision now gives six individually copyable, short SSH commands instead of one truncated long command. The router Agent adds a local 90-second SSID safe-apply/rollback workflow, including recovery at boot. Added allowlisted DNS service restart actions, alert/schedule CRUD, limited live status refresh and apk/opkg inventory compatibility. [English release notes](docs/en/RELEASE_NOTES_V1_4_ALPHA_3.md) · [فارسی](docs/fa/RELEASE_NOTES_V1_4_ALPHA_3.md).
 
-[v1.4 Alpha release notes and download](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.4.0-alpha.2) · [Full 14-workstream implementation matrix](docs/en/V1_4_EXECUTION.md) / [وضعیت اجرایی همه ۱۴ بخش](docs/fa/V1_4_EXECUTION.md).
+**Still missing:** VPN split-route application, full client block/QoS, all-network safe apply, model-specific RGB/modem actions, unattended backend upgrades and production/hardware certification. These operations are not advertised as implemented.
+
+
+The v1.4 implementation branch includes **independent web username/password login** during cPanel setup, hardened session/CSRF protection, Owner-only credential recovery from Telegram, redesigned control-center surfaces, pinned Vazirmatn with a self-hosted font in packaged ZIPs, safer bootstrap download, broader OpenWrt CPU builds, **Owner-approved staged Fleet rollouts, an additive MySQL migration ledger, reversible LED identification**, and a **read-only DNS/IPv6 egress audit**. These changes are included in the **signed v1.4.0-alpha.3 public download**. **Latest is not Stable:** use staging and a noncritical router, and do not assume full 14-feature or all-hardware support.
+
+[v1.4 Alpha release notes and download](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.4.0-alpha.3) · [Full 14-workstream implementation matrix](docs/en/V1_4_EXECUTION.md) / [وضعیت اجرایی همه ۱۴ بخش](docs/fa/V1_4_EXECUTION.md).
 
 ### v1.4 Alpha cPanel setup (staging only)
 
-1. Download `pw-agent-cpanel-v1.4.0-alpha.2.zip`, plus its SHA256 and signature, from the [latest release](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/latest).
+1. Download `pw-agent-cpanel-v1.4.0-alpha.3.zip`, plus its SHA256 and signature, from the [latest release](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/latest).
 2. Extract to a **new staging directory** on cPanel. Set the secure web username and password during `setup.php` (requires PHP 8.1+, HTTPS and MySQL).
 3. Open `/auth/login.php` for browser sign-in and `/control/` for router management. Run version-pinned provisioning only on a noncritical router with OpenSSL signature-verification tools.
 4. Always inspect [the alpha release warnings](docs/en/RELEASE_NOTES_V1_4_ALPHA_LATEST.md). No automatic upgrade of existing production installs is performed.
 
-### v1.4.0-alpha.2 — operational control preview
+### v1.4.0-alpha.3 — operational control preview
 
 - **LED:** confirmed manual sysfs brightness adjustment where the LED trigger is `none`; driver-managed LEDs remain protected; RGB and scheduling are not yet enabled.
 - **OpenVPN:** discover configured profiles and start/stop/restart the installed OpenWrt service with RBAC and a confirmation. The CIDR route builder is strictly **preview-only** and does not install firewall/routing rules.
@@ -136,7 +141,7 @@ bash scripts/package_cpanel.sh
 
 ### وضعیت انتشار
 
-- **جدیدترین نسخه عمومی GitHub Latest:** `v1.4.0-alpha.2` — نسخه Alpha و **غیرپایدار**؛ برای تست در Staging.
+- **جدیدترین نسخه عمومی GitHub Latest:** `v1.4.0-alpha.3` — نسخه Alpha و **غیرپایدار**؛ برای تست در Staging.
 - **آخرین نسخه پایدار:** `v0.6.0`.
 - نسخه `v1.3.0` هنوز Stable/GA نیست؛ نصب RC فقط برای Staging و روتر آزمایشی توصیه می‌شود.
 
