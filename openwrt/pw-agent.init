@@ -8,6 +8,7 @@ start_service() {
     # Recover any unconfirmed network settings after reboot/service restart.
     # If recovery fails, do not start an Agent that could hide the failure.
     /usr/bin/pw-agent --pw-safe-recover || return 1
+    /usr/bin/pw-agent --pw-config-recover || return 1
     procd_open_instance
     procd_set_param command /usr/bin/pw-agent
     procd_set_param respawn 3600 5 5
