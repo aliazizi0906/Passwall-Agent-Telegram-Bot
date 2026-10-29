@@ -48,3 +48,5 @@ jobs:
 # Format alpha.4 capability matrix tests.
 
 # Apply gofmt to the LuCI capability inventory and network-safe UCI controls.
+
+# Normalize annotated UCI-safe host and wireless support before alpha.5 signing.
