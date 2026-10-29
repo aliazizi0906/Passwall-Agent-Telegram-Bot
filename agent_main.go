@@ -92,7 +92,9 @@ var safeID = regexp.MustCompile(`^[A-Za-z0-9_\-]+$`)
 var linkScheme = regexp.MustCompile(`(?i)^(vless|vmess|trojan|ss|ssr|socks|socks5|hysteria2|hy2|tuic|naive|http|https)://`)
 
 func main() {
-	if configSafeCLIIfRequestedV16() { return }
+	if configSafeCLIIfRequestedV16() {
+		return
+	}
 	if safeApplyCLIIfRequestedV15() {
 		return
 	}
