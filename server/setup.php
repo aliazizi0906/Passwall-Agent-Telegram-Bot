@@ -248,7 +248,7 @@ Initial router: <code><?=setup_h($success['device_id'])?></code> — <?=setup_h(
 <button type="button" onclick="copyText('routerStep<?=$i?>')">Copy line <?=($i+1)?></button>
 </div>
 <?php endforeach; ?>
-<p class="muted">If wget is unavailable, substitute step 4 with: <code>curl -fLsS -o /tmp/pw.sh "$PW_SERVER_BASE/install/remote.sh"</code>. If installation fails, do not reuse a consumed or expired token. Protect and rotate exposed provisioning tokens.</p>
+<p class="muted">If wget is unavailable, substitute step 4 with: <code>curl -fLsS -o "$tmp/pw.sh" "$PW_SERVER_BASE/install/remote.sh"</code>. If installation fails, do not reuse a consumed or expired token. Protect and rotate exposed provisioning tokens.</p>
 </div>
 
 <div class="card">
