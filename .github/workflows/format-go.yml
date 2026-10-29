@@ -28,3 +28,5 @@ jobs:
             git commit -m "style(go): format new Agent controls with gofmt"
             git push origin "HEAD:refs/heads/feature/v1.4-secure-browser-control"
           fi
+
+# Maintainer opt-in formatting execution for alpha.2 source.
