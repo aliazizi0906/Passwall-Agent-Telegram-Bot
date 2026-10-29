@@ -130,7 +130,7 @@ jobs:
       - name: Upload cPanel preview bundle
         uses: actions/upload-artifact@v4
         with:
-          name: pw-agent-v1.4.0-alpha.3-cpanel-preview
+          name: pw-agent-v1.4.0-alpha.4-cpanel-preview
           path: |
             dist/pw-agent-cpanel-*.zip
             dist/pw-agent-cpanel-*.sha256
