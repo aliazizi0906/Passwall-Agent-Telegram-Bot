@@ -1,4 +1,5 @@
 name: Release
+# Explicit maintainer-approved v1.4.0-alpha.2 publication as non-GA GitHub Latest.
 
 on:
   push:
