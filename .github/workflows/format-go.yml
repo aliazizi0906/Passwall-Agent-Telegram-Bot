@@ -32,3 +32,5 @@ jobs:
 # Maintainer opt-in formatting execution for alpha.2 source.
 
 # Formatting Go sources before validating Wi-Fi safe-apply alpha.3.
+
+# Normalize the finalized safe Wi-Fi worker before alpha.3 release.
