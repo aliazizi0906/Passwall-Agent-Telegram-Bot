@@ -10,6 +10,8 @@
 
 **What changed in alpha.3:** OpenWrt Setup/Provision now gives six individually copyable, short SSH commands instead of one truncated long command. The router Agent adds a local 90-second SSID safe-apply/rollback workflow, including recovery at boot. Added allowlisted DNS service restart actions, alert/schedule CRUD, limited live status refresh and apk/opkg inventory compatibility. [English release notes](docs/en/RELEASE_NOTES_V1_4_ALPHA_3.md) · [فارسی](docs/fa/RELEASE_NOTES_V1_4_ALPHA_3.md).
 
+![Wi-Fi Safe Apply workflow — illustrative design, not a live router screenshot](docs/assets/previews/wifi-safe-apply-v140.svg)
+
 **Still missing:** VPN split-route application, full client block/QoS, all-network safe apply, model-specific RGB/modem actions, unattended backend upgrades and production/hardware certification. These operations are not advertised as implemented.
 
 
