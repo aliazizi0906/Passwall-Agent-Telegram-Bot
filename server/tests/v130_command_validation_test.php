@@ -43,3 +43,15 @@ foreach(['../bad','bad/name','..','name;reboot',''] as $name){
 }
 try{dash_v130_safe_params('led.identify',['name'=>'blue:status'],false);throw new RuntimeException('LED identify without confirmation accepted');}
 catch(RuntimeException $e){if($e->getMessage()==='LED identify without confirmation accepted')throw $e;}
+
+
+expectOkay('Manual LED brightness','led.brightness.set',['name'=>'blue:status','brightness'=>20],true,['name'=>'blue:status','brightness'=>20]);
+expectFailure('LED brightness requires confirmation','led.brightness.set',['name'=>'blue:status','brightness'=>20],false);
+expectFailure('LED brightness value too large','led.brightness.set',['name'=>'blue:status','brightness'=>99999],true);
+expectFailure('LED brightness shell injection','led.brightness.set',['name'=>'blue;rm','brightness'=>1],true);
+expectOkay('OpenVPN service start','openvpn.service.control',['mode'=>'start'],true,['mode'=>'start']);
+expectFailure('OpenVPN service needs confirmation','openvpn.service.control',['mode'=>'stop'],false);
+expectFailure('OpenVPN service shell injection','openvpn.service.control',['mode'=>'restart;reboot'],true);
+expectOkay('OpenVPN safe route dry-run','openvpn.route.plan',['profile'=>'office','mode'=>'through_vpn','cidr'=>'192.0.2.0/24'],false,['profile'=>'office','mode'=>'through_vpn','cidr'=>'192.0.2.0/24']);
+expectFailure('OpenVPN invalid CIDR','openvpn.route.plan',['profile'=>'office','mode'=>'through_vpn','cidr'=>'invalid'],false);
+expectFailure('OpenVPN injection profile','openvpn.route.plan',['profile'=>'office;touch','mode'=>'bypass_vpn','cidr'=>'192.0.2.0/24'],false);
