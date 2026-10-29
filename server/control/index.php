@@ -233,7 +233,9 @@ function proxy(){
  action('passwall2.shunt.list',say('قوانین Shunt','Shunt rules'),'passwall.read',false)+
  action('passwall2.nodes.relay_ranking',say('رتبه‌بندی Relay','Rank relay nodes'),'passwall.read',false)+
  action('passwall2.failover.list',say('وضعیت Failover','Failover status'),'passwall.read',false)+
- action('passwall2.restart',say('راه‌اندازی مجدد سرویس','Restart Passwall2'),'passwall.modify',true)+'</div></section>'+
+ action('passwall2.restart',say('راه‌اندازی مجدد سرویس','Restart Passwall2'),'passwall.modify',true)+
+  action('passwall2.enable',say('فعال‌سازی Passwall2','Enable Passwall2'),'passwall.modify',true)+
+  action('passwall2.disable',say('توقف Passwall2','Disable Passwall2'),'passwall.modify',true)+'</div></section>'+
  editor+resultBox()+
  '<section class="card"><div class="section-title">'+say('محافظت پیشرفته (در حال توسعه)','Advanced protection (planned)')+'</div><div class="tags">'+['Smart Failover 2.0','Iran split routing','Kill Switch','IPv6 leak protection','WireGuard/OpenVPN adapters'].map(function(v){return '<span class="tag">'+esc(v)+'</span>';}).join('')+'</div><p class="muted" style="margin-top:15px">'+say('قابلیت‌های حفاظت از مسیر ترافیک بدون تست واقعی و مسیر Rollback فعال نمی‌شوند.','Packet-policy features remain disabled until path validation and recovery tests are complete.')+'</p></section></div>';
 }
