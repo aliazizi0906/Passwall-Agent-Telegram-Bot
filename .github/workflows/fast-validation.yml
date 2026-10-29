@@ -4,7 +4,19 @@ on:
   push:
     branches:
       - "feature/v1.4-secure-browser-control"
+    paths:
+      - "*.go"
+      - "server/**"
+      - "openwrt/**"
+      - "scripts/**"
+      - ".github/workflows/**"
   pull_request:
+    paths:
+      - "*.go"
+      - "server/**"
+      - "openwrt/**"
+      - "scripts/**"
+      - ".github/workflows/**"
 
 permissions:
   contents: read
