@@ -55,7 +55,7 @@ label{display:block;font-weight:700;margin-top:19px;margin-bottom:6px}input{widt
 button{width:100%;font:inherit;font-weight:700;padding:12px;margin-top:25px;border-radius:13px;background:var(--accent);color:#fff;border:0;cursor:pointer}
 .error{border:1px solid #bc5868;background:#69202d3d;color:#ffc4cc;padding:12px;border-radius:10px}
 small{color:var(--muted)}a{color:#95c2ff}footer{margin-top:25px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:15px}
-</style><link rel="stylesheet" href="../assets/login-v14.css"></head><body><main class="auth-shell">
+</style><link rel="stylesheet" href="../assets/login-v14.css"><script src="../assets/login-v14.js" defer></script></head><body><main class="auth-shell">
 <aside class="auth-story" aria-label="معرفی مرکز کنترل"><div class="auth-kicker"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h2M7 14h2M16 10h2M16 14h2" stroke-linecap="round"/></svg> PW CONTROL / OPENWRT</div><div><h2>یک مرکز کنترل.<br>تمام روترهای شما.</h2><p>پایش شبکه، مدیریت روترها و عملیات مجاز از طریق مرورگر؛ بدون وابستگی به باز بودن تلگرام و بدون نیاز به پورت مدیریتی WAN.</p></div><div class="auth-benefits"><div><span>✓</span> نشست HTTPS و محدودیت تلاش‌های ورود</div><div><span>✓</span> مدیریت چند روتر با کنترل سطح دسترسی</div><div><span>✓</span> نمایش قابلیت‌های واقعی هر سخت‌افزار OpenWrt</div></div></aside>
 <section class="auth-form">
 <div class="brand"><div class="mark">PW</div><div><h1>مرکز کنترل روتر</h1><p class="muted">ورود مستقل به پنل مدیریت OpenWrt</p></div></div>
@@ -73,13 +73,4 @@ small{color:var(--muted)}a{color:#95c2ff}footer{margin-top:25px;font-size:12px;c
 <footer>ورود فقط از طریق HTTPS و نشست امن انجام می‌شود. رمز اولیه در نصب تازه تنظیم می‌شود؛ برای فعال‌سازی روی نصب قبلی، از حساب Owner داخل Telegram Mini App استفاده کنید.</footer>
 <?php endif;?>
 </section></main>
-<script>
-(function(){
- var button=document.getElementById('revealPassword'),password=document.getElementById('password');
- if(!button||!password)return;
- button.addEventListener('click',function(){
-   var showing=password.type==='password';password.type=showing?'text':'password';
-   button.textContent=showing?'پنهان':'نمایش';button.setAttribute('aria-pressed',showing?'true':'false');
- });
-})();
-</script></body></html>
+</body></html>
