@@ -300,6 +300,8 @@ func (a *Agent) execute(c *Command) (interface{}, error) {
 		return wifiChannelSafeV16(params)
 	case "firewall.wan_guard.set":
 		return vpnWANGuardV16(params)
+	case "firewall.dns53_guard.set":
+		return dnsPortGuardV16(params)
 	case "config.safe.confirm":
 		return configSafeConfirmV16(params)
 	case "network.doctor":
