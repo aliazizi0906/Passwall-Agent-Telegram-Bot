@@ -38,3 +38,5 @@ jobs:
 # gofmt for extended safe network control actions.
 
 # Format final safe configuration lock guard.
+
+# Format verified native RGB driver.
