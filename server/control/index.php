@@ -681,6 +681,37 @@ document.addEventListener('click',function(ev){
  command('system.service.restart',true,{name:name});
 });
 document.addEventListener('submit',function(ev){
+ var form=ev.target.closest('form[data-luci-form]');if(!form)return;
+ ev.preventDefault();if(!form.reportValidity())return;
+ var actionName=String(form.dataset.luciForm||'');
+ var permissions={
+  'luci.system.hostname.set':'system.modify',
+  'luci.dhcp.static.add':'network.modify',
+  'luci.dhcp.static.delete':'network.modify',
+  'luci.wifi.iface.toggle':'wifi.modify'
+ };
+ if(!Object.prototype.hasOwnProperty.call(permissions,actionName)||!has(permissions[actionName])||!has('network.modify'))return;
+ var fields=new FormData(form),params={};
+ for(var pair of fields.entries())params[pair[0]]=String(pair[1]);
+ if(actionName==='luci.wifi.iface.toggle')params.enabled=params.enabled==='1';
+ command(actionName,true,params).catch(function(e){var n=$('notice');if(n)n.textContent=e.message;});
+});
+document.addEventListener('input',function(ev){
+ var search=ev.target.closest('[data-luci-search]');if(!search)return;
+ filterLuciResults();
+});
+document.addEventListener('change',function(ev){
+ var select=ev.target.closest('[data-luci-status]');if(!select)return;
+ filterLuciResults();
+});
+function filterLuciResults(){
+ var q=document.querySelector('[data-luci-search]'),f=document.querySelector('[data-luci-status]');
+ var search=q?String(q.value).trim().toLowerCase():'',status=f?String(f.value):'all';
+ document.querySelectorAll('.luci-item').forEach(function(item){
+  item.hidden=!(item.dataset.moduleText||'').includes(search)||(status!=='all'&&item.dataset.moduleState!==status);
+ });
+}
+document.addEventListener('submit',function(ev){
  var form=ev.target.closest('form.operational-form[data-config-action]');if(!form)return;
  ev.preventDefault();if(!form.reportValidity())return;
  var actionName=String(form.dataset.configAction||'');
