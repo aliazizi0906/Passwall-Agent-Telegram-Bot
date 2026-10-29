@@ -1,6 +1,17 @@
 # PW Agent v1.4 engineering status (public Alpha, not Stable)
 
-Development source branch: `feature/v1.4-secure-browser-control`. **v1.4.0-alpha.3 is the GitHub Latest public download, but is NOT stable or production-certified.** Public distribution does not imply the 14 workstreams are complete.
+Development source branch: `feature/v1.4-secure-browser-control`. **v1.4.0-alpha.4 is the GitHub Latest public download, but is NOT stable or production-certified.** Public distribution does not imply the 14 workstreams are complete.
+
+## Alpha.4 actual actions and acceptance limits
+
+- **PBR:** create/delete PW-managed policies for existing logical network interfaces with independent rollback; package pbr required. Not a full split-tunnel/kill-switch guarantee.
+- **OpenVPN:** enable/disable UCI profiles and service control, requiring installed profiles and package.
+- **Firewall:** LAN-to-WAN MAC blocking, direct-forwarding block and TCP/UDP DNS port-53 guard with local rollback; no proof of full DNS/IPv6/DoH/DoT leak prevention.
+- **SQM:** update an existing queue's download/upload bitrates; does not rate-limit individual clients.
+- **Wi-Fi:** named radio channel safe apply plus existing SSID safe apply; password/guest provisioning is not cleared for use.
+- **LED RGB:** native 3-channel sysfs multicolor controls only when detected; no vendor LED driver or timer schedule.
+- **Backend:** explicitly invoked cPanel CLI tool for pinned Ed25519+SHA256 signed archive staging, backup, rollback and acceptance. Web self-update and DB migrations require further testing.
+- **Not certified:** power-cut/reboot hardware acceptance and all-model modem controls remain outstanding.
 
 ## Alpha.3 additions and acceptance
 
