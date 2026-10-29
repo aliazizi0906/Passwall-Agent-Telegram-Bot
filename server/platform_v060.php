@@ -313,6 +313,11 @@ function v060_can_device(int $uid,string $deviceId): bool {
 }
 function v060_action_permission(string $action): string {
     if($action==='terminal.exec')return 'terminal.execute';
+    if($action==='luci.catalog'||$action==='luci.system.status')return 'system.read';
+    if($action==='luci.system.hostname.set')return 'system.modify';
+    if($action==='luci.dhcp.static.list')return 'network.read';
+    if($action==='luci.dhcp.static.add'||$action==='luci.dhcp.static.delete')return 'network.modify';
+    if($action==='luci.wifi.iface.toggle')return 'wifi.modify';
     if($action==='openvpn.service.control'||$action==='openvpn.profile.toggle')return 'network.modify';
     if(str_starts_with($action,'pbr.policy.'))return $action==='pbr.policy.list'?'network.read':'network.modify';
     if($action==='sqm.queue.set')return 'network.modify';
@@ -561,7 +566,7 @@ function v060_add_alert(int $uid,string $deviceId,string $metric,string $op,floa
 
 function v060_dashboard_command_allowed(string $action): bool {
     return in_array($action,[
-      'system.status','agent.diagnose','agent.capabilities','network.doctor','network.path_audit','led.status','led.identify','led.brightness.set','led.rgb.set','openvpn.status','openvpn.service.control','openvpn.route.plan','openvpn.profile.toggle','pbr.policy.list','pbr.policy.add','pbr.policy.delete','clients.internet.block','sqm.queue.set','wifi.channel.safe_apply','firewall.wan_guard.set','firewall.dns53_guard.set','config.safe.confirm','system.clients','wifi.list','wifi.plan_ssid','wifi.ssid.safe_apply','wifi.ssid.safe_confirm','wifi.radios','wifi.stations',
+      'system.status','luci.catalog','luci.system.status','luci.system.hostname.set','luci.dhcp.static.list','luci.dhcp.static.add','luci.dhcp.static.delete','luci.wifi.iface.toggle','agent.diagnose','agent.capabilities','network.doctor','network.path_audit','led.status','led.identify','led.brightness.set','led.rgb.set','openvpn.status','openvpn.service.control','openvpn.route.plan','openvpn.profile.toggle','pbr.policy.list','pbr.policy.add','pbr.policy.delete','clients.internet.block','sqm.queue.set','wifi.channel.safe_apply','firewall.wan_guard.set','firewall.dns53_guard.set','config.safe.confirm','system.clients','wifi.list','wifi.plan_ssid','wifi.ssid.safe_apply','wifi.ssid.safe_confirm','wifi.radios','wifi.stations',
       'network.wan','network.dns','network.routes','network.dhcp_leases','network.wireguard','network.services','network.internet_test','network.speed_probe','network.path_audit','network.policy_status','cellular.status','system.leds','system.interfaces','system.services','system.service.restart','system.packages','system.package_updates','clients.policy_plan',
       'passwall2.status','passwall2.nodes.list','passwall2.nodes.relay_ranking',
       'passwall2.failover.list','passwall2.failover.run','passwall2.restart','passwall2.enable','passwall2.disable',
