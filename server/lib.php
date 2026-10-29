@@ -13,7 +13,7 @@ function cfg(): array {
     return $cfg;
 }
 
-function app_version(): string { return '1.4.0-alpha.3'; }
+function app_version(): string { return '1.4.0-alpha.4'; }
 
 function tg_validate_webapp_init_data(string $initData, int $maxAgeSeconds = 600): array {
     if ($initData === '' || strlen($initData) > 16384) throw new RuntimeException('Missing or invalid Telegram Mini App authentication data');
