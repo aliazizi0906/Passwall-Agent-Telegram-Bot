@@ -167,19 +167,31 @@ function pw_setup_write_config(string $path,array $config): void {
     @chmod($path,0600);
 }
 
-function pw_setup_router_command(string $base,string $token): string {
-    // Immutable release tag + explicit downloaded-file check; no sh -c "$(wget)" ambiguity.
-    $raw=rtrim($base,'/').'/install/remote.sh';
+/**
+ * BusyBox/Dropbear terminals can truncate long paste buffers. Each command is
+ * designed to be pasted and executed separately, without nested shell quotes.
+ * Never put the single-use provisioning token in a URL or log it.
+ *
+ * The wget bootstrap is served from this backend over HTTPS. The downloaded
+ * script verifies signed release assets before provisioning the router.
+ * An OpenWrt with curl but no wget may use the documented alternative.
+ */
+function pw_setup_router_steps(string $base,string $token): array {
+    $base=rtrim(pw_setup_validate_base_url($base),'/');
+    if(!preg_match('/^[A-Za-z0-9_-]{32,128}$/D',$token))
+        throw new RuntimeException('Invalid provisioning token');
     $quote=static fn(string $v): string => "'".str_replace("'","'\\''",$v)."'";
-    $script='set -eu; tmp=$(mktemp /tmp/pw-installer.XXXXXX); '
-        .'trap '. $quote('rm -f "$tmp"').' EXIT INT TERM; '
-        .'if command -v curl >/dev/null 2>&1; then '
-        .'curl -4 -fLsS --connect-timeout 10 --max-time 60 -o "$tmp" '.$quote($raw)
-        .' || wget -O "$tmp" '.$quote($raw).'; '
-        .'else wget -O "$tmp" '.$quote($raw).'; fi; '
-        .'test -s "$tmp"; sh "$tmp"';
-    return 'PW_SERVER_BASE='.$quote($base).' PW_PROVISION_TOKEN='.$quote($token)
-        .' PW_AGENT_VERSION='.$quote('v'.pw_setup_version()).' sh -c '.$quote($script);
+    return [
+        'export PW_SERVER_BASE='.$quote($base),
+        'export PW_PROVISION_TOKEN='.$quote($token),
+        'export PW_AGENT_VERSION='.$quote('v'.pw_setup_version()),
+        'wget -O /tmp/pw.sh "$PW_SERVER_BASE/install/remote.sh"',
+        'test -s /tmp/pw.sh && sh -n /tmp/pw.sh && sh /tmp/pw.sh',
+        'unset PW_PROVISION_TOKEN',
+    ];
+}
+function pw_setup_router_command(string $base,string $token): string {
+    return implode("\n",pw_setup_router_steps($base,$token));
 }
 
 function pw_setup_cron_command(string $root): string {
