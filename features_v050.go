@@ -47,7 +47,13 @@ func isMutationActionV5(action string) bool {
 		"passwall2.subscription.add", "passwall2.subscription.update", "passwall2.subscription.delete",
 		"passwall2.nodes.prune_dead", "passwall2.nodes.delete_many", "passwall2.nodes.delete_all",
 		"system.service.restart", "network.wan.reconnect", "firewall.redirect.toggle",
-		"agent.update.apply", "terminal.exec", "config.rollback_snapshot":
+		"agent.update.apply", "terminal.exec", "config.rollback_snapshot",
+		"led.brightness.set", "led.rgb.set", "openvpn.service.control",
+		"wifi.ssid.safe_apply", "wifi.ssid.safe_confirm",
+		"openvpn.profile.toggle", "pbr.policy.add", "pbr.policy.delete",
+		"clients.internet.block", "sqm.queue.set", "wifi.channel.safe_apply",
+		"firewall.wan_guard.set", "firewall.dns53_guard.set", "config.safe.confirm",
+		"luci.system.hostname.set", "luci.dhcp.static.add", "luci.dhcp.static.delete", "luci.wifi.iface.toggle":
 		return true
 	default:
 		return false
@@ -153,15 +159,19 @@ func (a *Agent) verifyUpdateSignatureV5(payload []byte, signatureB64 string) err
 	return verifyEd25519SignatureV5(effectiveUpdatePublicKeyV5(a.cfg), payload, signatureB64)
 }
 
+// releaseArchV14 is injected into official multiarchitecture bundles with
+// -ldflags="-X main.releaseArchV14=<arch>". For GOARCH=arm, runtime.GOARCH
+// alone cannot distinguish GOARM 5, 6 and 7; never guess on manual builds.
+var releaseArchV14 string
+
 func agentArchV5() string {
-	switch runtime.GOARCH {
-	case "arm":
-		return "armv7"
-	case "amd64", "arm64", "386", "mips", "mipsle":
-		return runtime.GOARCH
-	default:
-		return runtime.GOARCH
+	if releaseArchV14 != "" {
+		return releaseArchV14
 	}
+	if runtime.GOARCH == "arm" {
+		return "unknown"
+	}
+	return runtime.GOARCH
 }
 
 type nodeHealthV5 struct {

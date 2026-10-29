@@ -1,14 +1,24 @@
 # PW Agent Documentation — English
 
-> **Latest GitHub Release: v1.3.0-rc.2.** This release is marked Latest, while retaining the RC tag and its not-production-certified status. Use the [installation guide](INSTALL_V1_3.md), [upgrade guide](UPGRADE_V1_3.md) and [implementation status](CONTROL_CENTER_PROGRESS.md). Historical sections document the v0.6 baseline.
+> **Latest GitHub Release: v1.4.0-alpha.4 (Alpha, NOT stable).** It is the newest public download, not a certified production release; see the [release warnings](RELEASE_NOTES_V1_4_ALPHA_3.md) and [14-workstream matrix](V1_4_EXECUTION.md). v1.3 RC2 remains a previous candidate and v0.6 the older stable baseline.
 
 [← Project README](../../README.md) · [فارسی](../fa/README.md)
+
+## Public v1.4 Alpha (Latest, not Stable)
+- [Alpha.5 LuCI capability center, real DHCP/System controls and UX improvements](RELEASE_NOTES_V1_4_ALPHA_5.md)
+- [Alpha.4 real network controls, signed backend CLI upgrade and limitations](RELEASE_NOTES_V1_4_ALPHA_4.md)
+- [Alpha.3 release notes: short installer, Wi-Fi rollback, automation and limitations](RELEASE_NOTES_V1_4_ALPHA_3.md)
+- [Wi-Fi Safe Apply static workflow illustration](../assets/previews/wifi-safe-apply-v140.svg)
+- [Alpha.2 release notes, warnings and actionable modules](RELEASE_NOTES_V1_4_ALPHA_2.md)
+- [New operational dashboard SVG preview](../assets/previews/control-center-v140-operations.svg)
+- [OpenVPN and LED control SVG preview](../assets/previews/openvpn-led-v140-controls.svg)
+- [All 14 workstreams and test gates](V1_4_EXECUTION.md)
 
 ## Menu
 
 | Section | Description |
 |---|---|
-| [Install v1.3 RC](INSTALL_V1_3.md) | Current GitHub Latest release (RC-tagged) installation |
+| [Install v1.3 RC](INSTALL_V1_3.md) | Older v1.3 RC2 staging installation |
 | [Legacy install](INSTALL.md) | Stable v0.6.0 installation guide |
 | [Release notes](RELEASE_NOTES_V1_3_RC.md) | v1.3.0-rc.2 changes and limitations |
 | [Features](FEATURES.md) | Complete feature overview |

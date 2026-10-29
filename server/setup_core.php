@@ -6,17 +6,17 @@ declare(strict_types=1);
  * from both the CLI installer and the browser-based cPanel installer.
  */
 
-function pw_setup_version(): string { return '1.3.0-rc.2'; }
+function pw_setup_version(): string { return '1.4.0-alpha.5'; }
 
 function pw_setup_valid_device_id(string $v): bool {
     return (bool)preg_match('/^[A-Za-z0-9_-]{1,64}$/',$v);
 }
 
 function pw_setup_normalize_arch(string $arch): string {
-    $archMap=['armv7l'=>'armv7','armv7'=>'armv7','aarch64'=>'arm64','arm64'=>'arm64','x86_64'=>'amd64','amd64'=>'amd64','i386'=>'386','i686'=>'386','386'=>'386','mips'=>'mips','mipsel'=>'mipsle','mipsle'=>'mipsle'];
+    $archMap=['armv5tel'=>'armv5','armv5l'=>'armv5','armv6l'=>'armv6','armv8l'=>'armv7','armv7l'=>'armv7','armv7'=>'armv7','aarch64'=>'arm64','arm64'=>'arm64','x86_64'=>'amd64','amd64'=>'amd64','i386'=>'386','i686'=>'386','386'=>'386','mips'=>'mips','mipsel'=>'mipsle','mipsle'=>'mipsle','mips64el'=>'mips64le','mips64le'=>'mips64le','mips64'=>'mips64','riscv64'=>'riscv64','loongarch64'=>'loong64','loong64'=>'loong64','ppc64le'=>'ppc64le'];
     $key=strtolower(trim($arch));
     $out=$archMap[$key]??$key;
-    if(!in_array($out,['armv7','arm64','amd64','386','mips','mipsle'],true))throw new RuntimeException('Unsupported router architecture.');
+    if(!in_array($out,['armv5','armv6','armv7','arm64','amd64','386','mips','mipsle','mips64','mips64le','riscv64','loong64','ppc64le'],true))throw new RuntimeException('Unsupported router architecture.');
     return $out;
 }
 
@@ -167,10 +167,31 @@ function pw_setup_write_config(string $path,array $config): void {
     @chmod($path,0600);
 }
 
-function pw_setup_router_command(string $base,string $token): string {
-    $raw='https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh';
+/**
+ * BusyBox/Dropbear terminals can truncate long paste buffers. Each command is
+ * designed to be pasted and executed separately, without nested shell quotes.
+ * Never put the single-use provisioning token in a URL or log it.
+ *
+ * The wget bootstrap is served from this backend over HTTPS. The downloaded
+ * script verifies signed release assets before provisioning the router.
+ * An OpenWrt with curl but no wget may use the documented alternative.
+ */
+function pw_setup_router_steps(string $base,string $token): array {
+    $base=rtrim(pw_setup_validate_base_url($base),'/');
+    if(!preg_match('/^[A-Za-z0-9_-]{32,128}$/D',$token))
+        throw new RuntimeException('Invalid provisioning token');
     $quote=static fn(string $v): string => "'".str_replace("'","'\\''",$v)."'";
-    return 'PW_SERVER_BASE='.$quote($base).' PW_PROVISION_TOKEN='.$quote($token).' PW_AGENT_VERSION='.$quote('v'.pw_setup_version()).' sh -c "$(wget -qO- '.$quote($raw).')"';
+    return [
+        'export PW_SERVER_BASE='.$quote($base),
+        'export PW_PROVISION_TOKEN='.$quote($token),
+        'export PW_AGENT_VERSION='.$quote('v'.pw_setup_version()),
+        'tmp=$(mktemp -d /tmp/pw.XXXXXX) && wget -O "$tmp/pw.sh" "$PW_SERVER_BASE/install/remote.sh"',
+        'test -s "$tmp/pw.sh" && sh -n "$tmp/pw.sh" && sh "$tmp/pw.sh"',
+        'unset PW_PROVISION_TOKEN; test -n "$tmp" && rm -f "$tmp/pw.sh" && rmdir "$tmp"',
+    ];
+}
+function pw_setup_router_command(string $base,string $token): string {
+    return implode("\n",pw_setup_router_steps($base,$token));
 }
 
 function pw_setup_cron_command(string $root): string {

@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-const agentVersion = "1.3.0-rc.2"
+const agentVersion = "1.4.0-alpha.5"
 
 type Config struct {
 	ServerURL           string `json:"server_url"`
@@ -92,6 +92,12 @@ var safeID = regexp.MustCompile(`^[A-Za-z0-9_\-]+$`)
 var linkScheme = regexp.MustCompile(`(?i)^(vless|vmess|trojan|ss|ssr|socks|socks5|hysteria2|hy2|tuic|naive|http|https)://`)
 
 func main() {
+	if configSafeCLIIfRequestedV16() {
+		return
+	}
+	if safeApplyCLIIfRequestedV15() {
+		return
+	}
 	if runCLIIfRequestedV4() {
 		return
 	}
@@ -123,7 +129,11 @@ func main() {
 		client: &http.Client{Timeout: time.Duration(cfg.RequestTimeoutSec) * time.Second},
 	}
 	fmt.Printf("pw-agent %s started for %s\n", agentVersion, cfg.DeviceID)
-	go a.failoverLoopV4()
+	// A generic OpenWrt device can run the core Agent without Passwall2.
+	// Do not start a Passwall2-specific background worker on unsupported routers.
+	if _, err := os.Stat("/etc/config/passwall2"); err == nil {
+		go a.failoverLoopV4()
+	}
 	go healthTelemetryLoopV6()
 	a.loop()
 }
@@ -258,16 +268,76 @@ func (a *Agent) execute(c *Command) (interface{}, error) {
 	switch c.Action {
 	case "system.status":
 		return systemStatus()
+	case "luci.catalog":
+		return luciModulesListV17(), nil
+	case "luci.system.status":
+		return luciSystemInfoV17()
+	case "luci.system.hostname.set":
+		return luciHostnameSetV17(params)
+	case "luci.dhcp.static.list":
+		return luciStaticDHCPListV17()
+	case "luci.dhcp.static.add":
+		return luciDHCPAddV17(params)
+	case "luci.dhcp.static.delete":
+		return luciDHCPDeleteV17(params)
+	case "luci.wifi.iface.toggle":
+		return luciWifiInterfaceToggleV17(params)
 	case "agent.capabilities":
 		return capabilityReportV13(), nil
 	case "led.status":
 		return ledStatusV13()
+	case "led.identify":
+		return identifyLEDV14(params)
+	case "led.brightness.set":
+		return setLEDBrightnessV14(params)
+	case "led.rgb.set":
+		return setRGBLEDV16(params)
+	case "openvpn.status":
+		return openvpnStatusV15()
+	case "openvpn.service.control":
+		return openvpnServiceControlV15(params)
+	case "openvpn.route.plan":
+		return openvpnRoutePlanV15(params)
+	case "openvpn.profile.toggle":
+		return openvpnProfileToggleV16(params)
+	case "pbr.policy.list":
+		return pbrPolicyListV16()
+	case "pbr.policy.add":
+		return pbrPolicyAddV16(params)
+	case "pbr.policy.delete":
+		return pbrPolicyDeleteV16(params)
+	case "clients.internet.block":
+		return clientInternetBlockV16(params)
+	case "sqm.queue.set":
+		return sqmQueueSetV16(params)
+	case "wifi.channel.safe_apply":
+		return wifiChannelSafeV16(params)
+	case "firewall.wan_guard.set":
+		return vpnWANGuardV16(params)
+	case "firewall.dns53_guard.set":
+		return dnsPortGuardV16(params)
+	case "config.safe.confirm":
+		return configSafeConfirmV16(params)
 	case "network.doctor":
 		return networkDoctorV13()
+	case "network.path_audit":
+		return routeSecurityAuditV14()
+	case "network.speed_probe":
+		return speedProbeV14()
+	case "cellular.status":
+		return cellularStatusV14()
+	case "network.policy_status":
+		return networkPoliciesV14()
+	case "network.services":
+		return networkServiceInventoryV14()
+	case "system.leds":
+		return ledInventoryV14()
 	case "system.interfaces":
 		return networkInterfaces()
 	case "system.clients":
 		return connectedClients()
+	case "clients.policy_plan":
+		return clientPolicyPlanV14(params)
 	case "system.backup.create":
 		return createSystemBackup()
 	case "system.backup.restore":
@@ -276,6 +346,12 @@ func (a *Agent) execute(c *Command) (interface{}, error) {
 		return scheduleReboot()
 	case "wifi.list":
 		return listWiFi()
+	case "wifi.plan_ssid":
+		return planSSIDV14(params)
+	case "wifi.ssid.safe_apply":
+		return safeApplySSIDV15(params)
+	case "wifi.ssid.safe_confirm":
+		return confirmSSIDV15(params)
 	case "wifi.set_ssid":
 		section, e1 := stringParam(params, "section")
 		ssid, e2 := stringParam(params, "ssid")

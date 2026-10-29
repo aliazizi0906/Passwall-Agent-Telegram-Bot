@@ -1,14 +1,24 @@
 # مستندات PW Agent — فارسی
 
-> **آخرین Release در GitHub: v1.3.0-rc.2.** این نسخه با برچسب Latest منتشر شده است، اما نام RC و محدودیت‌های آمادگی برای Production همچنان برقرار است. برای نصب و ارتقا از [راهنمای نصب](INSTALL_V1_3.md)، [ارتقا](UPGRADE_V1_3.md) و [وضعیت قابلیت‌ها](CONTROL_CENTER_PROGRESS.md) استفاده کن. راهنماهای v0.6 مربوط به نسخه پایه قدیمی‌اند.
+> **Latest GitHub Release: v1.4.0-alpha.4.** این نسخه بنا به درخواست مالک به‌عنوان Latest منتشر می‌شود، اما **Alpha و غیرپایدار** است؛ تضمین عملکرد روی تمام روترها ندارد. [یادداشت انتشار](RELEASE_NOTES_V1_4_ALPHA_3.md) و [ماتریس ۱۴ قابلیت](V1_4_EXECUTION.md) را بخوانید. نسخه ۱.۳ RC قدیمی‌تر است و v0.6 خط مبنای پایدار قبلی است.
 
 [← صفحه اصلی پروژه](../../README.md) · [English](../en/README.md)
+
+## نسخه عمومی Alpha v1.4 (Latest، نه Stable)
+- [آلفا ۵: ماژول‌های LuCI، اکشن‌های سیستم و DHCP و اصلاح کامل آیکون‌ها](RELEASE_NOTES_V1_4_ALPHA_5.md)
+- [آلفا ۴: اکشن‌های شبکه، مدیریت RGB، ارتقای امضاشده و محدودیت‌ها](RELEASE_NOTES_V1_4_ALPHA_4.md)
+- [یادداشت نسخه آلفا ۳: نصب کوتاه، بازگشت امن Wi-Fi و محدودیت‌ها](RELEASE_NOTES_V1_4_ALPHA_3.md)
+- [تصویر نمونه Safe Apply وای‌فای](../assets/previews/wifi-safe-apply-v140.svg)
+- [یادداشت انتشار ۱.۴ آلفا ۲ و محدودیت‌های عملیاتی](../en/RELEASE_NOTES_V1_4_ALPHA_2.md)
+- [تصویر جدید داشبورد](../assets/previews/control-center-v140-operations.svg)
+- [پیش‌نمایش OpenVPN و LED](../assets/previews/openvpn-led-v140-controls.svg)
+- [وضعیت و مراحل اجرایی تمام ۱۴ قابلیت](V1_4_EXECUTION.md)
 
 ## منو
 
 | بخش | توضیح |
 |---|---|
-| [نصب v1.3 RC](INSTALL_V1_3.md) | راهنمای آخرین Release در GitHub (نسخه RC) |
+| [نصب v1.3 RC](INSTALL_V1_3.md) | راهنمای نسخه قدیمی‌تر RC2؛ برای v1.4 راهنمای انتشار Alpha را بخوانید |
 | [نصب Legacy](INSTALL.md) | راهنمای نسخه پایدار v0.6.0 |
 | [یادداشت انتشار RC2](RELEASE_NOTES_V1_3_RC.md) | تغییرات و محدودیت‌های v1.3.0-rc.2 |
 | [قابلیت‌ها](FEATURES.md) | معرفی کامل امکانات |

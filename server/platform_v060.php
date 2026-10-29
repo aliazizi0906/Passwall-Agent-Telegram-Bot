@@ -208,6 +208,18 @@ function v060_device_row(string $deviceId): ?array {
     $st=db()->prepare('SELECT r.*,g.name group_name,d.last_seen,d.last_ip,d.agent_version,d.hostname,d.meta_json FROM pw_device_registry r LEFT JOIN pw_device_groups g ON g.id=r.group_id LEFT JOIN pw_devices d ON d.device_id=r.device_id WHERE r.device_id=?');
     $st->execute([$deviceId]);$r=$st->fetch();return $r?:null;
 }
+/** Only explicitly public attributes may cross Telegram/Web API boundaries. */
+function v060_public_device_fields(array $raw): array {
+    $allowed=[
+      'device_id','display_name','enabled','group_id','group_name','location','tags_json',
+      'last_seen','agent_version','hostname','created_at','updated_at'
+    ];
+    return array_intersect_key($raw,array_flip($allowed));
+}
+function v060_public_device_row(string $deviceId): ?array {
+    $row=v060_device_row($deviceId);
+    return $row===null?null:v060_public_device_fields($row);
+}
 function v060_device_secret(string $deviceId): string {
     ensure_v060_schema();
     $st=db()->prepare('SELECT secret_sealed,enabled FROM pw_device_registry WHERE device_id=?');$st->execute([$deviceId]);$r=$st->fetch();
@@ -262,9 +274,8 @@ function v060_issue_provision_token(int $uid,string $deviceId): array {
 }
 
 function v060_provision_command(string $token): string {
-    $base=rtrim((string)cfg()['base_url'],'/');
-    $raw='https://raw.githubusercontent.com/aliazizi0906/Passwall-Agent-Telegram-Bot/main/openwrt/install-remote.sh';
-    return 'PW_SERVER_BASE='.escapeshellarg($base).' PW_PROVISION_TOKEN='.escapeshellarg($token).' PW_AGENT_VERSION='.escapeshellarg('v'.app_version()).' sh -c "$(wget -qO- '.escapeshellarg($raw).')"';
+    require_once __DIR__.'/setup_core.php';
+    return pw_setup_router_command(rtrim((string)cfg()['base_url'],'/'),$token);
 }
 
 function v060_user(int $uid): ?array {
@@ -302,6 +313,17 @@ function v060_can_device(int $uid,string $deviceId): bool {
 }
 function v060_action_permission(string $action): string {
     if($action==='terminal.exec')return 'terminal.execute';
+    if($action==='luci.catalog'||$action==='luci.system.status')return 'system.read';
+    if($action==='luci.system.hostname.set')return 'system.modify';
+    if($action==='luci.dhcp.static.list')return 'network.read';
+    if($action==='luci.dhcp.static.add'||$action==='luci.dhcp.static.delete')return 'network.modify';
+    if($action==='luci.wifi.iface.toggle')return 'wifi.modify';
+    if($action==='openvpn.service.control'||$action==='openvpn.profile.toggle')return 'network.modify';
+    if(str_starts_with($action,'pbr.policy.'))return $action==='pbr.policy.list'?'network.read':'network.modify';
+    if($action==='sqm.queue.set')return 'network.modify';
+    if($action==='clients.internet.block')return 'firewall.modify';
+    if($action==='config.safe.confirm')return 'network.modify';
+    if($action==='openvpn.status'||$action==='openvpn.route.plan')return 'network.read';
     if($action==='system.backup.create')return 'backup.create';
     if($action==='system.backup.restore')return 'backup.restore';
     if(str_starts_with($action,'agent.update'))return $action==='agent.update.check'?'system.read':'agent.update';
@@ -309,17 +331,17 @@ function v060_action_permission(string $action): string {
     if(str_starts_with($action,'wifi.'))return isMutationActionPHPV6($action)?'wifi.modify':'wifi.read';
     if(str_starts_with($action,'firewall.'))return isMutationActionPHPV6($action)?'firewall.modify':'firewall.read';
     if(str_starts_with($action,'network.'))return isMutationActionPHPV6($action)?'network.modify':'network.read';
-    if(str_starts_with($action,'diag.')||$action==='network.doctor')return 'network.read';
+    if(str_starts_with($action,'diag.')||$action==='network.doctor'||$action==='cellular.status')return 'network.read';
     if(str_starts_with($action,'config.rollback'))return 'rollback';
     return isMutationActionPHPV6($action)?'system.modify':'system.read';
 }
 function isMutationActionPHPV6(string $a): bool {
     $read=[
-      'system.status','system.interfaces','system.clients','wifi.list','passwall2.status','passwall2.log',
-      'agent.capabilities','network.doctor','led.status',
+      'system.status','system.interfaces','system.clients','clients.policy_plan','wifi.list','wifi.plan_ssid','passwall2.status','passwall2.log',
+      'agent.capabilities','network.doctor','network.speed_probe','network.policy_status','network.services','cellular.status','system.leds','led.status','openvpn.status','openvpn.route.plan','pbr.policy.list',
       'passwall2.nodes.list','passwall2.node.test','passwall2.nodes.test_all','passwall2.shunt.list',
       'passwall2.shunt.options','system.time','system.log','system.klog','system.processes','system.services',
-      'system.packages','system.package_updates','network.wan','network.internet_test','network.routes','network.dns',
+      'system.packages','system.package_updates','cellular.status','system.leds','network.wan','network.internet_test','network.speed_probe','network.policy_status','network.services','network.routes','network.dns',
       'network.dhcp_leases','network.wireguard','wifi.radios','wifi.stations','firewall.zones','firewall.redirects',
       'diag.ping','diag.traceroute','passwall2.failover.list','passwall2.subscriptions.list',
       'passwall2.nodes.relay_ranking','passwall2.nodes.dead_candidates','agent.update.check','agent.diagnose'
@@ -544,10 +566,10 @@ function v060_add_alert(int $uid,string $deviceId,string $metric,string $op,floa
 
 function v060_dashboard_command_allowed(string $action): bool {
     return in_array($action,[
-      'system.status','agent.diagnose','agent.capabilities','network.doctor','led.status','system.clients','wifi.list','wifi.radios','wifi.stations',
-      'network.wan','network.dns','network.routes','network.internet_test','system.interfaces',
+      'system.status','luci.catalog','luci.system.status','luci.system.hostname.set','luci.dhcp.static.list','luci.dhcp.static.add','luci.dhcp.static.delete','luci.wifi.iface.toggle','agent.diagnose','agent.capabilities','network.doctor','network.path_audit','led.status','led.identify','led.brightness.set','led.rgb.set','openvpn.status','openvpn.service.control','openvpn.route.plan','openvpn.profile.toggle','pbr.policy.list','pbr.policy.add','pbr.policy.delete','clients.internet.block','sqm.queue.set','wifi.channel.safe_apply','firewall.wan_guard.set','firewall.dns53_guard.set','config.safe.confirm','system.clients','wifi.list','wifi.plan_ssid','wifi.ssid.safe_apply','wifi.ssid.safe_confirm','wifi.radios','wifi.stations',
+      'network.wan','network.dns','network.routes','network.dhcp_leases','network.wireguard','network.services','network.internet_test','network.speed_probe','network.path_audit','network.policy_status','cellular.status','system.leds','system.interfaces','system.services','system.service.restart','system.packages','system.package_updates','clients.policy_plan',
       'passwall2.status','passwall2.nodes.list','passwall2.nodes.relay_ranking',
-      'passwall2.failover.list','passwall2.failover.run','passwall2.restart',
+      'passwall2.failover.list','passwall2.failover.run','passwall2.restart','passwall2.enable','passwall2.disable',
       'passwall2.subscriptions.list','passwall2.shunt.list','passwall2.log',
       'passwall2.node.test','passwall2.node.select','passwall2.node.add_link','passwall2.node.delete',
       'passwall2.subscription.add','passwall2.subscription.update','passwall2.subscription.delete',

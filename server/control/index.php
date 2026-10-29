@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__).'/lib.php';
+require_once dirname(__DIR__).'/web_auth.php';
+$browserUid=pw_web_auth_user();
+$browserCsrf=$browserUid?pw_web_auth_csrf():'';
 header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
@@ -14,20 +17,23 @@ if(!str_starts_with(rtrim((string)(cfg()['base_url']??''),'/'),'https://')){
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>PW Control Center — Preview</title>
+<title>PW Control Center — OpenWrt Management</title>
+<link rel="stylesheet" href="../assets/vazirmatn.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{--bg:#f7f8fc;--panel:#fff;--soft:#f0f4fa;--border:#dde5ef;--ink:#10233c;--muted:#72829a;--nav:#101f3b;--accent:#2666da;--accent2:#39a6a0;--good:#00856d;--bad:#c64154;--warn:#ac742a;--shadow:0 14px 35px rgba(23,46,85,.05);color-scheme:light}
 :root[data-theme=dark]{--bg:#0d1523;--panel:#142237;--soft:#1b2e48;--border:#2a3b55;--ink:#e8effb;--muted:#9cafc8;--nav:#08101f;--accent:#75a6ff;--accent2:#6fddcf;--good:#70d7b8;--bad:#ff9cab;--warn:#ffce86;--shadow:none;color-scheme:dark}
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;font:14px/1.65 Tahoma,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+html,body{margin:0;min-height:100%;font:14px/1.75 'Vazirmatn',Tahoma,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--ink)}
 button,select{font:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.5}
 .shell{display:flex;min-height:100vh}.sidebar{width:250px;flex:none;background:var(--nav);color:#f2f6ff;padding:25px 15px;position:sticky;top:0;height:100vh;overflow:auto}
 .brand{display:flex;gap:13px;align-items:center;padding:7px 12px 28px;border-bottom:1px solid #ffffff16;margin-bottom:19px}.brand-logo{width:45px;height:45px;display:grid;place-items:center;background:linear-gradient(140deg,#407eff,#23b6c0);border-radius:15px;font-weight:900;font-size:18px}.brand b{display:block;font-size:17px;letter-spacing:.2px}.brand small{color:#adbfda;font-size:11px}
 .nav-title{padding:11px 12px;color:#8a9eba;font-size:11px;letter-spacing:1.1px}
 .nav-btn{display:flex;align-items:center;gap:11px;width:100%;padding:12px 11px;border:0;border-radius:12px;color:#b8c8de;background:transparent;text-align:start;margin-bottom:4px;font-weight:550}
 .nav-btn:hover,.nav-btn:focus-visible{background:#ffffff0b;color:white}.nav-btn.selected{background:#315b9d66;color:white;box-shadow:inset -3px 0 #7db3ff}
-.nav-symbol{width:29px;height:29px;border:1px solid #ffffff20;border-radius:9px;display:grid;place-items:center;font-size:11px;letter-spacing:-.5px;font-weight:800;color:#c7deff}
+.nav-symbol{width:31px;height:31px;flex:none;border:1px solid #ffffff20;border-radius:10px;display:grid;place-items:center;color:#c7deff}
+.nav-symbol svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.nav-btn.selected .nav-symbol{background:#ffffff22;border-color:#ffffff4a;color:#fff}
 .nav-foot{border-top:1px solid #ffffff16;margin-top:20px;padding:18px 12px 6px;color:#8ea4c5;font-size:11px}
 .main{flex:1;min-width:0}.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px clamp(18px,3.5vw,46px);background:var(--panel);border-bottom:1px solid var(--border)}
 .topbar h1{font-size:18px;margin:0}.topbar small{color:var(--muted)}.topbar-actions{display:flex;gap:8px;align-items:center}
@@ -58,30 +64,50 @@ a{color:var(--accent)}
 @media(max-width:1100px){.sidebar{width:202px}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}}
 @media(max-width:740px){.shell{display:block}.sidebar{position:sticky;top:0;width:100%;height:auto;z-index:4;padding:9px 12px;overflow-x:auto;display:flex;align-items:center;gap:10px}.brand{padding:0;margin:0;border:0;white-space:nowrap}.brand-logo{width:32px;height:32px;border-radius:10px;font-size:12px}.brand small,.nav-title,.nav-foot{display:none}.nav{display:flex;flex:none;gap:3px}.nav-btn{white-space:nowrap;width:auto;margin:0;font-size:12px;padding:7px 9px}.nav-symbol{display:none}.topbar{padding:12px 16px}.topbar h1{font-size:15px}.content{padding:20px 15px 35px}.headline h2{font-size:23px}.hero h3{font-size:18px}.hero-status{width:55px;height:55px;border-radius:15px;font-size:22px}.grid{grid-template-columns:1fr}.summary{gap:10px}.card{padding:16px}}
 @media(prefers-reduced-motion:no-preference){button,.nav-btn{transition:background .15s,border-color .15s}}
+
+/* Original PW Agent design system: network operations control deck. */
+:root{--bg:#f2f5fb;--nav:#0b1a32;--accent:#2b66df;--accent2:#14a6a1;--shadow:0 12px 38px rgba(16,35,60,.065)}
+:root[data-theme=dark]{--bg:#071326;--nav:#09152a;--panel:#10233a;--soft:#182e47;--accent:#79a7ff;--shadow:0 12px 32px #0003}
+body{letter-spacing:0;-webkit-font-smoothing:antialiased}
+.sidebar{background:radial-gradient(ellipse at 0% 0%,#203d6a 0%,transparent 44%),linear-gradient(170deg,var(--nav),#081429);box-shadow:12px 0 40px #0a204014}
+.brand-logo{box-shadow:0 9px 22px #204dbc44;border:1px solid #ffffff5c}
+.nav-btn{font-weight:600;border:1px solid transparent}.nav-btn.selected{background:linear-gradient(115deg,#2f6be1,#2256aa);border-color:#ffffff20;box-shadow:0 5px 15px #0b224522;color:#fff}
+.card{border:1px solid var(--border);box-shadow:var(--shadow);background:var(--panel);border-radius:17px}
+.hero{border:1px solid #cbd8ec;background:linear-gradient(115deg,var(--panel),var(--soft));box-shadow:var(--shadow)}
+.topbar{backdrop-filter:blur(16px);background:color-mix(in srgb,var(--panel),transparent 6%)}
+.summary .stat{position:relative;overflow:hidden}.summary .stat:before{content:"";position:absolute;inset-block:0;inset-inline-start:0;width:3px;background:var(--accent2)}
+.action:not(.danger),.chip-btn{transition:box-shadow .15s,transform .15s,background .15s}
+.action:hover:not(:disabled),.chip-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 17px #1b56b31c}
+.content{max-width:1550px}input,textarea,select{font-family:inherit}
+input[name=username],input[name=password]{background:var(--soft);color:var(--ink);border:1px solid var(--border);border-radius:11px;padding:12px;width:100%;max-width:500px}
+@media(prefers-reduced-motion:reduce){.action,.chip-btn{transition:none}}
 </style>
+<link rel="stylesheet" href="../assets/control-v14.css">
 </head>
-<body>
-<div class="shell">
-<aside class="sidebar">
+<body data-web-auth="<?= $browserUid?'1':'0' ?>" data-web-csrf="<?=htmlspecialchars($browserCsrf,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')?>">
+<div class="shell" id="appShell">
+<button type="button" class="menu-backdrop" id="navBackdrop" aria-label="بستن منوی کناری" tabindex="-1"></button>
+<aside class="sidebar" id="appSidebar" aria-label="ناوبری پنل">
  <div class="brand"><div class="brand-logo">PW</div><div><b>PW Control</b><small>Network Control Center</small></div></div>
  <div class="nav-title">CONTROL PANEL</div>
  <nav class="nav" id="navigation" aria-label="Primary navigation"></nav>
- <div class="nav-foot">PW Control Center · Release candidate<br>Local LuCI available offline</div>
+ <div class="nav-foot">PW Control Center · LuCI capability matrix<br>Only installed, verified actions are enabled</div>
 </aside>
 <div class="main">
  <header class="topbar">
-  <div><h1 id="topTitle">PW Control Center</h1><small id="identity">Telegram authentication required</small></div>
+  <div class="toolbar-leading"><button type="button" class="chip-btn menu-btn" id="menuBtn" aria-label="باز کردن منوی کناری" aria-controls="appSidebar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div class="toolbar-heading"><h1 id="topTitle">PW Control Center</h1><small id="identity">Telegram authentication required</small></div></div>
   <div class="topbar-actions">
-   <button type="button" class="chip-btn" id="refreshBtn" aria-label="Refresh">↻</button>
+   <?php if($browserUid): ?><form method="post" action="../auth/login.php" style="margin:0"><input type="hidden" name="csrf" value="<?=htmlspecialchars($browserCsrf,ENT_QUOTES,'UTF-8')?>"><button class="chip-btn" name="logout" value="1" type="submit" title="خروج از پنل">خروج</button></form><?php else: ?><a class="chip-btn" href="../auth/login.php" title="ورود مستقل پنل وب">ورود وب</a><?php endif; ?>
+   <button type="button" class="chip-btn" id="refreshBtn" aria-label="Refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7V3h-4M20 3l-4 4A9 9 0 1 0 21 12"/></svg></button>
    <button type="button" class="chip-btn" id="langBtn">EN</button>
-   <button type="button" class="chip-btn" id="themeBtn" aria-label="Toggle color theme">◐</button>
+   <button type="button" class="chip-btn" id="themeBtn" aria-label="Toggle color theme"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14a8.5 8.5 0 0 1-10.5-10.5 8.5 8.5 0 1 0 10.5 10.5z"/></svg></button>
   </div>
  </header>
  <main class="content">
   <div id="notice" role="status" aria-live="polite"></div>
   <div class="headline"><div><h2 id="pageTitle"></h2><p id="pageDesc"></p></div><select id="devicePicker" class="select" aria-label="Router" hidden></select></div>
   <section id="page" aria-live="polite"><div class="empty">Connecting…</div></section>
-  <footer>PW Control Center · v1.3 release candidate · Legacy dashboard also available</footer>
+  <footer>PW Control Center · v1.4.0-alpha.5 · Experimental · Not production-certified</footer>
  </main>
 </div></div>
 <script>
@@ -90,12 +116,18 @@ a{color:var(--accent)}
 var tg=window.Telegram && window.Telegram.WebApp;
 if(tg){tg.ready();tg.expand();}
 var init=tg && tg.initData ? tg.initData : '';
+var webAuth=document.body.dataset.webAuth==='1';
+var webCsrf=document.body.dataset.webCsrf||'';
+if(!init&&!webAuth){window.location.replace('../auth/login.php');return;}
 var state={fleet:null,active:'',role:'viewer',permissions:[],detail:null,page:'home',lang:'fa',theme:'light',busy:false};
 try{state.lang=localStorage.getItem('pwcontrol-lang')==='en'?'en':'fa';state.theme=localStorage.getItem('pwcontrol-theme')==='dark'?'dark':'light';}catch(e){}
 var menu=[
  ['home','01','خانه','Home','وضعیت لحظه‌ای شبکه و روتر','Router and network status'],
+  ['luci','15','مرکز LuCI','LuCI Modules','کاتالوگ قابلیت‌ها، DHCP، تنظیمات سیستم و شبکه','Capability inventory, DHCP, system and network modules'],
  ['internet','02','اینترنت','Internet','کیفیت WAN، DNS و اتصال','WAN, DNS and connectivity'],
  ['proxy','03','فیلترشکن','Proxy','Passwall2 و عملیات مجاز','Passwall2 and supported operations'],
+ ['openvpn','13','OpenVPN','OpenVPN','اتصال، سرویس و قوانین مسیر','VPN and route policy tools'],
+ ['terminal','14','ترمینال وب','Web Terminal','کنسول SSH با دسترسی کنترل‌شده','Permission-scoped SSH console'],
  ['routers','04','روترها','Fleet','مدیریت روترهای ثبت‌شده','Manage registered routers'],
  ['clients','05','دستگاه‌ها','Clients','موبایل‌ها و تجهیزات LAN','LAN clients and their policies'],
  ['wifi','06','وای‌فای','Wi-Fi','رادیوها، رمز و شبکه مهمان','Radios, password and guest network'],
@@ -116,10 +148,28 @@ var metric=function(r,k){return r && Object.prototype.hasOwnProperty.call(r,k)?r
 var has=function(p){return state.permissions.includes('*')||state.permissions.includes(p);};
 var current=function(){return menu.find(function(m){return m[0]===state.page;})||menu[0];};
 function applyTheme(){document.documentElement.dataset.theme=state.theme;document.documentElement.dir=state.lang==='fa'?'rtl':'ltr';document.documentElement.lang=state.lang;$('langBtn').textContent=state.lang==='fa'?'EN':'فا';}
+var navArt={
+ home:'<path d="m3 10 9-7 9 7v11H3z"/><path d="M9 21v-8h6v8"/>',
+  luci:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+ internet:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c5 5 5 13 0 18M12 3c-5 5-5 13 0 18"/>',
+ proxy:'<path d="M12 2 20 6v6c0 5-3 8-8 10-5-2-8-5-8-10V6z"/><path d="m9 12 2 2 4-4"/>',
+ openvpn:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M9 16h6"/>',
+ terminal:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m6 9 4 3-4 3M12 16h5"/>',
+ routers:'<rect x="3" y="7" width="18" height="11" rx="2"/><path d="M7 12h.01M11 12h.01M7 18v3M17 18v3"/>',
+ clients:'<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+ wifi:'<path d="M2 9a16 16 0 0 1 20 0M5 12a11 11 0 0 1 14 0M8 15a6 6 0 0 1 8 0"/><circle cx="12" cy="19" r="1"/>',
+ cellular:'<path d="M12 20V4M7 20h10M7 7a7 7 0 0 0 0 10M17 7a7 7 0 0 1 0 10M3 3a13 13 0 0 0 0 18M21 3a13 13 0 0 1 0 18"/>',
+ dns:'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0"/>',
+ gaming:'<path d="M6 8h12c2 0 3 2 4 7l-1 4c-1 2-3 1-5-1H8c-2 2-4 3-5 1l-1-4c1-5 2-7 4-7z"/><path d="M7 12v5M4.5 14.5h5M16 13h.01M19 15h.01"/>',
+ system:'<circle cx="12" cy="12" r="3"/><path d="M10 2h4l1 3 2 1 3-1 2 4-2 2v2l2 2-2 4-3-1-2 1-1 3h-4l-1-3-2-1-3 1-2-4 2-2v-2L2 9l2-4 3 1 2-1z"/>',
+ led:'<path d="M9 18h6M10 21h4M9 15c-5-3-5-10 0-12a7 7 0 0 1 6 12l-1 3h-4z"/>',
+ automation:'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>'
+};
+function navIcon(key){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+(navArt[key]||navArt.system)+'</svg>';}
 function nav(){
- $('navigation').innerHTML=menu.map(function(m){return '<button type="button" class="nav-btn '+(m[0]===state.page?'selected':'')+'" data-nav="'+esc(m[0])+'"><span class="nav-symbol">'+m[1]+'</span>'+esc(say(m[2],m[3]))+'</button>';}).join('');
+ $('navigation').innerHTML=menu.map(function(m){return '<button type="button" class="nav-btn '+(m[0]===state.page?'selected':'')+'" data-nav="'+esc(m[0])+'" '+(m[0]===state.page?'aria-current="page"':'')+'><span class="nav-symbol">'+navIcon(m[0])+'</span><span class="nav-label">'+esc(say(m[2],m[3]))+'</span></button>';}).join('');
  var p=current();$('pageTitle').textContent=say(p[2],p[3]);$('pageDesc').textContent=say(p[4],p[5]);$('topTitle').textContent=say('مرکز کنترل شبکه','Network Control Center');
- $('identity').textContent=(state.fleet?say('نقش کاربری: ','Role: ')+state.role:say('ورود از تلگرام الزامی است','Open through Telegram'));
+ $('identity').textContent=(state.fleet?say('نقش کاربری: ','Role: ')+state.role:say('ورود به پنل الزامی است','Authentication required'))+(webAuth?' · Web':'');
  var select=$('devicePicker');var ds=state.fleet && state.fleet.devices || [];
  select.hidden=!ds.length;
  select.innerHTML=ds.map(function(d){return '<option value="'+esc(d.device_id)+'" '+(d.device_id===state.active?'selected':'')+'>'+esc(d.display_name||d.device_id)+'</option>';}).join('');
@@ -160,7 +210,7 @@ function home(){
  '<div style="margin-top:15px">'+chartHtml('cpu-chart',say('تاریخچه CPU','CPU sample history'))+'</div><div style="margin-top:15px">'+resultBox()+'</div>';
  drawChart('cpu-chart','cpu_percent');
 }
-function resultBox(){return '<section class="card"><div class="section-title">'+say('نتیجه دستور','Command result')+'</div><pre id="feedback">'+say('یک عملیات مجاز انتخاب کنید.','Select an allowed operation.')+'</pre></section>';}
+function resultBox(){return '<section class="card"><div class="section-title">'+say('نتیجه دستور','Command result')+'</div><div id="feedback" class="result-region" role="status">'+say('یک عملیات مجاز انتخاب کنید.','Select an allowed operation.')+'</div></section>';}
 function internet(){
  var m=latest(),h=state.detail&&state.detail.overview&&state.detail.overview['24h']||{};
  $('page').innerHTML='<div class="summary">'+statCard('WAN',status(metric(m,'wan_up'))[0],esc(m.wan_ip||'—'))+
@@ -169,7 +219,8 @@ function internet(){
  statCard(say('پایداری ۲۴ساعته','24h heartbeat'),safeNum(h.heartbeat_coverage,1)+'%',say('از داده‌های ثبت‌شده','From recorded samples'))+'</div>'+
  '<div class="stack">'+chartHtml('latency-chart',say('تأخیر Relay (نمونه‌های موجود)','Relay latency (recorded samples)'))+
  chartHtml('loss-chart',say('افت بسته (نمونه‌های موجود)','Packet loss (recorded samples)'))+
- '<div class="card"><p class="warn-note">'+say('تست سرعت واقعی از خود روتر، اندازه‌گیری جداگانه شبکه داخلی/بین‌الملل و عیب‌یابی ریشه‌ای به Agent/API نسخه جدید نیاز دارند.','Router-based speed tests, separate domestic/foreign checks and root-cause analysis need new Agent/API capabilities.')+'</p></div></div>';
+ '<section class="card"><div class="section-title">'+say('آزمون محدود دانلود','Capped router download probe')+'</div><p class="muted">'+say('اندازه‌گیری اختیاری ۲ مگابایت از Cloudflare. IP عمومی روتر با Cloudflare به اشتراک گذاشته می‌شود؛ این نتیجه سرعت نهایی ISP یا Bufferbloat نیست. حداکثر هر ۱۰ دقیقه یک بار.','Optional 2 MiB Cloudflare download. Your router public IP is disclosed to Cloudflare; result is not line-rate or bufferbloat. At most once per 10 minutes.')+'</p><div class="actions">'+action('network.speed_probe',say('اجرای تست ۲ مگابایتی','Run 2 MiB probe'),'network.read',true)+'</div></section>'+resultBox()+
+ '<div class="card"><p class="warn-note">'+say('سنجش مستقل ایران/خارج و تست Bufferbloat همچنان به پیاده‌سازی و تست نیاز دارند.','Independent regional speed measurements and bufferbloat testing remain unimplemented.')+'</p></div></div>';
  drawChart('latency-chart','node_relay_ms');drawChart('loss-chart','packet_loss');
 }
 function proxy(){
@@ -184,7 +235,9 @@ function proxy(){
  action('passwall2.shunt.list',say('قوانین Shunt','Shunt rules'),'passwall.read',false)+
  action('passwall2.nodes.relay_ranking',say('رتبه‌بندی Relay','Rank relay nodes'),'passwall.read',false)+
  action('passwall2.failover.list',say('وضعیت Failover','Failover status'),'passwall.read',false)+
- action('passwall2.restart',say('راه‌اندازی مجدد سرویس','Restart Passwall2'),'passwall.modify',true)+'</div></section>'+
+ action('passwall2.restart',say('راه‌اندازی مجدد سرویس','Restart Passwall2'),'passwall.modify',true)+
+  action('passwall2.enable',say('فعال‌سازی Passwall2','Enable Passwall2'),'passwall.modify',true)+
+  action('passwall2.disable',say('توقف Passwall2','Disable Passwall2'),'passwall.modify',true)+'</div></section>'+
  editor+resultBox()+
  '<section class="card"><div class="section-title">'+say('محافظت پیشرفته (در حال توسعه)','Advanced protection (planned)')+'</div><div class="tags">'+['Smart Failover 2.0','Iran split routing','Kill Switch','IPv6 leak protection','WireGuard/OpenVPN adapters'].map(function(v){return '<span class="tag">'+esc(v)+'</span>';}).join('')+'</div><p class="muted" style="margin-top:15px">'+say('قابلیت‌های حفاظت از مسیر ترافیک بدون تست واقعی و مسیر Rollback فعال نمی‌شوند.','Packet-policy features remain disabled until path validation and recovery tests are complete.')+'</p></section></div>';
 }
@@ -192,8 +245,40 @@ function routers(){
  var devices=state.fleet&&state.fleet.devices||[];
  $('page').innerHTML='<section class="card"><div class="section-title">'+say('روترهای ثبت‌شده','Registered routers')+' <span class="pill">'+devices.length+'</span></div>'+
  (devices.map(function(d){return '<div class="device-row"><div><strong>'+esc(d.display_name||d.device_id)+' '+(d.device_id===state.active?'●':'')+'</strong><small>'+esc(d.device_id)+' · '+esc(d.hostname||'—')+' · Agent '+esc(d.agent_version||'—')+'</small></div><button type="button" class="action" data-router="'+esc(d.device_id)+'" '+(d.device_id===state.active?'disabled':'')+'>'+say('انتخاب','Select')+'</button></div>';}).join('')||'<div class="empty">'+say('روتری ثبت نشده است.','No registered routers.')+'</div>')+
- '</section><p class="muted" style="margin-top:14px">'+say('این بخش مربوط به Fleet روترها است؛ دستگاه‌های متصل به وای‌فای/LAN در بخش «دستگاه‌ها» قرار می‌گیرند.','This section manages routers; Wi-Fi/LAN clients have a separate page.')+'</p>';
+ '</section><p class="muted" style="margin-top:14px">'+say('این بخش مربوط به Fleet روترها است؛ دستگاه‌های متصل به وای‌فای/LAN در بخش «دستگاه‌ها» قرار می‌گیرند.','This section manages routers; Wi-Fi/LAN clients have a separate page.')+'</p>'+
+ (state.role==='owner'?'<section class="card" style="margin-top:18px" id="rolloutBoard"><div class="section-title">'+say('انتشار مرحله‌ای با تأیید Owner','Owner-approved canary rollout')+'</div><p class="muted">'+say('هر موج پس از اتمام و تأیید سلامت دستگاه‌ها متوقف می‌شود و برای موج بعدی به تأیید Owner نیاز دارد.','Each wave halts for fresh health verification and explicit Owner approval before the next wave.')+'</p><div class="empty">'+say('در حال دریافت برنامه‌ها…','Loading rollouts…')+'</div></section>':'');
+ if(state.role==='owner')loadRollouts();
 }
+async function loadRollouts(){
+ if(state.page!=='routers'||state.role!=='owner')return;
+ var target=$('rolloutBoard');if(!target)return;
+ try {
+  var [g,r]=await Promise.all([api('groups'),api('rollout_list')]);
+  if(state.page!=='routers'||!target.isConnected)return;
+  var groups=Array.isArray(g.groups)?g.groups:[];
+  var rollouts=Array.isArray(r.rollouts)?r.rollouts:[];
+  var options=groups.map(function(x){return '<option value="'+Number(x.id)+'">'+esc(x.name||('Group '+x.id))+'</option>';}).join('');
+  var create=groups.length?'<form data-rollout-create class="stack"><label>'+say('گروه روترها','Router group')+' <select name="group_id" required class="select">'+options+'</select></label>'+
+   '<label>'+say('فرمان مرحله‌ای','Staged action')+' <select name="command_action" class="select"><option value="agent.update.check">'+say('بررسی آپدیت','Check updates')+'</option><option value="agent.update.apply">'+say('نصب آپدیت امضاشده','Apply signed update')+'</option></select></label>'+
+   '<label>'+say('تعداد روتر هر موج بعد از Canary','Subsequent wave size')+' <input name="wave_size" type="number" min="1" max="5" value="2" required style="width:85px"></label>'+
+   '<button class="action primary" type="submit">'+say('ساخت برنامه (بدون اجرا)','Create rollout draft')+'</button></form>':'<p class="warn-note">'+say('ابتدا یک گروه روتر در Dashboard ایجاد کن.','Create a router group in the Fleet Dashboard first.')+'</p>';
+  var rows=rollouts.map(function(x){
+    var status=String(x.status||''),id=Number(x.id);
+    var ops=[];
+    if(status==='draft')ops.push(['start',say('شروع Canary','Start canary')]);
+    if(status==='awaiting_approval')ops.push(['approve_next',say('تأیید موج بعد','Approve next wave')]);
+    if(status==='running'||status==='awaiting_approval')ops.push(['pause',say('توقف','Pause')]);
+    if(status==='paused'&&Number(x.failed_routers||0)===0)ops.push(['resume',say('ادامه پس از بررسی','Resume after review')]);
+    if(['draft','running','awaiting_approval','paused'].includes(status))ops.push(['cancel',say('لغو برنامه','Cancel rollout')]);
+    return '<div class="device-row"><div><strong>#'+id+' '+esc(x.command_action||'')+'</strong><small>'+say('وضعیت: ','Status: ')+esc(status)+' · '+esc(x.completed_routers||0)+' / '+esc(x.total_routers||0)+' · '+esc(x.last_error||'')+'</small></div><div class="actions">'+
+       ops.map(function(op){return '<button type="button" class="action" data-rollout-control="'+op[0]+'" data-rollout-id="'+id+'">'+op[1]+'</button>';}).join('')+'</div></div>';
+  }).join('');
+  target.innerHTML='<div class="section-title">'+say('انتشار مرحله‌ای و کنترل موج‌ها','Staged router rollouts')+'</div>'+
+   '<p class="warn-note">'+say('نسخه توسعه: ابتدا روی روتر آزمایشی. توقف برنامه، فرمانی را که قبلاً در صف قرار گرفته لغو نمی‌کند.','Development: use test routers only. Cancelling a rollout cannot undo already queued commands.')+'</p>'+create+
+   '<div class="section-title" style="margin-top:23px">'+say('برنامه‌های قبلی','Recent rollouts')+'</div>'+(rows||'<p class="muted">—</p>');
+ }catch(e){if(target.isConnected)target.innerHTML='<p class="warn-note">'+esc(e.message)+'</p>';}
+}
+
 
 function readPanel(title,desc,items,planned){
  $('page').innerHTML='<div class="stack"><section class="card"><div class="section-title">'+esc(title)+'</div><p class="muted" style="margin-bottom:14px">'+esc(desc)+'</p><div class="actions">'+
@@ -206,35 +291,70 @@ function showClients(){
   ['system.clients','دریافت لیست دستگاه‌ها','List clients','system.read'],
   ['system.interfaces','اینترفیس‌های شبکه','Network interfaces','system.read'],
   ['network.dhcp_leases','اجاره‌های DHCP','DHCP leases','network.read']
- ],say('مسدودسازی دستگاه، محدودیت سرعت، زمان‌بندی و اولویت‌دهی به قوانین nftables/tc آزمایش‌شده روی روتر نیاز دارند. فعلاً غیرفعال‌اند.','Blocking, limits, schedules and priorities require tested nftables/tc policies; not active yet.'));
+ ],say('مسدودسازی دسترسی اینترنت LAN به WAN بر اساس MAC با Rollback واقعی فعال است؛ محدودیت سرعت اختصاصی هر دستگاه هنوز آماده نیست.','MAC-based LAN→WAN blocking uses a timed router-local rollback. Per-device rate limiting is not yet implemented.'));
+ if(has('firewall.modify'))$('page').innerHTML+='<section class="card"><div class="section-title">'+say('مسدودسازی اینترنت دستگاه','Block client WAN internet access')+'</div><p class="muted">'+say('فقط Forward شبکه LAN به WAN را بر اساس MAC کنترل می‌کند؛ روی شبکه‌های مهمان یا VLAN دیگر، بدون Rule مجزا اثری ندارد.','Matches MAC traffic from LAN to WAN only; not a universal client ban across all zones or VLANs.')+'</p><form class="stack operational-form" data-config-action="clients.internet.block"><label>MAC<input name="mac" dir="ltr" required placeholder="02:11:22:33:44:55" pattern="([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}"></label><label><select name="blocked" class="select"><option value="1">'+say('مسدودسازی','Block internet')+'</option><option value="0">'+say('رفع مسدودی','Unblock internet')+'</option></select></label><button type="submit" class="action danger">'+say('اعمال با بازگشت خودکار','Apply with rollback')+'</button></form></section>';
+ if(has('system.read')){
+  $('page').innerHTML+='<section class="card"><div class="section-title">'+say('پیش‌نمایش سیاست دستگاه (بدون اجرا)','Client policy dry run (no changes)')+'</div><p class="muted">'+say('MAC دستگاه و نوع سیاست را وارد کن. این فرم هیچ اتصال یا تنظیمی را تغییر نمی‌دهد.','Enter a client MAC and policy. No firewall, connection or configuration is changed.')+'</p><form class="stack" data-client-policy><input name="mac" maxlength="24" required placeholder="02:11:22:33:44:55" dir="ltr" aria-label="Client MAC"><select name="mode" aria-label="Policy"><option value="block">Block</option><option value="unblock">Unblock</option><option value="limit">Speed limit (kbit/s)</option></select><input name="limit_kbit" type="number" min="64" max="1000000" step="1" placeholder="1024 (only for limit)" aria-label="Speed limit"><button class="action" type="submit">'+say('نمایش پیش‌نمایش','Preview policy')+'</button></form></section>';
+ }
 }
 function showWifi(){
  readPanel(say('مدیریت وای‌فای','Wi-Fi control'),say('مشاهده SSID و رادیوها و کلاینت‌های وای‌فای. رمزهای فعلی هیچ‌وقت در خروجی نمایش داده نمی‌شوند.','Discover SSIDs, radios and stations. Existing Wi-Fi passwords are never returned.'),[
  ['wifi.list','شبکه‌های وای‌فای','Wi-Fi networks','wifi.read'],
  ['wifi.radios','رادیوهای ۲٫۴/۵/۶','Wi-Fi radios','wifi.read'],
  ['wifi.stations','دستگاه‌های وای‌فای','Wi-Fi stations','wifi.read']
- ],say('تغییر رمز و کانال تنها بعد از فعال‌شدن Apply با Rollback زمان‌دار ارائه خواهد شد تا دسترسی به روتر از دست نرود.','Mutating SSID/password/channel settings await timed safe-apply rollback.'));
+ ],say('تغییر امن SSID با نسخه پشتیبان و تأیید ۹۰ ثانیه‌ای فعال شده است. هر تغییر تأییدنشده روی روتر به‌صورت محلی بازگردانده می‌شود.','Safe SSID changes use a router-local 90-second rollback. Unconfirmed changes are restored without relying on the server.'));
+ if(has('wifi.modify'))$('page').innerHTML+='<section class="card"><div class="section-title">'+say('کانال رادیوی وای‌فای','Wi-Fi radio channel')+'</div><p class="warn-note">'+say('تغییر کانال ممکن است دستگاه‌های متصل را موقتاً قطع کند. پس از اتصال مجدد، تغییر را تأیید کن.','Channel change can disconnect clients. Confirm after reconnecting; unconfirmed changes are automatically rolled back.')+'</p><form class="stack operational-form" data-config-action="wifi.channel.safe_apply"><label>'+say('شناسه رادیو UCI','UCI radio section')+'<input name="radio" required pattern="[A-Za-z][A-Za-z0-9_]{0,47}" placeholder="radio0"></label><label>'+say('کانال یا auto','Channel or auto')+'<input name="channel" required placeholder="auto"></label><button type="submit" class="action primary">'+say('اعمال کانال با Rollback','Apply channel with rollback')+'</button></form></section>';
+ if(has('wifi.read')){
+  $('page').innerHTML+='<section class="card"><div class="section-title">'+say('پیش‌نمایش تغییر نام شبکه','SSID change preview')+'</div><p class="muted">'+say('ابتدا از «شبکه‌های وای‌فای» شناسه Section را پیدا کن. این فرم فقط تفاوت مقدار فعلی و پیشنهادی را نشان می‌دهد.','Retrieve a named Wi-Fi section from Wi-Fi networks first. This form only compares the current and desired SSID.')+'</p><form data-ssid-plan class="stack"><label>'+say('نام Section','UCI section')+'<input name="section" required pattern="[A-Za-z0-9_-]{1,64}" maxlength="64" autocomplete="off" placeholder="default_radio0"></label><label>'+say('نام جدید Wi-Fi','Desired SSID')+'<input name="ssid" required maxlength="32" autocomplete="off" placeholder="My-WiFi"></label><div class="actions"><button class="action" type="submit">'+say('پیش‌نمایش بدون تغییر','Preview only')+'</button>'+(has('wifi.modify')?'<button class="action primary" type="button" data-safe-ssid-apply>'+say('اعمال امن (بازگشت خودکار)','Safe apply (auto rollback)')+'</button>':'')+'</div></form><p class="warn-note">'+say('پس از اعمال تغییر، اتصال جدید را بررسی و در کمتر از ۹۰ ثانیه تأیید کن. قطع دسترسی باعث بازگردانی خودکار می‌شود.','After applying, verify access and confirm within 90 seconds; otherwise local rollback occurs.')+'</p></section>';
+ }
 }
 function showDNS(){
  readPanel(say('DNS و امنیت','DNS & security'),say('مشاهده Resolver و Route و اجرای آزمایش اتصال بدون تغییر تنظیمات فعلی.','Read resolver configuration and routing; test connectivity without altering settings.'),[
  ['network.dns','مشاهده DNS روتر','Read DNS','network.read'],
  ['network.routes','جدول مسیریابی','Routing table','network.read'],
+ ['network.path_audit','ممیزی نشانه‌های IPv6 و DNS','IPv6 and DNS egress indicators','network.read'],
+ ['network.services','سرویس‌های DNS، Adblock، DDNS، MultiWAN و VLAN','DNS, Adblock, DDNS, MultiWAN and VLAN','network.read'],
  ['network.internet_test','تست اینترنت','Internet probes','network.read'],
  ['network.doctor','عیب‌یابی مرحله‌ای','Network doctor','network.read']
  ],say('DNS رمزنگاری‌شده، تفکیک ترافیک ایران، نشت DNS/IPv6 و Kill Switch تا زمان تست بسته‌ها و مسیرها فعلاً فقط در برنامه توسعه هستند.','Encrypted/split DNS, IPv6 leak blocking and kill switch need validated packet-path tests.'));
 }
 function showLED(){
- readPanel(say('چراغ Google WiFi','Google WiFi LED'),say('تشخیص کانال‌های RGB و وضعیت سرویس GoogleWifiLED؛ فقط روی روترهایی که این پکیج نصب است.','Detect RGB channels and the installed GoogleWifiLED service; unsupported routers will report unavailable.'),[
-  ['led.status','بررسی وضعیت LED','Read LED state','system.read'],
-  ['agent.capabilities','شناسایی سخت‌افزار','Read capabilities','system.read']
- ],say('تنظیم رنگ و روشنایی و زمان‌بندی چراغ به Adapter تست‌شده نیاز دارد. این نسخه از طریق Agent تغییری در LED ایجاد نمی‌کند.','Changing color/brightness and scheduling needs a tested adapter; no LED mutations are exposed yet.'));
+ readPanel(say('چراغ‌های روتر','Router LEDs'),say('LEDهای دارای کنترل دستی را می‌توان تنظیم کرد؛ چراغ‌های تحت مدیریت سیستم فقط قابل مشاهده‌اند.','Per-LED manual brightness control where the kernel trigger is none; driver-managed LEDs stay read-only.'),[
+  ['system.leds','چراغ‌های sysfs','Read sysfs LEDs','system.read'],
+  ['led.status','وضعیت GoogleWifiLED','GoogleWifiLED status','system.read'],
+  ['agent.capabilities','شناسایی سخت‌افزار','Hardware capabilities','system.read']
+ ],say('برای LEDهای sysfs دارای سه کانال RGB و Trigger دستی، تغییر رنگ فعال است. الگوها و زمان‌بندی اختصاصی سخت‌افزار هنوز نیازمند Adapter هستند.','Native sysfs RGB LEDs with three channels support color adjustment. Vendor-specific patterns and scheduling still require drivers.'));
+}
+function showCellular(){
+ readPanel(say('مودم و سیم‌کارت','Cellular modem'),say('کشف مودم‌های جانبی با ModemManager یا uqmi و نمایش فقط شدت سیگنال؛ شناسه سیم‌کارت، IMSI و IMEI ارسال نمی‌شوند.','Read-only ModemManager/uqmi discovery and whitelisted signal metrics. No subscriber identifiers are sent.'),[
+  ['cellular.status','بررسی مودم و سیگنال','Check modem and signal','network.read'],
+  ['agent.capabilities','قابلیت‌های سخت‌افزار','Hardware capabilities','system.read']
+ ],say('قفل باند، Cell Lock، SMS و USSD نیازمند Adapter تست‌شده مخصوص مودم‌اند؛ در دستگاه‌های بدون مودم این کنترل‌ها غیرفعال‌اند.','Band/cell locking and SMS/USSD need tested modem-specific adapters and remain disabled without them.'));
 }
 function showGaming(){
  readPanel(say('بازی و کیفیت اتصال','Gaming & quality'),say('تست‌های تشخیصی شبکه برای بررسی کیفیت پایه؛ مقادیر فعلی جایگزین تست واقعی Bufferbloat نیستند.','Network diagnostics are available; these do not replace a true bufferbloat test.'),[
  ['network.internet_test','آزمایش اتصال','Connectivity test','network.read'],
  ['network.doctor','عیب‌یابی شبکه','Network doctor','network.read'],
+ ['network.policy_status','وضعیت SQM و UPnP','SQM and UPnP inventory','network.read'],
  ['system.interfaces','وضعیت اینترفیس‌ها','Interfaces','system.read']
- ],say('SQM، QoS، UPnP و اولویت دستگاه‌ها پس از تشخیص قابلیت واقعی سخت‌افزار و طراحی تنظیمات برگشت‌پذیر فعال می‌شوند.','SQM/QoS, UPnP and prioritization require capability discovery and recoverable configuration.'));
+ ],say('برای صف‌های موجود SQM امکان تنظیم نرخ Upload/Download با Rollback فعال است. اولویت‌دهی هر دستگاه و UPnP هنوز به آزمون جداگانه نیاز دارد.','Existing SQM queues support upload/download changes with rollback. Per-device priorities and UPnP modifications remain unavailable.'));
+ $('page').innerHTML+=showTrafficShapingV16();
+}
+// Bounded accessible key/value and list renderer; never render untrusted HTML.
+function structuredValue(value,depth){
+ if(depth>6)return '<span class="muted">…</span>';
+ if(value==null)return '<span class="muted">—</span>';
+ if(typeof value==='boolean')return '<span class="pill '+(value?'ok':'bad')+'">'+(value?say('بله','Yes'):say('خیر','No'))+'</span>';
+ if(typeof value!=='object')return '<span class="result-value">'+esc(value)+'</span>';
+ if(Array.isArray(value)){
+  if(!value.length)return '<span class="muted">'+say('موردی وجود ندارد','No records')+'</span>';
+  return '<div class="result-array">'+value.slice(0,60).map(function(item,i){
+    return '<details class="result-group" '+(i<3?'open':'')+'><summary>'+say('ردیف ','Item ')+(i+1)+'</summary>'+structuredValue(item,depth+1)+'</details>';
+  }).join('')+'</div>';
+ }
+ return '<dl class="result-kv">'+Object.keys(value).slice(0,70).map(function(key){
+  return '<div class="result-pair"><dt>'+esc(key.replace(/_/g,' '))+'</dt><dd>'+structuredValue(value[key],depth+1)+'</dd></div>';
+ }).join('')+'</dl>';
 }
 function renderCommandOutput(actionName,result){
  var keysensitive=/(^|_)(password|secret|token|private|credential|psk|auth|key|data_b64|sealed|url|link)(_|$)/i;
@@ -247,6 +367,49 @@ function renderCommandOutput(actionName,result){
   return typeof x==='string'?x.slice(0,2048):x;
  }
  var safe=clean(result,0);
+ if(actionName==='luci.catalog'&&safe&&Array.isArray(safe.modules)){
+  return '<div class="luci-filter"><input type="search" data-luci-search placeholder="'+say('جست‌وجوی ماژول LuCI','Search LuCI modules')+'" aria-label="LuCI module search"><select class="select" data-luci-status><option value="all">'+say('همه ماژول‌ها','All modules')+'</option><option value="partial">'+say('دارای اکشن','Actionable')+'</option><option value="read_only">'+say('فقط مشاهده','Read only')+'</option><option value="not_implemented">'+say('نیازمند توسعه','Adapter needed')+'</option><option value="unavailable">'+say('پکیج نصب نیست','Package unavailable')+'</option></select></div>'+
+    '<div class="luci-catalog">'+safe.modules.map(function(m){
+      var st=String(m.state||'unavailable'),page=String(m.page||''),valid=menu.some(function(x){return x[0]===page;});
+      var title=String(m.title||m.id||''),detail=String(m.detail||'');
+      var caption=st==='partial'?say('اکشن‌های قابل اجرا','Actionable controls'):st==='read_only'?say('فقط مشاهده','Read only'):st==='not_implemented'?say('نیازمند Adapter','Adapter needed'):say('پکیج یافت نشد','Unavailable');
+      var actionButton=valid&&(st==='partial'||st==='read_only')?'<button class="action primary" type="button" data-nav="'+esc(page)+'">'+say('باز کردن بخش','Open module')+'</button>':'';
+      return '<article class="luci-item" data-module-state="'+esc(st)+'" data-module-text="'+esc((title+' '+detail).toLowerCase())+'"><div class="luci-item-heading">'+navIcon(valid?page:'luci')+'<h3>'+esc(title)+'</h3></div><span class="pill '+(st==='partial'?'ok':st==='unavailable'?'bad':'')+'">'+caption+'</span><p>'+esc(detail)+'</p><div class="actions">'+actionButton+'</div></article>';
+    }).join('')+'</div>';
+ }
+ if(actionName==='luci.dhcp.static.list'&&safe&&Array.isArray(safe.leases)){
+  return '<div class="section-title">'+say('رزروهای IP','Static IP reservations')+' ('+safe.leases.length+')</div>'+
+   (safe.leases.length?safe.leases.map(function(x){
+     return '<div class="device-row"><div><strong>'+esc(x.name||x.section)+'</strong><small dir="ltr">'+esc(x.ip||'—')+' · '+esc(x.mac||'—')+'</small></div><span class="pill '+(x.managed_by_pw?'ok':'')+'">'+(x.managed_by_pw?'PW managed':say('فقط مشاهده','Read only'))+'</span></div>';
+   }).join(''):'<div class="empty">'+say('رزرو DHCP ثبت نشده است','No static reservations')+'</div>');
+ }
+ if(actionName==='system.leds'&&safe&&Array.isArray(safe.leds)){
+  return '<div class="section-title">'+say('چراغ‌های شناسایی‌شده','Detected LEDs')+' ('+safe.leds.length+')</div>'+
+  (safe.leds.map(function(item){
+    var name=String(item.name||''),max=Number(item.max_brightness)||0;
+    var manual=!!item.manual_control&&max>0&&max<=65535;
+    var valid=/^[A-Za-z0-9:_+.-]{1,96}$/.test(name)&&name!=='.'&&name!=='..';
+    var control=valid&&manual&&has('system.modify')?
+     '<div class="led-adjust"><label>'+say('روشنایی','Brightness')+' <input type="number" min="0" max="'+max+'" step="1" value="'+Number(item.brightness||0)+'" data-led-level="'+esc(name)+'"></label><button type="button" class="action primary" data-led-apply="'+esc(name)+'">'+say('اعمال','Apply')+'</button><button type="button" class="action" data-led-identify="'+esc(name)+'">'+say('شناسایی','Identify')+'</button></div>':
+     '<span class="pill">'+say('کنترل دستی موجود نیست','Manual control unavailable')+'</span>';
+    return '<div class="device-row"><div><strong>'+esc(name)+'</strong><small>'+say('شدت فعلی: ','Current brightness: ')+esc(item.brightness||0)+' / '+max+'</small></div>'+control+(item.rgb_control&&has('system.modify')?'<div class="led-adjust"><label>'+say('رنگ RGB','RGB color')+' <input type="color" data-led-rgb-color="'+esc(name)+'" value="#ffffff"></label><button type="button" class="action primary" data-led-rgb-apply="'+esc(name)+'">'+say('اعمال رنگ','Apply color')+'</button></div>':'')+'</div>';
+  }).join('')||'<div class="empty">'+say('چراغی پیدا نشد','No LEDs detected')+'</div>');
+ }
+ if(actionName==='system.services'&&safe&&Array.isArray(safe.services)){
+   return '<div class="section-title">'+say('سرویس‌های روتر','Router services')+' ('+safe.services.length+')</div>'+
+     safe.services.map(function(s){
+      var name=String(s.name||'');
+      var allowed=['dnsmasq','odhcpd','sysntpd'].includes(name)&&!!s.installed;
+      return '<div class="device-row"><div><strong>'+esc(name)+'</strong><small>'+esc(s.status||'unknown')+' · '+(s.enabled?'Autostart':'Manual')+'</small></div><div class="actions"><span class="pill '+(s.status==='running'?'ok':'')+'">'+esc(s.installed?s.status:'Not installed')+'</span>'+(allowed&&has('system.modify')?'<button class="action" data-safe-service-restart="'+esc(name)+'">'+say('ری‌استارت','Restart')+'</button>':'')+'</div></div>';
+     }).join('');
+ }
+ if(actionName==='openvpn.status'&&safe){
+   return '<div class="section-title">OpenVPN <span class="pill '+(safe.installed?'ok':'bad')+'">'+(safe.installed?'Installed':'Unavailable')+'</span></div>'+
+    (safe.warning?'<p class="warn-note">'+esc(safe.warning)+'</p>':'')+
+    (Array.isArray(safe.profiles)?safe.profiles.map(function(p){
+       return '<div class="device-row"><div><strong>'+esc(p.name||'—')+'</strong><small>'+say('پروفایل ','Profile ')+(p.configured?'✓':'—')+'</small></div><span class="pill '+(p.enabled?'ok':'')+'">'+(p.enabled?say('فعال','Enabled'):say('غیرفعال','Disabled'))+'</span></div>';
+    }).join(''):'')+'<div class="result-table">'+structuredValue(safe.service||{reason:safe.reason||'—'},0)+'</div>';
+ }
  if(actionName==='system.clients'&&safe&&Array.isArray(safe.clients)){
   var clients=safe.clients;
   return '<div class="section-title">'+say('کلاینت‌های کشف‌شده','Discovered clients')+' ('+clients.length+')</div>'+
@@ -281,10 +444,23 @@ function renderCommandOutput(actionName,result){
    safe.checks.map(function(v){return '<div class="device-row"><div><strong>'+esc(v.id||'—')+'</strong><small>'+esc(v.detail||'')+'</small></div><span class="pill '+(v.status==='pass'?'ok':v.status==='fail'?'bad':'')+'">'+esc(v.status||'—')+' · '+esc(v.latency_ms||0)+'ms</span></div>';}).join('');
  }
  if(actionName==='agent.capabilities'&&safe&&safe.capabilities){
-  return '<div class="section-title">'+say('قابلیت‌های شناسایی‌شده','Discovered capabilities')+'</div><p class="muted">'+esc(safe.hardware&&safe.hardware.model||'—')+' · OpenWrt '+esc(safe.openwrt_version||'—')+'</p>'+
-  Object.entries(safe.capabilities).map(function(entry){return '<div class="status-row"><span>'+esc(entry[0])+'</span><span>'+esc(Array.isArray(entry[1])?entry[1].join(', ')||'—':entry[1]?'✓':'—')+'</span></div>';}).join('');
+  var supported=safe.feature_support&&typeof safe.feature_support==='object'?Object.entries(safe.feature_support):[];
+  var statusLabels={available:say('قابل استفاده','Available'),read_only:say('فقط مشاهده','Read-only'),planned:say('در حال توسعه','Planned'),not_available:say('غیرفعال یا ناموجود','Unavailable')};
+  var statusStyles={available:'ok',read_only:'',planned:'',not_available:'bad'};
+  var header='<div class="section-title">'+say('سازگاری سخت‌افزاری روتر','Router hardware compatibility')+'</div>'+
+   '<p class="muted">'+esc(safe.hardware&&safe.hardware.model||'—')+' · OpenWrt '+esc(safe.openwrt_version||'—')+'</p>'+
+   '<p class="warn-note" style="margin:14px 0">'+say('قابلیت‌های غیرفعال روی این روتر اجرا نمی‌شوند. کشف یک پکیج به معنی امکان تغییر ایمن تنظیمات نیست.','Unavailable features do not run. Detecting a package does not prove a safe configuration write.')+'</p>';
+  if(supported.length){
+   return header+supported.map(function(entry){
+    var name=entry[0],data=entry[1]||{},stateName=String(data.status||'not_available');
+    return '<div class="device-row"><div><strong>'+esc(name.replace(/_/g,' '))+'</strong><small>'+esc(data.detail||'')+'</small></div><span class="pill '+(statusStyles[stateName]||'')+'">'+esc(statusLabels[stateName]||stateName)+'</span></div>';
+   }).join('');
+  }
+  return header+Object.entries(safe.capabilities).map(function(entry){
+   return '<div class="status-row"><span>'+esc(entry[0])+'</span><span>'+esc(Array.isArray(entry[1])?entry[1].join(', ')||'—':entry[1]?'✓':'—')+'</span></div>';
+  }).join('');
  }
- return '<pre id="feedback">'+esc(JSON.stringify(safe,null,2).slice(0,24000))+'</pre>';
+ return '<div class="result-table">'+structuredValue(safe,0)+'</div>';
 }
 function pending(title,summary,bullets){
  $('page').innerHTML='<div class="grid"><section class="card info"><span class="pill">'+say('در دست توسعه · فعلاً غیرفعال','Planned · Not yet implemented')+'</span><h3>'+esc(title)+'</h3><p>'+esc(summary)+'</p><div class="tags">'+bullets.map(function(b){return '<span class="tag">'+esc(b)+'</span>';}).join('')+'</div></section><section class="card"><div class="section-title">'+say('سازگاری و امنیت','Compatibility & safety')+'</div><p class="muted">'+say('تا وقتی Agent قابلیت سخت‌افزاری مربوط را اعلام نکند و API عملیات با RBAC و Rollback آزمایش نشود، کنترل تغییردهنده‌ای فعال نمی‌شود.','No mutating controls are enabled until the agent advertises the required capability and the API action passes RBAC and rollback testing.')+'</p><p class="warn-note" style="margin-top:16px">'+say('برای دستگاه‌های ناسازگار نباید تنظیمات ساختگی یا موفقیت ظاهری نمایش داده شود.','Unsupported hardware must not show fake settings or simulated success.')+'</p></section></div>';
@@ -296,27 +472,97 @@ function system(){
  action('agent.capabilities',say('شناسایی سخت‌افزار','Hardware capabilities'),'system.read',false)+
  action('system.interfaces',say('اینترفیس‌های شبکه','Network interfaces'),'system.read',false)+
  action('system.backup.create',say('ارسال بکاپ در تلگرام','Send backup to Telegram'),'backup.create',true)+
- action('agent.update.check',say('بررسی آپدیت','Check updates'),'system.read',false)+
+ action('system.services',say('سرویس‌های OpenWrt','OpenWrt services'),'system.read',false)+
+  action('system.packages',say('پکیج‌های نصب‌شده (apk/opkg)','Installed packages (apk/opkg)'),'system.read',false)+
+  action('system.package_updates',say('آپدیت پکیج‌ها (فقط مشاهده)','Available package updates (read only)'),'system.read',false)+
+  action('agent.update.check',say('بررسی آپدیت','Check updates'),'system.read',false)+
  action('agent.update.apply',say('نصب آپدیت Agent','Update agent'),'agent.update',true)+'</div></section>'+resultBox()+
+ (state.role==='owner'&&init?'<section class="card"><div class="section-title">'+say('مهاجرت دیتابیس','Database migrations')+'</div><p class="muted">'+say('مهاجرت‌های افزودنی بدون حذف داده؛ ابتدا بکاپ دیتابیس تهیه کن. اجرای تغییر فقط با تأیید Owner تلگرام مجاز است.','Additive, non-destructive migrations. Back up MySQL first; only Telegram Owner may apply.')+'</p><div class="actions"><button class="action" data-migration="status">'+say('نمایش وضعیت','Show status')+'</button><button class="action danger" data-migration="apply">'+say('اجرای مهاجرت تأییدشده','Apply confirmed migrations')+'</button></div><div id="migrationInfo" class="muted" aria-live="polite"></div></section>':'')+
+ (state.role==='owner'&&init?'<section class="card"><div class="section-title">'+say('تنظیم ورود مستقل وب','Configure browser login')+'</div><p class="muted">'+say('فقط Owner از داخل Telegram Mini App می‌تواند نام کاربری و رمز پنل را ایجاد یا بازنشانی کند.','Only a Telegram Owner can create or reset the web login credentials.')+'</p><form data-web-admin class="stack"><input required name="username" placeholder="admin" autocomplete="username" pattern="[a-z][a-z0-9._-]{2,31}" minlength="3" maxlength="32"><input required type="password" name="password" autocomplete="new-password" minlength="12" maxlength="256" placeholder="Password (12+ characters)"><button type="submit" class="action primary">'+say('ثبت نام کاربری و رمز','Save login credentials')+'</button></form></section>':'')+
  '<section class="card"><div class="section-title">'+say('بخش‌های آماده توسعه','Planned integration')+'</div><p class="muted">'+say('مدیریت LED، سرویس‌ها، آپدیت PHP Backend و کنسول پیشرفته بعد از توسعه Adapter و مسیر بازیابی اضافه می‌شوند.','LED control, service operations, staged backend updates and advanced console will require adapters and recovery paths.')+'</p></section></div>';
 }
 async function automation(){
  $('page').innerHTML='<div class="empty">'+say('در حال خواندن هشدارها و برنامه‌ها…','Reading schedules and alerts…')+'</div>';
  var parts=[];
  try{if(has('monitor.read')){var a=await api('alerts',{device_id:state.active});parts.push('<section class="card"><div class="section-title">'+say('قوانین هشدار','Alert rules')+' <span class="pill">'+(a.alerts||[]).length+'</span></div>'+
- (a.alerts||[]).slice(0,15).map(function(x){return '<div class="device-row"><div><strong>'+esc(x.metric)+'</strong><small>'+esc(x.operator)+' '+esc(x.threshold)+' · '+esc(x.duration_seconds)+' sec</small></div><span class="pill">'+(Number(x.enabled)?say('فعال','Enabled'):say('غیرفعال','Disabled'))+'</span></div>';}).join('')+'</section>');}}
+ (a.alerts||[]).slice(0,15).map(function(x){return '<div class="device-row"><div><strong>'+esc(x.metric)+'</strong><small>'+esc(x.operator)+' '+esc(x.threshold)+' · '+esc(x.duration_seconds)+' sec</small></div><div class="actions"><span class="pill">'+(Number(x.enabled)?say('فعال','Enabled'):say('غیرفعال','Disabled'))+'</span>'+(has('alert.manage')?'<button class="action" data-alert-toggle="'+Number(x.id)+'" data-enable="'+(Number(x.enabled)?'0':'1')+'">'+(Number(x.enabled)?say('غیرفعال‌سازی','Disable'):say('فعال‌سازی','Enable'))+'</button><button class="action danger" data-alert-delete="'+Number(x.id)+'">'+say('حذف','Delete')+'</button>':'')+'</div></div>';}).join('')+'</section>');}}
  catch(e){parts.push('<div class="warn-note">'+esc(e.message)+'</div>');}
  try{if(has('device.read')){var s=await api('schedules',{device_id:state.active});parts.push('<section class="card"><div class="section-title">'+say('زمان‌بندی‌ها','Schedules')+' <span class="pill">'+(s.schedules||[]).length+'</span></div>'+
- (s.schedules||[]).slice(0,15).map(function(x){return '<div class="device-row"><div><strong>'+esc(x.name)+'</strong><small>'+esc(x.action)+' · '+esc(x.next_run_at||'—')+'</small></div><span class="pill">'+(Number(x.enabled)?say('فعال','Enabled'):say('غیرفعال','Disabled'))+'</span></div>';}).join('')+'</section>');}}
+ (s.schedules||[]).slice(0,15).map(function(x){return '<div class="device-row"><div><strong>'+esc(x.name)+'</strong><small>'+esc(x.action)+' · '+esc(x.next_run_at||'—')+'</small></div><div class="actions"><span class="pill">'+(Number(x.enabled)?say('فعال','Enabled'):say('غیرفعال','Disabled'))+'</span>'+(has('schedule.manage')?'<button class="action" data-schedule-toggle="'+Number(x.id)+'" data-enable="'+(Number(x.enabled)?'0':'1')+'">'+(Number(x.enabled)?say('غیرفعال‌سازی','Disable'):say('فعال‌سازی','Enable'))+'</button><button class="action danger" data-schedule-delete="'+Number(x.id)+'">'+say('حذف','Delete')+'</button>':'')+'</div></div>';}).join('')+'</section>');}}
  catch(e){parts.push('<div class="warn-note">'+esc(e.message)+'</div>');}
- parts.push('<section class="card"><p class="muted">'+say('برای ویرایش کامل از داشبورد قبلی استفاده کن؛ موتور قوانین شرطی پیشرفته در نسخه 1.3 توسعه می‌یابد.','Use the legacy dashboard for full editing; advanced conditional automation is planned for v1.3.')+'</p><a href="../dashboard/">'+say('داشبورد قبلی','Legacy dashboard')+'</a></section>');
+ if(has('alert.manage'))parts.push('<section class="card"><div class="section-title">'+say('ساخت هشدار هوشمند','Create alert rule')+'</div><form data-alert-create class="stack">'+
+ '<label>'+say('شاخص','Metric')+'<select name="metric" class="select"><option value="cpu_percent">CPU %</option><option value="memory_percent">RAM %</option><option value="packet_loss">Packet loss %</option><option value="node_relay_ms">VPN latency ms</option><option value="dns_down">DNS down</option><option value="internet_down">Internet down</option><option value="passwall_down">Passwall down</option></select></label>'+
+ '<label>'+say('عملگر','Operator')+'<select name="operator" class="select"><option value=">">&gt;</option><option value=">=">&gt;=</option><option value="==">=</option></select></label>'+
+ '<div class="grid"><label>'+say('آستانه','Threshold')+'<input name="threshold" type="number" step="0.1" min="0" max="100000" required value="90"></label><label>'+say('حداقل مدت خطا (ثانیه)','Duration seconds')+'<input name="duration" type="number" min="0" max="86400" required value="300"></label></div>'+
+ '<button class="action primary" type="submit">'+say('ثبت قانون هشدار','Create alert')+'</button></form></section>');
+ if(has('schedule.manage'))parts.push('<section class="card"><div class="section-title">'+say('زمان‌بندی عملیات','Schedule operations')+'</div><form data-schedule-create class="stack">'+
+ '<label>'+say('نام برنامه','Schedule label')+'<input name="name" maxlength="80" required placeholder="Nightly backup"></label>'+
+ '<label>'+say('عملیات مجاز','Allowed action')+'<select name="action" class="select"><option value="system.backup.create">'+say('ارسال بکاپ','Create backup')+'</option><option value="passwall2.restart">'+say('راه‌اندازی مجدد Passwall2','Restart Passwall2')+'</option></select></label>'+
+ '<label>'+say('فاصله اجرا (دقیقه)','Interval minutes')+'<input name="minutes" type="number" min="15" max="10080" value="1440" required></label>'+
+ '<button class="action primary" type="submit">'+say('ساخت برنامه','Create schedule')+'</button></form></section>');
+ parts.push('<section class="card"><p class="muted">'+say('تمامی عملیات با مجوز نقش کاربر و ثبت Audit اجرا می‌شوند؛ تکمیل Ruleهای چندشرطی نیازمند ارزیابی بیشتر است.','Actions respect role permissions and audit logging; advanced multi-condition triggers remain in development.')+'</p></section>');
  $('page').innerHTML='<div class="stack">'+parts.join('')+'</div>';
+}
+function operationalPoliciesV16(){
+ var card='<section class="card vpn-ops"><div class="section-title">'+say('مدیریت عملیاتی شبکه با بازگشت خودکار','Network operations with automatic rollback')+'</div>'+
+ '<p class="warn-note">'+say('برای این عملیات بسته مناسب باید روی روتر نصب باشد. تغییر تا ۱۲۰ ثانیه نیاز به تأیید دارد؛ در غیر این صورت روتر آن را برمی‌گرداند. این مرحله هنوز روی همه سخت‌افزارها تأیید نشده است.','Required OpenWrt packages must exist. Confirm within 120 seconds or the router restores settings. Hardware acceptance is not yet complete.')+'</p>';
+ if(has('network.read')) card+='<div class="actions">'+action('pbr.policy.list',say('نمایش قوانین PBR','List PBR policies'),'network.read',false)+'</div>';
+ if(has('network.modify'))card+='<div class="vpn-operation-grid">'+
+ '<form class="stack operational-form" data-config-action="pbr.policy.add"><div class="section-title">'+say('افزودن Rule مسیریابی PBR','Create PBR route policy')+'</div>'+
+ '<label>'+say('نام قانون (با pw_)','Policy name (pw_ prefix)')+'<input name="name" required pattern="pw_[A-Za-z0-9_]{1,44}" placeholder="pw_office"></label>'+
+ '<label>'+say('شبکه مقصد CIDR','Destination CIDR')+'<input name="cidr" required dir="ltr" placeholder="192.0.2.0/24"></label>'+
+ '<label>'+say('نام Interface واقعی در network UCI','Existing OpenWrt network interface')+'<input name="interface" required pattern="[A-Za-z][A-Za-z0-9_]{0,47}" placeholder="vpn"></label>'+
+ '<button class="action primary" type="submit">'+say('ایجاد با Safe Apply','Create with rollback')+'</button></form>'+
+ '<form class="stack operational-form" data-config-action="pbr.policy.delete"><label>'+say('حذف Rule ساخته‌شده توسط PW','Delete PW-managed policy')+'<input name="name" required pattern="pw_[A-Za-z0-9_]{1,44}" placeholder="pw_office"></label><button class="action danger" type="submit">'+say('حذف با Safe Apply','Delete with rollback')+'</button></form>'+
+ '<form class="stack operational-form" data-config-action="openvpn.profile.toggle"><div class="section-title">'+say('فعال/غیرفعال کردن پروفایل OpenVPN','OpenVPN profile activation')+'</div><label>'+say('نام پروفایل OpenVPN','OpenVPN UCI profile')+'<input name="profile" required pattern="[A-Za-z][A-Za-z0-9_]{0,47}"></label><label><select name="enabled" class="select"><option value="1">'+say('فعال','Enable')+'</option><option value="0">'+say('غیرفعال','Disable')+'</option></select></label><button class="action primary" type="submit">'+say('اعمال پروفایل','Apply profile')+'</button></form>'+
+ '<form class="stack operational-form" data-config-action="firewall.wan_guard.set"><div class="section-title">'+say('محافظ مسیر مستقیم LAN به WAN','LAN → WAN forwarding guard')+'</div><p class="muted">'+say('فقط Forward مستقیم LAN→WAN را مسدود می‌کند؛ محافظت کامل DNS/IPv6 یا Kill Switch سراسری نیست.','Blocks direct LAN→WAN forwarding only; not a global DNS/IPv6 leak-proof kill switch.')+'</p><label><select name="enabled" class="select"><option value="1">'+say('فعال','Enable')+'</option><option value="0">'+say('خاموش','Disable')+'</option></select></label><button class="action danger" type="submit">'+say('تغییر Firewall با بازگشت خودکار','Apply firewall guard with rollback')+'</button></form>'+
+ '<form class="stack operational-form" data-config-action="firewall.dns53_guard.set"><div class="section-title">'+say('محافظت از DNS کلاسیک کلاینت‌ها','Client classic DNS port 53 guard')+'</div><p class="muted">'+say('DNS با TCP/UDP روی پورت ۵۳ از LAN به WAN مسدود می‌شود. این گزینه DoH/DoT یا DNS صادرشده توسط خود روتر را پوشش نمی‌دهد.','Blocks forwarded LAN→WAN TCP/UDP port 53 only. It does not prevent DoH/DoT or router-originated DNS.')+'</p><label><select name="enabled" class="select"><option value="1">'+say('فعال','Enable')+'</option><option value="0">'+say('خاموش','Disable')+'</option></select></label><button class="action danger" type="submit">'+say('اعمال محافظ DNS با Rollback','Apply DNS guard with rollback')+'</button></form>';
+ if(has('network.modify'))card+='</div>';
+ card+='</section>';return card;
+}
+function showTrafficShapingV16(){
+ if(!has('network.modify'))return '';
+ return '<section class="card"><div class="section-title">'+say('تنظیم سرعت SQM','SQM queue controls')+'</div><p class="muted">'+say('فقط Queue تعریف‌شده در sqm-scripts قابل ویرایش است؛ این محدودیت سرعت هر دستگاه نیست.','Requires an existing SQM queue. This is interface shaping, not per-device throttling.')+'</p>'+
+ '<form class="stack operational-form" data-config-action="sqm.queue.set"><label>'+say('نام Queue در UCI','SQM UCI queue')+'<input name="section" required pattern="[A-Za-z][A-Za-z0-9_]{0,47}" placeholder="eth1"></label><label>'+say('Download (kbit/s)','Download (kbit/s)')+'<input name="download_kbit" type="number" required min="64" max="10000000" value="20000"></label>'+
+ '<label>'+say('Upload (kbit/s)','Upload (kbit/s)')+'<input name="upload_kbit" type="number" required min="64" max="10000000" value="5000"></label><button class="action primary" type="submit">'+say('اعمال SQM با Rollback','Apply SQM with rollback')+'</button></form></section>';
+}
+function showLuci(){
+ var read=has('system.read')?'<div class="actions">'+action('luci.catalog',say('شناسایی قابلیت‌های نصب‌شده','Detect installed LuCI capabilities'),'system.read',false)+action('luci.system.status',say('تنظیمات عمومی سیستم','Current system settings'),'system.read',false)+'</div>':'';
+ var hostname=(has('system.modify')&&has('network.modify'))?
+ '<form class="stack operational-form" data-luci-form="luci.system.hostname.set"><div class="section-title">'+say('تغییر نام روتر','Change router hostname')+'</div><p class="muted">'+say('تغییر با Snapshot و تأیید ۱۲۰ ثانیه‌ای انجام می‌شود.','Change uses local snapshot and 120-second confirmation.')+'</p><label>'+say('نام جدید (یک بخش DNS)','New single-label hostname')+'<input name="hostname" required pattern="[A-Za-z][A-Za-z0-9-]{0,62}" maxlength="63" placeholder="OpenWrt-Gale"></label><button class="action primary" type="submit">'+say('اعمال امن نام روتر','Safely update hostname')+'</button></form>':'';
+ var dhcp=(has('network.read')?'<div class="actions">'+action('luci.dhcp.static.list',say('رزروهای DHCP','List static DHCP leases'),'network.read',false)+'</div>':'')+
+ (has('network.modify')?'<form class="stack operational-form" data-luci-form="luci.dhcp.static.add"><div class="section-title">'+say('افزودن رزرو DHCP','Create DHCP static lease')+'</div><label>MAC<input name="mac" dir="ltr" pattern="([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}" required placeholder="02:11:22:33:44:55"></label><label>IPv4 '+say('داخل LAN','on LAN')+'<input name="ip" dir="ltr" required placeholder="192.168.1.80"></label><label>'+say('نام دستگاه','Device name')+'<input name="name" pattern="[A-Za-z][A-Za-z0-9-]{0,62}" required placeholder="office-printer"></label><button class="action primary" type="submit">'+say('افزودن با بازگشت خودکار','Create with auto rollback')+'</button></form>'+
+ '<form class="stack operational-form" data-luci-form="luci.dhcp.static.delete"><div class="section-title">'+say('حذف رزرو ساخته‌شده توسط PW','Delete PW-managed lease')+'</div><label>MAC<input name="mac" dir="ltr" required pattern="([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}" placeholder="02:11:22:33:44:55"></label><button class="action danger" type="submit">'+say('حذف با بازگشت خودکار','Remove with auto rollback')+'</button></form>':'');
+ var wifi=has('wifi.modify')&&has('network.modify')?
+ '<form class="stack operational-form" data-luci-form="luci.wifi.iface.toggle"><div class="section-title">'+say('فعال/غیرفعال‌سازی SSID','Enable/disable Wi-Fi interface')+'</div><p class="warn-note">'+say('ممکن است ارتباط بی‌سیم قطع شود؛ اگر تأیید نکنی روتر تنظیمات قبلی را بازمی‌گرداند.','Wireless connection may drop; an unconfirmed change is rolled back locally.')+'</p><label>'+say('شناسه Wi-Fi Interface در UCI','Named UCI wifi-iface')+'<input name="section" required maxlength="48" placeholder="default_radio0 / @wifi-iface[0]"></label><label>'+say('عملیات','Action')+'<select name="enabled" class="select"><option value="1">'+say('روشن','Enable')+'</option><option value="0">'+say('خاموش','Disable')+'</option></select></label><button class="action primary" type="submit">'+say('اعمال امن','Safe apply')+'</button></form>':'';
+ $('page').innerHTML='<div class="stack">'+hero()+
+ '<section class="card"><div class="section-title"><span class="section-icon">'+navIcon('luci')+'</span>'+say('مرکز مدیریت LuCI','LuCI capability center')+'</div><p class="muted">'+say('این بخش قابلیت‌های نصب‌شده روی روتر را بررسی می‌کند؛ پوشش همه افزونه‌ها و درایورهای LuCI تضمین نشده است. اکشن فاقد پشتوانه واقعی عمداً در دسترس نیست.','Live installed-package capability inventory. Full parity with all LuCI plugins and drivers is not guaranteed. Unsupported actions are explicitly unavailable.')+'</p>'+read+'</section>'+
+ '<div class="grid"><section class="card"><div class="section-title">'+say('تنظیمات System','System settings')+'</div>'+hostname+(hostname?'':'<p class="muted">'+say('مجوز تغییر تنظیمات موجود نیست.','Mutation permission not available.')+'</p>')+'</section>'+
+ '<section class="card"><div class="section-title">'+say('رزروهای DHCP','DHCP static leases')+'</div><div class="stack">'+dhcp+'</div></section></div>'+
+ '<section class="card"><div class="section-title">'+say('شبکه بی‌سیم','Wireless interfaces')+'</div>'+wifi+'</section>'+
+ resultBox()+'</div>';
+}
+function showOpenVPN(){
+ var controls=has('network.modify')?'<section class="card"><div class="section-title">'+say('اتصال و قطع سرویس OpenVPN','OpenVPN service controls')+'</div><p class="warn-note">'+say('قطع یا راه‌اندازی VPN ممکن است ارتباط روتر را تغییر دهد. فقط با راه دسترسی جایگزین استفاده کن.','Changes can interrupt connectivity; keep independent recovery access.')+'</p><div class="actions">'+
+ ['start','stop','restart'].map(function(v){return '<button class="action danger" data-ovpn-mode="'+v+'">'+({start:say('اتصال','Connect'),stop:say('قطع اتصال','Disconnect'),restart:say('اتصال مجدد','Reconnect')}[v])+'</button>';}).join('')+'</div></section>':'';
+ $('page').innerHTML='<div class="stack">'+hero()+
+ '<section class="card"><div class="section-title"><span class="section-icon">'+navIcon('openvpn')+'</span>OpenVPN</div><p class="muted">'+say('پروفایل‌های واقعی نصب‌شده در OpenWrt را مشاهده کن. کلیدها و مشخصات خصوصی نمایش داده نمی‌شوند.','Inspect real OpenWrt OpenVPN profiles without exposing credentials.')+'</p><div class="actions">'+action('openvpn.status',say('پروفایل‌ها و وضعیت اتصال','Profiles and service'),'network.read',false)+'</div></section>'+controls+
+ '<section class="card"><div class="section-title">'+say('طراحی و اعتبارسنجی Rule','Route policy builder')+'</div><p class="warn-note">'+say('این فرم فقط اعتبارسنجی است. ایجاد Rule واقعی با Rollback در کارت‌های مدیریتی پایین انجام می‌شود.','This form validates only. Real PBR rule installation with timed rollback is available in the controls below.')+'</p>'+
+ '<form class="stack vpn-plan-form" data-openvpn-plan><label>'+say('شناسه پروفایل','UCI profile')+'<input required name="profile" pattern="[A-Za-z0-9_-]{1,64}" placeholder="client_a"></label>'+
+ '<label>'+say('مقصد CIDR','Destination CIDR')+'<input required name="cidr" dir="ltr" placeholder="192.0.2.0/24"></label>'+
+ '<label>'+say('مسیر','Routing policy')+'<select class="select" name="mode"><option value="through_vpn">'+say('از VPN','Through VPN')+'</option><option value="bypass_vpn">'+say('مستقیم','Direct / Bypass')+'</option></select></label>'+
+ '<button type="submit" class="action primary">'+say('تست Rule بدون تغییر','Validate without applying')+'</button></form></section>'+operationalPoliciesV16()+resultBox()+'</div>';
+}
+function showTerminal(){
+ if(!has('terminal.execute')){$('page').innerHTML='<div class="empty">'+say('مجوز terminal.execute لازم است.','terminal.execute permission required.')+'</div>';return;}
+ if(!webAuth){$('page').innerHTML='<section class="card"><div class="section-title">'+say('ترمینال تحت وب','Web SSH Terminal')+'</div><p class="muted">'+say('برای استفاده از ترمینال یکپارچه وارد حساب وب شو.','Sign in with your browser account for embedded SSH.')+'</p><a href="../auth/login.php">Web Login</a></section>';return;}
+ $('page').innerHTML='<div class="stack"><section class="card terminal-panel"><div class="terminal-header"><div class="section-title"><span class="section-icon">'+navIcon('terminal')+'</span>'+say('ترمینال SSH روتر','Router SSH Console')+'</div><span class="pill">SSH · '+esc(state.active)+'</span></div><p class="muted">'+say('فرمان‌های غیرتعاملی با حساب Dropbear روتر انتخاب‌شده اجرا می‌شوند.','Non-interactive commands run with Dropbear credentials for the selected router.')+'</p><div class="terminal-frame-shell"><iframe class="terminal-frame" title="OpenWrt SSH Console" src="../terminal/?device_id='+encodeURIComponent(state.active)+'" loading="lazy"></iframe></div></section></div>';
 }
 function render(){
  nav();
- if(!state.fleet){$('page').innerHTML='<div class="empty">'+say('برای مشاهده داده‌های روتر، پنل را از دکمه Mini App در تلگرام باز کن. ورود مستقیم مرورگر در این پیش‌نمایش پشتیبانی نمی‌شود.','Open this preview from the Telegram Mini App button. Direct browser authentication is not available.')+'</div>';return;}
+ if(!state.fleet){$('page').innerHTML='<div class="empty">'+say('برای ورود از حساب وب یا مینی‌اپ تلگرام استفاده کن.','Sign in with your web account or Telegram Mini App.')+'</div>';return;}
  if(!state.active){$('page').innerHTML='<div class="empty">'+say('هیچ روتر فعالی وجود ندارد.','No active router.')+'</div>';return;}
- if(state.page==='home')home();else if(state.page==='internet')internet();else if(state.page==='proxy')proxy();else if(state.page==='routers')routers();else if(state.page==='clients')showClients();else if(state.page==='wifi')showWifi();else if(state.page==='dns')showDNS();else if(state.page==='gaming')showGaming();else if(state.page==='led')showLED();else if(state.page==='system')system();else if(state.page==='automation'){automation();}else{
+ if(state.page==='home')home();else if(state.page==='luci')showLuci();else if(state.page==='internet')internet();else if(state.page==='proxy')proxy();else if(state.page==='openvpn')showOpenVPN();else if(state.page==='terminal')showTerminal();else if(state.page==='routers')routers();else if(state.page==='clients')showClients();else if(state.page==='wifi')showWifi();else if(state.page==='dns')showDNS();else if(state.page==='gaming')showGaming();else if(state.page==='led')showLED();else if(state.page==='cellular')showCellular();else if(state.page==='system')system();else if(state.page==='automation'){automation();}else{
  var plans={
   clients:[say('مدیریت دستگاه‌های شبکه','LAN client management'),say('فهرست کلاینت‌ها، محدودیت سرعت، مسدودسازی، زمان‌بندی و اولویت‌بندی پس از توسعه API مجاز نمایش داده می‌شود.','Live client list, rate limits, blocking, schedules and priorities require an authorized agent API.'),['DHCP / ARP','MAC identity','Live RX/TX','Rate limit','Block / unblock','Parental schedules']],
   wifi:[say('مدیریت Wi-Fi','Wi-Fi management'),say('مدیریت SSID، رمز، ۲٫۴/۵ گیگاهرتز، شبکه مهمان، QR و انتخاب کانال ایمن همراه با Rollback.','SSID, password, 2.4/5 GHz, guest Wi-Fi, QR, safe channel selection and rollback.'),['SSID & WPA2/WPA3','Guest isolation','Channel scan','QR codes','Safe rollback']],
@@ -329,14 +575,14 @@ function render(){
  }
 }
 async function api(action,data){
- if(!init)throw new Error(say('احراز هویت Telegram Mini App وجود ندارد.','Telegram Mini App authorization is missing.'));
- var r=await fetch('../dashboard/api.php',{method:'POST',cache:'no-store',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({init_data:init,action:action},data||{}))});
+ if(!init&&!webAuth)throw new Error(say('ورود امن لازم است','Authentication required'));
+ var r=await fetch('../dashboard/api.php',{method:'POST',cache:'no-store',credentials:'same-origin',headers:{'Content-Type':'application/json','X-PW-CSRF':webCsrf},body:JSON.stringify(Object.assign({init_data:init,action:action},data||{}))});
  var payload=await r.json().catch(function(){return {ok:false,error:'Invalid API response'};});
  if(!r.ok||!payload.ok)throw new Error(payload.error||'API '+r.status);
  return payload;
 }
 async function refresh(){
- if(!init){state.fleet=null;render();return;}
+ if(!init&&!webAuth){window.location.replace('../auth/login.php');return;}
  $('notice').textContent=say('در حال همگام‌سازی اطلاعات روتر…','Syncing router data…');
  try{
   var r=await api('summary');state.fleet=r.fleet;state.active=r.active_device_id||'';state.role=r.role||'viewer';state.permissions=r.permissions||[];
@@ -346,7 +592,7 @@ async function refresh(){
 }
 async function command(id,confirmNeeded,params){
  if(state.busy)return;
- if(confirmNeeded&&!window.confirm(say('این عملیات ممکن است ارتباط روتر را تغییر دهد. مطمئنی؟','This action may affect router connectivity. Continue?')))return;
+ if(confirmNeeded&&!window.confirm(id==='network.speed_probe'?say('این آزمون حدود ۲ مگابایت داده از Cloudflare دانلود می‌کند و IP عمومی روتر قابل مشاهده خواهد بود. اجرا شود؟','This probe downloads 2 MiB from Cloudflare, exposing your router public IP. Continue?'):id==='led.identify'?say('چراغ حدود یک ثانیه تغییر کرده و سپس برمی‌گردد. ادامه؟','The LED changes for one second and then returns to its original state. Continue?'):say('این عملیات ممکن است ارتباط روتر را تغییر دهد. مطمئنی؟','This action may affect router connectivity. Continue?')))return;
  state.busy=true;var buttons=document.querySelectorAll('[data-command]');buttons.forEach(function(b){b.disabled=true;});
  var out=$('feedback');if(out)out.textContent=say('در حال ارسال فرمان…','Submitting command…');
  try{
@@ -357,7 +603,7 @@ async function command(id,confirmNeeded,params){
    await new Promise(function(resolve){setTimeout(resolve,1400);});
    var j=await api('command_status',{device_id:state.active,command_id:ret.command_id});
    if(j.command && ['done','failed'].includes(j.command.status)){
-     if(out){var box=out.parentElement; if(j.command.status==='done'&&j.command.result){box.innerHTML='<div class="section-title">'+esc(id)+'</div>'+renderCommandOutput(id,j.command.result); if(!box.querySelector('#feedback')){var nextOut=document.createElement('pre');nextOut.id='feedback';nextOut.style.display='none';box.appendChild(nextOut);}}else{out.textContent=JSON.stringify({status:j.command.status,error:j.command.error},null,2).slice(0,20000);}}
+     if(out){if(j.command.status==='done'){out.innerHTML=renderCommandOutput(id,j.command.result||{status:'done'});if(j.command.result&&j.command.result.pending){var tx=String(j.command.result.transaction_id||'');if(/^[a-f0-9]{32}$/.test(tx)){var wf=id==='wifi.ssid.safe_apply';out.innerHTML+='<div class="actions" style="margin-top:13px"><button type="button" class="action primary" '+(wf?'data-safe-ssid-confirm':'data-config-confirm')+'="'+esc(tx)+'">'+say('تأیید تنظیمات پس از تست اتصال','Confirm tested configuration')+'</button></div>';}}}else{out.textContent=say('خطا: ','Error: ')+String(j.command.error||'Failed');}}
      finished=true;break;
    }
   }
@@ -365,6 +611,218 @@ async function command(id,confirmNeeded,params){
  }catch(e){if(out)out.textContent=e.message;else $('notice').textContent=e.message;}
  finally{state.busy=false;buttons.forEach(function(b){b.disabled=false;});}
 }
+document.addEventListener('submit',function(ev){
+ var form=ev.target.closest('form[data-rollout-create]');if(!form)return;
+ ev.preventDefault();if(state.role!=='owner')return;
+ var fd=new FormData(form),group=Number(fd.get('group_id')),wave=Number(fd.get('wave_size')),commandAction=String(fd.get('command_action')||'');
+ if(!Number.isInteger(group)||group<=0||!Number.isInteger(wave)||wave<1||wave>5)return;
+ if(!['agent.update.check','agent.update.apply'].includes(commandAction))return;
+ if(!window.confirm(say('برنامه ساخته شود؟ اجرای آن بعداً نیازمند تأیید مستقل است.','Create this rollout? Start requires separate approval.')))return;
+ api('rollout_create',{group_id:group,wave_size:wave,command_action:commandAction,confirmed:true})
+ .then(loadRollouts).catch(function(e){$('notice').textContent=e.message;});
+});
+document.addEventListener('click',function(ev){
+ var button=ev.target.closest('[data-rollout-control]');if(!button)return;
+ if(state.role!=='owner')return;
+ var id=Number(button.dataset.rolloutId),operation=String(button.dataset.rolloutControl||'');
+ if(!Number.isInteger(id)||id<=0||!['start','approve_next','pause','resume','cancel'].includes(operation))return;
+ if(!window.confirm(say('این عملیات ممکن است روی روترهای گروه اثر بگذارد. ادامه می‌دهی؟','This may affect routers in your group. Continue?')))return;
+ button.disabled=true;
+ api('rollout_control',{id:id,operation:operation,confirmed:true}).then(loadRollouts)
+ .catch(function(e){$('notice').textContent=e.message;button.disabled=false;});
+});
+document.addEventListener('click',function(ev){
+ var b=ev.target.closest('[data-migration]');if(!b)return;
+ if(!init||state.role!=='owner')return;
+ var mode=String(b.dataset.migration||'');
+ if(!['status','apply'].includes(mode))return;
+ if(mode==='apply'&&!window.confirm(say('از دیتابیس بکاپ گرفته‌ای؟ مهاجرت جداول جدید را ایجاد می‌کند. ادامه؟','Do you have a MySQL backup? This creates new tables. Continue?')))return;
+ b.disabled=true;
+ api(mode==='apply'?'migration_apply':'migration_status',mode==='apply'?{confirmed:true}:{}).then(function(result){
+  var el=$('migrationInfo');if(el)el.textContent=(result.applied?('Applied: '+result.applied.join(', ')+' · '):'')+
+    'Pending: '+((result.migration&&result.migration.pending)||[]).join(', ');
+ }).catch(function(e){$('notice').textContent=e.message;}).finally(function(){b.disabled=false;});
+});
+document.addEventListener('submit',function(ev){
+ var a=ev.target.closest('form[data-alert-create]');
+ var b=ev.target.closest('form[data-schedule-create]');
+ if(!a&&!b)return;
+ ev.preventDefault();
+ var f=new FormData(a||b);
+ if(a){
+  if(!has('alert.manage'))return;
+  var metric=String(f.get('metric')||''),operator=String(f.get('operator')||''),threshold=Number(f.get('threshold')),duration=Number(f.get('duration'));
+  if(!['cpu_percent','memory_percent','packet_loss','node_relay_ms','dns_down','internet_down','passwall_down'].includes(metric)||!['>','>=','=='].includes(operator)||!Number.isFinite(threshold)||!Number.isInteger(duration)||duration<0||duration>86400)return;
+  api('alert_create',{device_id:state.active,metric,operator,threshold,duration_seconds:duration,cooldown_seconds:900}).then(automation).catch(function(e){$('notice').textContent=e.message;});
+ }
+ if(b){
+  if(!has('schedule.manage'))return;
+  var name=String(f.get('name')||''),action=String(f.get('action')||''),minutes=Number(f.get('minutes'));
+  if(!name||name.length>80||!['system.backup.create','passwall2.restart'].includes(action)||!Number.isInteger(minutes)||minutes<15||minutes>10080)return;
+  if(!window.confirm(say('برنامه فعال خواهد شد. ادامه می‌دهی؟','Create and enable this recurring action?')))return;
+  api('schedule_create',{device_id:state.active,name,command_action:action,params:{},schedule_type:'interval',schedule_spec:{every_minutes:minutes}}).then(automation).catch(function(e){$('notice').textContent=e.message;});
+ }
+});
+document.addEventListener('click',function(ev){
+ var b=ev.target.closest('[data-alert-toggle],[data-alert-delete],[data-schedule-toggle],[data-schedule-delete]');
+ if(!b)return;
+ var isAlert=!!(b.dataset.alertToggle||b.dataset.alertDelete);
+ var isDelete=b.hasAttribute('data-alert-delete')||b.hasAttribute('data-schedule-delete');
+ var id=Number(b.dataset.alertToggle||b.dataset.alertDelete||b.dataset.scheduleToggle||b.dataset.scheduleDelete);
+ if(!Number.isInteger(id)||id<=0||!has(isAlert?'alert.manage':'schedule.manage'))return;
+ if(isDelete&&!window.confirm(say('این قانون حذف شود؟','Delete this rule?')))return;
+ var action=(isAlert?'alert_':'schedule_')+(isDelete?'delete':'toggle');
+ api(action,{device_id:state.active,id,enabled:b.dataset.enable==='1'}).then(automation).catch(function(e){$('notice').textContent=e.message;});
+});
+document.addEventListener('click',function(ev){
+ var b=ev.target.closest('[data-safe-service-restart]');if(!b)return;
+ if(!has('system.modify'))return;
+ var name=String(b.dataset.safeServiceRestart||'');
+ if(!['dnsmasq','odhcpd','sysntpd'].includes(name))return;
+ command('system.service.restart',true,{name:name});
+});
+document.addEventListener('submit',function(ev){
+ var form=ev.target.closest('form[data-luci-form]');if(!form)return;
+ ev.preventDefault();if(!form.reportValidity())return;
+ var actionName=String(form.dataset.luciForm||'');
+ var permissions={
+  'luci.system.hostname.set':'system.modify',
+  'luci.dhcp.static.add':'network.modify',
+  'luci.dhcp.static.delete':'network.modify',
+  'luci.wifi.iface.toggle':'wifi.modify'
+ };
+ if(!Object.prototype.hasOwnProperty.call(permissions,actionName)||!has(permissions[actionName])||!has('network.modify'))return;
+ var fields=new FormData(form),params={};
+ for(var pair of fields.entries())params[pair[0]]=String(pair[1]);
+ if(actionName==='luci.wifi.iface.toggle')params.enabled=params.enabled==='1';
+ command(actionName,true,params).catch(function(e){var n=$('notice');if(n)n.textContent=e.message;});
+});
+document.addEventListener('input',function(ev){
+ var search=ev.target.closest('[data-luci-search]');if(!search)return;
+ filterLuciResults();
+});
+document.addEventListener('change',function(ev){
+ var select=ev.target.closest('[data-luci-status]');if(!select)return;
+ filterLuciResults();
+});
+function filterLuciResults(){
+ var q=document.querySelector('[data-luci-search]'),f=document.querySelector('[data-luci-status]');
+ var search=q?String(q.value).trim().toLowerCase():'',status=f?String(f.value):'all';
+ document.querySelectorAll('.luci-item').forEach(function(item){
+  item.hidden=!(item.dataset.moduleText||'').includes(search)||(status!=='all'&&item.dataset.moduleState!==status);
+ });
+}
+document.addEventListener('submit',function(ev){
+ var form=ev.target.closest('form.operational-form[data-config-action]');if(!form)return;
+ ev.preventDefault();if(!form.reportValidity())return;
+ var actionName=String(form.dataset.configAction||'');
+ var perms={'pbr.policy.add':'network.modify','pbr.policy.delete':'network.modify',
+  'openvpn.profile.toggle':'network.modify','sqm.queue.set':'network.modify',
+  'clients.internet.block':'firewall.modify','wifi.channel.safe_apply':'wifi.modify',
+  'firewall.wan_guard.set':'firewall.modify','firewall.dns53_guard.set':'firewall.modify'};
+ if(!Object.prototype.hasOwnProperty.call(perms,actionName)||!has(perms[actionName]))return;
+ var fd=new FormData(form),params={};
+ for(var pair of fd.entries())params[pair[0]]=String(pair[1]);
+ if(actionName==='openvpn.profile.toggle'||actionName==='firewall.wan_guard.set'||actionName==='firewall.dns53_guard.set')params.enabled=params.enabled==='1';
+ if(actionName==='clients.internet.block')params.blocked=params.blocked==='1';
+ command(actionName,true,params).catch(function(e){var n=$('notice');if(n)n.textContent=e.message;});
+});
+document.addEventListener('click',function(ev){
+ var btn=ev.target.closest('[data-config-confirm]');if(!btn||!has('network.modify'))return;
+ var id=String(btn.dataset.configConfirm||'');if(!/^[a-f0-9]{32}$/.test(id))return;
+ command('config.safe.confirm',true,{transaction_id:id}).catch(function(e){var n=$('notice');if(n)n.textContent=e.message;});
+});
+document.addEventListener('click',function(ev){
+ var btn=ev.target.closest('[data-led-rgb-apply]');if(!btn||!has('system.modify'))return;
+ var name=String(btn.dataset.ledRgbApply||'');
+ if(!/^[A-Za-z0-9:_+.-]{1,96}$/.test(name)||name==='.'||name==='..')return;
+ var scope=btn.closest('.device-row'),picker=scope&&scope.querySelector('[data-led-rgb-color]');
+ var hex=picker?String(picker.value):'';
+ if(!/^#[0-9a-fA-F]{6}$/.test(hex))return;
+ command('led.rgb.set',true,{name:name,red:parseInt(hex.slice(1,3),16),green:parseInt(hex.slice(3,5),16),blue:parseInt(hex.slice(5,7),16)});
+});
+document.addEventListener('click',function(ev){
+ var b=ev.target.closest('[data-ovpn-mode]');
+ if(b){
+  if(!has('network.modify'))return;
+  var mode=b.dataset.ovpnMode;
+  if(!['start','stop','restart'].includes(mode))return;
+  command('openvpn.service.control',true,{mode:mode}).catch(function(e){$('notice').textContent=e.message;});
+  return;
+ }
+ var led=ev.target.closest('[data-led-apply]');
+ if(!led)return;
+ if(!has('system.modify'))return;
+ var name=led.dataset.ledApply;
+ if(!/^[A-Za-z0-9:_+.-]{1,96}$/.test(name)||name==='.'||name==='..')return;
+ var scope=led.closest('.device-row'),input=scope&&scope.querySelector('[data-led-level]');
+ var level=input?Number(input.value):NaN;
+ if(!input||!Number.isInteger(level)||level<0||level>Number(input.max)){$('notice').textContent=say('شدت روشنایی معتبر نیست.','Invalid brightness level.');return;}
+ command('led.brightness.set',true,{name:name,brightness:level}).catch(function(e){$('notice').textContent=e.message;});
+});
+document.addEventListener('submit',function(ev){
+ var form=ev.target.closest('form[data-openvpn-plan]');if(!form)return;
+ ev.preventDefault();if(!has('network.read'))return;
+ var f=new FormData(form);
+ command('openvpn.route.plan',false,{profile:String(f.get('profile')||''),cidr:String(f.get('cidr')||''),mode:String(f.get('mode')||'')})
+ .catch(function(e){$('notice').textContent=e.message;});
+});
+document.addEventListener('click',function(ev){
+ var b=ev.target.closest('[data-led-identify]');if(!b)return;
+ var name=String(b.dataset.ledIdentify||'');
+ if(!/^[A-Za-z0-9:_+.-]{1,96}$/.test(name)||name==='.'||name==='..'||!has('system.modify'))return;
+ command('led.identify',true,{name:name}).catch(function(e){$('notice').textContent=e.message;});
+});
+document.addEventListener('submit',function(ev){
+ var form=ev.target.closest('form[data-web-admin]');if(!form)return;
+ ev.preventDefault();if(!init||state.role!=='owner')return;
+ var fd=new FormData(form),username=String(fd.get('username')||''),password=String(fd.get('password')||'');
+ api('web_credentials_set',{username:username,password:password}).then(function(){
+   $('notice').textContent=say('ورود وب فعال شد.','Browser login configured.');
+   form.reset();
+ }).catch(function(e){$('notice').textContent=e.message;});
+});
+document.addEventListener('submit',function(ev){
+ var f=ev.target.closest('form[data-client-policy]');if(!f)return;
+ ev.preventDefault();if(!has('system.read'))return;
+ var fd=new FormData(f),mac=String(fd.get('mac')||'').trim(),mode=String(fd.get('mode')||'');
+ var raw=String(fd.get('limit_kbit')||'');
+ if(!/^[a-fA-F0-9:-]{11,24}$/.test(mac)||!['block','unblock','limit'].includes(mode))return;
+ var params={mac:mac,mode:mode};
+ if(mode==='limit'){
+  var limit=Number(raw);
+  if(!Number.isInteger(limit)||limit<64||limit>1000000){$('notice').textContent='Invalid kbit/s limit';return;}
+  params.limit_kbit=limit;
+ }
+ command('clients.policy_plan',false,params).catch(function(e){$('notice').textContent=e.message;});
+});
+document.addEventListener('click',function(ev){
+ var apply=ev.target.closest('[data-safe-ssid-apply]');
+ if(apply){
+  if(!has('wifi.modify'))return;
+  var form=apply.closest('form[data-ssid-plan]');if(!form||!form.reportValidity())return;
+  var fd=new FormData(form),section=String(fd.get('section')||''),ssid=String(fd.get('ssid')||'');
+  if(!/^[A-Za-z0-9_-]{1,64}$/.test(section)||!ssid||new TextEncoder().encode(ssid).length>32)return;
+  command('wifi.ssid.safe_apply',true,{section:section,ssid:ssid});
+ }
+ var confirmBtn=ev.target.closest('[data-safe-ssid-confirm]');
+ if(confirmBtn){
+  if(!has('wifi.modify'))return;
+  var id=String(confirmBtn.dataset.safeSsidConfirm||'');
+  if(!/^[a-f0-9]{32}$/.test(id))return;
+  command('wifi.ssid.safe_confirm',true,{transaction_id:id});
+ }
+});
+document.addEventListener('submit',function(ev){
+ var f=ev.target.closest('form[data-ssid-plan]');if(!f)return;
+ ev.preventDefault();
+ if(!has('wifi.read'))return;
+ var fd=new FormData(f),section=String(fd.get('section')||''),ssid=String(fd.get('ssid')||'');
+ if(!/^[A-Za-z0-9_-]{1,64}$/.test(section)||!ssid||new TextEncoder().encode(ssid).length>32){
+   $('notice').textContent=say('Section یا SSID معتبر نیست.','Invalid section or SSID.');return;
+ }
+ command('wifi.plan_ssid',false,{section:section,ssid:ssid}).catch(function(e){$('notice').textContent=e.message;});
+});
 document.addEventListener('submit',function(ev){
  var f=ev.target.closest('form[data-passwall-form]');if(!f)return;
  ev.preventDefault();
@@ -381,15 +839,30 @@ document.addEventListener('click',function(event){
  var b=event.target.closest('[data-nav],[data-router],[data-command],[data-action-param]');
  if(!b)return;
  if(b.dataset.actionParam){var id=b.dataset.paramId||'';if(!/^[A-Za-z0-9_-]{1,96}$/.test(id))return;var mutation=b.dataset.actionParam!=='passwall2.node.test';command(b.dataset.actionParam,mutation,{id:id});return;}
- if(b.dataset.nav){state.page=b.dataset.nav;render();window.scrollTo(0,0);}
+ if(b.dataset.nav){state.page=b.dataset.nav;closeMenu();render();window.scrollTo(0,0);}
  else if(b.dataset.router){api('select_device',{device_id:b.dataset.router}).then(refresh).catch(function(e){$('notice').textContent=e.message;});}
  else if(b.dataset.command){command(b.dataset.command,b.dataset.confirm==='1');}
 });
+function closeMenu(){document.getElementById('appShell').classList.remove('menu-open');$('menuBtn').setAttribute('aria-expanded','false');}
+$('menuBtn').addEventListener('click',function(){var app=$('appShell');var opened=app.classList.toggle('menu-open');$('menuBtn').setAttribute('aria-expanded',opened?'true':'false');if(opened){var current=document.querySelector('.sidebar .nav-btn.selected');(current||document.querySelector('.sidebar .nav-btn'))?.focus();}});
+$('navBackdrop').addEventListener('click',function(){closeMenu();$('menuBtn').focus();});
+document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&$('appShell').classList.contains('menu-open')){closeMenu();$('menuBtn').focus();}});
+window.addEventListener('resize',function(){if(window.innerWidth>850)closeMenu();});
 $('devicePicker').addEventListener('change',function(e){api('select_device',{device_id:e.target.value}).then(refresh).catch(function(err){$('notice').textContent=err.message;});});
 $('refreshBtn').onclick=refresh;
 $('langBtn').onclick=function(){state.lang=state.lang==='fa'?'en':'fa';try{localStorage.setItem('pwcontrol-lang',state.lang);}catch(e){}applyTheme();render();};
 $('themeBtn').onclick=function(){state.theme=state.theme==='light'?'dark':'light';try{localStorage.setItem('pwcontrol-theme',state.theme);}catch(e){}applyTheme();render();};
 applyTheme();refresh();
+// Limited live monitoring refreshes only view-only pages, never editing forms.
+setInterval(function(){
+ if(document.visibilityState==='hidden'||state.busy||!state.fleet)return;
+ if(!['home','internet'].includes(state.page))return;
+ api('summary').then(function(r){
+  state.fleet=r.fleet;state.active=r.active_device_id||state.active;
+  return state.active?api('device_detail',{device_id:state.active}):null;
+ }).then(function(d){if(d && !state.busy && ['home','internet'].includes(state.page)){state.detail=d;render();}})
+ .catch(function(e){var el=$('notice');if(el)el.textContent=say('همگام‌سازی زنده ناموفق بود: ','Live refresh failed: ')+e.message;});
+},20000);
 })();
 </script>
 </body>

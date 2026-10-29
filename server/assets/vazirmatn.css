@@ -1,0 +1,12 @@
+/* Vazirmatn 33.0.3, SIL OFL 1.1. Prefer guaranteed bundled WOFF2, then pinned CDN.
+ * An offline system font is the final graceful fallback until bundle installation.
+ */
+@font-face{
+  font-family:'Vazirmatn';
+  font-style:normal;
+  font-weight:100 900;
+  font-display:swap;
+  src:url('./fonts/Vazirmatn.woff2') format('woff2'),
+      url('https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/fonts/webfonts/Vazirmatn%5Bwght%5D.woff2') format('woff2');
+}
+:root{font-synthesis:none}

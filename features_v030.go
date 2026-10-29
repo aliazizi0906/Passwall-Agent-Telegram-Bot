@@ -452,15 +452,23 @@ func restartServiceV3(name string) (map[string]interface{}, error) {
 }
 
 func packagesV3(updatesOnly bool) (map[string]interface{}, error) {
-	apk := commandPath("apk")
-	if apk == "" {
-		return map[string]interface{}{"available": false, "packages": []string{}, "count": 0}, nil
-	}
+	manager := "apk"
+	path := commandPath("apk")
 	args := []string{"list", "--installed"}
-	if updatesOnly {
+	if path == "" {
+		manager = "opkg"
+		path = commandPath("opkg")
+		args = []string{"list-installed"}
+		if updatesOnly {
+			args = []string{"list-upgradable"}
+		}
+	} else if updatesOnly {
 		args = []string{"list", "-u"}
 	}
-	out, err := runOutput(45*time.Second, apk, args...)
+	if path == "" {
+		return map[string]interface{}{"available": false, "manager": "none", "packages": []string{}, "count": 0}, nil
+	}
+	out, err := runOutput(45*time.Second, path, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -478,7 +486,7 @@ func packagesV3(updatesOnly bool) (map[string]interface{}, error) {
 		lines = lines[:120]
 		limited = true
 	}
-	return map[string]interface{}{"available": true, "packages": lines, "count": total, "limited": limited, "updates_only": updatesOnly}, nil
+	return map[string]interface{}{"available": true, "manager": manager, "packages": lines, "count": total, "limited": limited, "updates_only": updatesOnly}, nil
 }
 
 func wanStatusV3() (map[string]interface{}, error) {

@@ -41,6 +41,9 @@ func capabilityReportV13() map[string]interface{} {
 					radios = append(radios, "5g")
 				} else if strings.Contains(mode, "11g") {
 					radios = append(radios, "2g")
+				} else {
+					// Vendor radio with no standard band/hwmode still supports Wi-Fi inventory.
+					radios = append(radios, "unknown")
 				}
 			}
 		}
@@ -60,18 +63,30 @@ func capabilityReportV13() map[string]interface{} {
 			"board": board,
 		},
 		"capabilities": map[string]interface{}{
-			"passwall2":     exists("/etc/config/passwall2"),
-			"wifi_radios":   radios,
-			"guest_network": false,
-			"cellular":      false,
-			"cell_lock":     false,
-			"sms":           false,
-			"led_rgb":       hasGoogleWifiLEDProviderV13(),
-			"sqm":           exists("/etc/config/sqm") && commandPath("tc") != "",
-			"upnp":          exists("/etc/init.d/miniupnpd"),
-			"wireguard":     commandPath("wg") != "",
-			"openvpn":       exists("/etc/init.d/openvpn"),
+			"passwall2":        exists("/etc/config/passwall2"),
+			"wifi_radios":      radios,
+			"guest_network":    false,
+			"cellular":         false, // Vendor/provider present does not prove an attached modem; consult cellular.status.
+			"cell_lock":        false,
+			"sms":              false,
+			"led_rgb":          false, // Only provider discovery exists; no safe RGB write API.
+			"sqm":              exists("/etc/config/sqm") && commandPath("tc") != "",
+			"led_sysfs":        exists("/sys/class/leds"),
+			"cellular_adapter": modemProviderV14(),
+			"upnp":             exists("/etc/init.d/miniupnpd"),
+			"wireguard":        commandPath("wg") != "",
+			"openvpn":          exists("/etc/init.d/openvpn"),
 		},
+		"feature_support": featureSupportV14(
+			radios,
+			exists("/etc/config/passwall2"),
+			exists("/sys/class/leds"),
+			modemProviderV14() != "",
+			exists("/etc/config/sqm") && commandPath("tc") != "",
+			exists("/etc/init.d/miniupnpd"),
+			commandPath("wg") != "",
+			exists("/etc/init.d/openvpn"),
+		),
 		"limits": map[string]interface{}{
 			"can_control_led": false,
 			"can_lock_tower":  false,

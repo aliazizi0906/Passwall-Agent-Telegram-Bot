@@ -1,0 +1,54 @@
+name: Fast validation (OpenWrt + cPanel)
+
+on:
+  push:
+    branches:
+      - "feature/v1.4-secure-browser-control"
+    paths:
+      - "*.go"
+      - "server/**"
+      - "openwrt/**"
+      - "scripts/**"
+      - ".github/workflows/**"
+  pull_request:
+    paths:
+      - "*.go"
+      - "server/**"
+      - "openwrt/**"
+      - "scripts/**"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+      - name: Go formatting / tests / vet
+        run: |
+          test -z "$(gofmt -l *.go)"
+          go test ./...
+          go vet ./...
+      - name: PHP validation
+        run: |
+          find server -name '*.php' -print0 | xargs -0 -n1 php -l
+          php server/tests/setup_core_test.php
+          php server/cli/backend-upgrade.php --self-test
+          php server/tests/v130_command_validation_test.php
+          php server/tests/web_auth_test.php
+          php server/tests/public_device_test.php
+          php server/tests/install_asset_test.php
+      - name: Browser JS / shell
+        run: |
+          python3 scripts/check_dashboard_js.py
+          python3 scripts/check_control_assets.py
+          python3 scripts/check_markdown_links.py
+          node --check server/assets/login-v14.js
+          sh -n openwrt/install-remote.sh
+          sh -n openwrt/install.sh
+          sh -n openwrt/install-update.sh

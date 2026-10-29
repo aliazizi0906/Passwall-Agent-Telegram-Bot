@@ -33,6 +33,7 @@ $defaults=[
     'db_name'=>'',
     'db_user'=>'',
     'admin_id'=>'',
+    'web_username'=>'admin',
     'device_id'=>'router-01',
     'device_name'=>'Main Router',
     'arch'=>'armv7',
@@ -81,6 +82,11 @@ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&isset($_POST['install'])){
 
     $admin=trim((string)$form['admin_id']);
     if(!ctype_digit($admin)||$admin==='0')$errors[]='Telegram Admin ID must be a positive numeric user ID.';
+    $webName=trim((string)($_POST['web_username']??''));
+    $webPass=(string)($_POST['web_password']??'');
+    if($webPass!==(string)($_POST['web_password_confirm']??''))$errors[]='Web passwords do not match.';
+    require_once __DIR__.'/web_auth.php';
+    try{pw_web_auth_validate_credentials($webName,$webPass);}catch(Throwable $e){$errors[]=$e->getMessage();}
 
     try{$arch=pw_setup_normalize_arch((string)$form['arch']);$form['arch']=$arch;}catch(Throwable $e){$errors[]=$e->getMessage();}
 
@@ -137,6 +143,7 @@ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&isset($_POST['install'])){
                 require_once $root.'/lib.php';
                 ensure_v060_schema();
                 $pdo=db();
+                pw_web_auth_install($pdo,$webName,$webPass,(int)$admin);
                 $pdo->prepare('UPDATE pw_device_registry SET display_name=? WHERE device_id=?')->execute([$deviceName,$deviceId]);
 
                 $provisionToken=rtrim(strtr(base64_encode(random_bytes(36)),'+/','-_'),'=');
@@ -151,7 +158,7 @@ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&isset($_POST['install'])){
                         'drop_pending_updates'=>'true',
                     ]);
                 }catch(Throwable $e){
-                    $warnings[]='Backend was installed, but Telegram Webhook registration failed: '.$e->getMessage().'. You can delete config.php in File Manager and rerun setup after fixing outbound HTTPS/cURL connectivity.';
+                    $warnings[]='Backend was installed, but Telegram Webhook registration failed: '.$e->getMessage().'. Preserve config.php and the generated database keys; do not rerun Setup. Repair outbound HTTPS/cURL and re-register this existing Bot webhook using the stored secret.';
                 }
 
                 $release=null;
@@ -168,10 +175,12 @@ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&isset($_POST['install'])){
                     'device_name'=>$deviceName,
                     'arch'=>$arch,
                     'router_command'=>pw_setup_router_command((string)$form['base_url'],$provisionToken),
+                    'provision_token'=>$provisionToken,
                     'cron'=>pw_setup_cron_command($root),
                     'health_url'=>rtrim((string)$form['base_url'],'/').'/health.php',
                     'release'=>$release,
                 ];
+                unset($webPass);
                 $_SESSION['pw_setup_complete']=true;
                 $installed=true;
             }catch(Throwable $e){
@@ -195,9 +204,10 @@ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&isset($_POST['install'])){
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PW Agent Web Setup</title>
+<link rel="stylesheet" href="assets/vazirmatn.css">
 <style>
 :root{color-scheme:dark;--bg:#0b0f14;--card:#121923;--card2:#182230;--line:#2b3a4d;--text:#edf5ff;--muted:#91a4b8;--accent:#58a6ff;--good:#3fb950;--bad:#f85149;--warn:#d29922}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:920px;margin:auto;padding:24px}h1{font-size:27px;margin:0 0 6px}h2{font-size:18px;margin:0 0 14px}.muted{color:var(--muted)}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.full{grid-column:1/-1}label{display:block;font-weight:650;margin-bottom:5px}input,select{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:11px;color:var(--text)}button{background:var(--accent);border:0;border-radius:10px;padding:11px 16px;color:white;font-weight:700;cursor:pointer}.secondary{background:var(--card2);border:1px solid var(--line)}.ok{border-color:var(--good)}.error{border-color:var(--bad);color:#ffb4ae}.warning{border-color:var(--warn);color:#ffd980}code,pre{background:#080b0f;border:1px solid var(--line);border-radius:9px}code{padding:2px 5px}pre{padding:12px;overflow:auto;white-space:pre-wrap;word-break:break-word}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.check{display:flex;gap:8px;align-items:center}.check input{width:auto}.badge{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 8px;margin-right:5px}.good{color:var(--good)}.bad{color:var(--bad)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.65 'Vazirmatn',Tahoma,system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:920px;margin:auto;padding:24px}h1{font-size:27px;margin:0 0 6px}h2{font-size:18px;margin:0 0 14px}.muted{color:var(--muted)}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.full{grid-column:1/-1}label{display:block;font-weight:650;margin-bottom:5px}input,select{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:11px;color:var(--text)}button{background:var(--accent);border:0;border-radius:10px;padding:11px 16px;color:white;font-weight:700;cursor:pointer}.secondary{background:var(--card2);border:1px solid var(--line)}.ok{border-color:var(--good)}.error{border-color:var(--bad);color:#ffb4ae}.warning{border-color:var(--warn);color:#ffd980}code,pre{background:#080b0f;border:1px solid var(--line);border-radius:9px}code{padding:2px 5px}pre{padding:12px;overflow:auto;white-space:pre-wrap;word-break:break-word}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.check{display:flex;gap:8px;align-items:center}.check input{width:auto}.badge{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 8px;margin-right:5px}.good{color:var(--good)}.bad{color:var(--bad)}
 @media(max-width:680px){main{padding:14px}.grid{grid-template-columns:1fr}.full{grid-column:auto}}
 </style>
 </head>
@@ -230,8 +240,15 @@ Initial router: <code><?=setup_h($success['device_id'])?></code> — <?=setup_h(
 <div class="card">
 <h2>1. Install the Agent on OpenWrt</h2>
 <p class="muted">This provisioning token expires in 30 minutes and is single-use.</p>
-<pre id="routerCommand"><?=setup_h($success['router_command'])?></pre>
-<button type="button" onclick="copyText('routerCommand')">Copy router command</button>
+<p class="muted">Paste <strong>one line at a time</strong> and press Enter after each. Do not paste the full block into a restricted router terminal. Use a fresh token if it expires (30 min).</p>
+<?php foreach(pw_setup_router_steps((string)$success['base_url'],(string)$success['provision_token']) as $i=>$line): ?>
+<div style="display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap">
+<strong style="min-width:25px"><?=($i+1)?>.</strong>
+<code id="routerStep<?=$i?>" dir="ltr" style="display:block;flex:1;min-width:220px;overflow-wrap:anywhere;padding:11px;background:var(--card2);border-radius:9px"><?=setup_h($line)?></code>
+<button type="button" onclick="copyText('routerStep<?=$i?>')">Copy line <?=($i+1)?></button>
+</div>
+<?php endforeach; ?>
+<p class="muted">If wget is unavailable, substitute step 4 with: <code>tmp=$(mktemp -d /tmp/pw.XXXXXX) && curl -fLsS -o "$tmp/pw.sh" "$PW_SERVER_BASE/install/remote.sh"</code>. If installation fails, do not reuse a consumed or expired token. Protect and rotate exposed provisioning tokens.</p>
 </div>
 
 <div class="card">
@@ -244,6 +261,7 @@ Initial router: <code><?=setup_h($success['device_id'])?></code> — <?=setup_h(
 <div class="card">
 <h2>3. Finish in Telegram</h2>
 <p>Open your bot and send <code>/start</code>. Fleet, Dashboard, Monitoring, RBAC, Audit, Alerts, Maintenance and Schedules are then available.</p>
+<p>Independent web panel: <a href="auth/login.php">Sign in with the web username and password</a>.</p>
 <p class="warning">For security, this installer is now locked because <code>config.php</code> exists. Do not leave backup copies of config.php in the public directory.</p>
 </div>
 
@@ -301,14 +319,23 @@ Initial router: <code><?=setup_h($success['device_id'])?></code> — <?=setup_h(
 <div><label>Display Name</label><input name="device_name" required value="<?=setup_h((string)$form['device_name'])?>"></div>
 <div><label>Architecture</label>
 <select name="arch">
-<?php foreach(['armv7','arm64','amd64','386','mips','mipsle'] as $a): ?><option value="<?=$a?>" <?=$form['arch']===$a?'selected':''?>><?=$a?></option><?php endforeach; ?>
+<?php foreach(['armv5','armv6','armv7','arm64','amd64','386','mips','mipsle','mips64','mips64le','riscv64','loong64','ppc64le'] as $a): ?><option value="<?=$a?>" <?=$form['arch']===$a?'selected':''?>><?=$a?></option><?php endforeach; ?>
 </select></div>
 <div class="check"><input id="syncRelease" type="checkbox" name="sync_release" value="1" <?=!empty($form['sync_release'])?'checked':''?>><label for="syncRelease" style="margin:0">Download signed self-update bundle now</label></div>
 </div>
 </div>
 
 <div class="card">
-<h2>5. Install</h2>
+<h2>5. Independent web login / ورود مستقل پنل وب</h2>
+<p class="muted">These credentials are configured now and stored as a one-way password hash in MySQL. They inherit the Telegram Owner's device scope and RBAC permissions.</p>
+<div class="grid">
+<div class="full"><label>Web username</label><input name="web_username" autocomplete="username" minlength="3" maxlength="32" pattern="[a-z][a-z0-9._-]{2,31}" required value="<?=setup_h((string)$form['web_username'])?>" placeholder="admin"></div>
+<div><label>Web password (12+ characters)</label><input type="password" name="web_password" autocomplete="new-password" minlength="12" maxlength="256" required></div>
+<div><label>Repeat web password</label><input type="password" name="web_password_confirm" autocomplete="new-password" minlength="12" maxlength="256" required></div>
+</div></div>
+
+<div class="card">
+<h2>6. Install</h2>
 <p class="muted">Setup creates/upgrades the schema, generates secrets, writes config.php, creates the Owner RBAC record, registers the Telegram webhook, creates a 30-minute provisioning token and optionally syncs the signed Agent release.</p>
 <button type="submit" <?=(!$req['php_ok']||$req['missing_extensions'])?'disabled':''?>>Install PW Agent</button>
 </div>

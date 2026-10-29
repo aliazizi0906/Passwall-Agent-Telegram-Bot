@@ -3,12 +3,24 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/lib.php';
 require dirname(__DIR__) . '/release_tools.php';
 require dirname(__DIR__) . '/v130_command_validation.php';
+require dirname(__DIR__) . '/fleet_rollout.php';
+require dirname(__DIR__) . '/schema_migrations.php';
 header('Cache-Control: no-store');
 
 $in=json_decode_assoc(raw_body());
 $init=(string)($in['init_data']??'');
-try{$tgUser=tg_validate_webapp_init_data($init);}catch(Throwable $e){response_json(['ok'=>false,'error'=>$e->getMessage()],null,403);}
-$uid=(int)($tgUser['id']??0);
+$isBrowser=$init==='';
+if(!$isBrowser){
+    try{$tgUser=tg_validate_webapp_init_data($init);}catch(Throwable $e){response_json(['ok'=>false,'error'=>$e->getMessage()],null,403);}
+    $uid=(int)($tgUser['id']??0);
+}else{
+    require_once dirname(__DIR__).'/web_auth.php';
+    try{
+        $uid=pw_web_auth_user()??0;
+        $csrf=(string)($_SERVER['HTTP_X_PW_CSRF']??'');
+        if($uid<=0||!pw_web_auth_csrf_ok($csrf))response_json(['ok'=>false,'error'=>'Browser session expired or CSRF mismatch'],null,403);
+    }catch(Throwable $e){response_json(['ok'=>false,'error'=>'Browser authentication unavailable'],null,403);}
+}
 ensure_v060_schema();
 if($uid<=0||!v060_user_allowed($uid))response_json(['ok'=>false,'error'=>'Unauthorized user'],null,403);
 
@@ -25,6 +37,56 @@ function dash_json($v): array { return is_array($v)?$v:[]; }
 
 
 try{
+    if($action==='web_credentials_set'){
+        // Only a verified Telegram Owner can bootstrap/recover browser credentials.
+        // A logged-in browser session is deliberately insufficient for reset.
+        $actor=v060_user($uid);
+        if($isBrowser||!is_array($actor)||(string)($actor['role']??'')!=='owner'){
+            response_json(['ok'=>false,'error'=>'Only the Telegram Owner may configure browser credentials'],null,403);
+        }
+        require_once dirname(__DIR__).'/web_auth.php';
+        $name=trim((string)($in['username']??''));
+        $pass=(string)($in['password']??'');
+        pw_web_auth_install(db(),$name,$pass,$uid);
+        v060_audit_event($device?:'fleet',$uid,'dashboard','web.auth.configure','done',['username'=>$name]);
+        response_json(['ok'=>true,'configured'=>true]);
+    }
+    if($action==='migration_status'){
+        $actor=v060_user($uid);
+        if(($actor['role']??'')!=='owner')throw new RuntimeException('Owner role is required');
+        response_json(['ok'=>true,'migration'=>pw_migrations_status(db())]);
+    }
+    if($action==='migration_apply'){
+        $actor=v060_user($uid);
+        if($isBrowser||($actor['role']??'')!=='owner'||empty($in['confirmed'])){
+            throw new RuntimeException('Confirmed Telegram Owner session required for migrations');
+        }
+        $applied=pw_migrations_apply(db());
+        v060_audit_event($device?:'fleet',$uid,'dashboard','schema.migrations','done',['applied'=>$applied]);
+        response_json(['ok'=>true,'applied'=>$applied,'migration'=>pw_migrations_status(db())]);
+    }
+    if($action==='rollout_list'){
+        dash_need($uid,'agent.update');
+        response_json(['ok'=>true,'rollouts'=>pw_rollout_list($uid)]);
+    }
+    if($action==='rollout_detail'){
+        dash_need($uid,'agent.update');
+        response_json(['ok'=>true]+pw_rollout_detail($uid,(int)($in['id']??0)));
+    }
+    if($action==='rollout_create'){
+        dash_need($uid,'agent.update');
+        if(empty($in['confirmed']))throw new RuntimeException('Explicit rollout creation confirmation required');
+        $groupId=(int)($in['group_id']??0);
+        $commandAction=(string)($in['command_action']??'agent.update.check');
+        $waveSize=(int)($in['wave_size']??1);
+        response_json(['ok'=>true,'rollout'=>pw_rollout_create($uid,$groupId,$commandAction,$waveSize)]);
+    }
+    if($action==='rollout_control'){
+        dash_need($uid,'agent.update');
+        if(empty($in['confirmed']))throw new RuntimeException('Explicit rollout operation confirmation required');
+        $result=pw_rollout_control($uid,(int)($in['id']??0),(string)($in['operation']??''));
+        response_json(['ok'=>true,'rollout'=>$result]);
+    }
     if($action==='summary'){
         dash_need($uid,'device.read');
         $fleet=v060_fleet_summary($uid);
@@ -41,7 +103,7 @@ try{
 
     if($action==='device_detail'){
         dash_device($uid,$device);
-        $row=v060_device_row($device);
+        $row=v060_public_device_row($device);
         $m=db()->prepare('SELECT * FROM pw_metrics WHERE device_id=? ORDER BY captured_at DESC LIMIT 60');$m->execute([$device]);
         $metrics=array_reverse($m->fetchAll());
         $maint=v060_maintenance_row($device);
@@ -72,7 +134,7 @@ try{
         if($groupId!==null){$g=db()->prepare('SELECT id FROM pw_device_groups WHERE id=?');$g->execute([$groupId]);if(!$g->fetchColumn())throw new RuntimeException('Group not found');}
         db()->prepare('UPDATE pw_device_registry SET display_name=?,location=?,tags_json=?,group_id=? WHERE device_id=?')->execute([$name,$location,json_encode($tags,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$groupId,$device]);
         v060_audit_event($device,$uid,'dashboard','device.update','done',['display_name'=>$name,'location'=>$location,'tags'=>$tags,'group_id'=>$groupId]);
-        response_json(['ok'=>true,'device'=>v060_device_row($device)]);
+        response_json(['ok'=>true,'device'=>v060_public_device_row($device)]);
     }
 
     if($action==='groups'){
@@ -145,7 +207,7 @@ try{
         dash_need($uid,'agent.update');
         $dir=dirname(__DIR__).'/releases';
         $rows=[];
-        foreach(['armv7','arm64','amd64','386','mips','mipsle'] as $arch){
+        foreach(['armv5','armv6','armv7','arm64','amd64','386','mips','mipsle','mips64','mips64le','riscv64','loong64','ppc64le'] as $arch){
             $path=$dir.'/pw-agent-openwrt-'.app_version().'-'.$arch.'.tar.gz';
             $rows[]=[
                 'arch'=>$arch,
@@ -159,9 +221,10 @@ try{
     }
     if($action==='release_sync'){
         dash_need($uid,'agent.update');
+        if(empty($in['confirmed']))throw new RuntimeException('Explicit confirmation is required before downloading signed release bundles');
         @set_time_limit(180);
         $arch=(string)($in['arch']??'');
-        $arches=$arch==='all'?['armv7','arm64','amd64','386','mips','mipsle']:[$arch];
+        $arches=$arch==='all'?['armv5','armv6','armv7','arm64','amd64','386','mips','mipsle','mips64','mips64le','riscv64','loong64','ppc64le']:[$arch];
         $results=[];$errors=[];
         foreach($arches as $a){
             try{$results[]=pw_release_sync_arch(dirname(__DIR__),app_version(),$a);}

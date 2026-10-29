@@ -12,6 +12,19 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: pw_web_ci
+          MYSQL_USER: pw_test
+          MYSQL_PASSWORD: ci-test-only
+          MYSQL_ROOT_PASSWORD: ci-root-test-only
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uci_test -pci-test-only || mysqladmin ping -h 127.0.0.1 -uroot -pci-root-test-only"
+          --health-interval=10s --health-timeout=5s --health-retries=15
     steps:
       - uses: actions/checkout@v4
 
@@ -32,33 +45,82 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          GOOS=linux GOARCH=arm GOARM=5 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-armv5 .
+          GOOS=linux GOARCH=arm GOARM=6 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-armv6 .
           GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-armv7 .
           GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-arm64 .
           GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-amd64 .
           GOOS=linux GOARCH=386 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-386 .
           GOOS=linux GOARCH=mips GOMIPS=softfloat CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-mips .
           GOOS=linux GOARCH=mipsle GOMIPS=softfloat CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-mipsle .
+          GOOS=linux GOARCH=mips64 GOMIPS64=softfloat CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-mips64 .
+          GOOS=linux GOARCH=mips64le GOMIPS64=softfloat CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-mips64le .
+          GOOS=linux GOARCH=riscv64 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-riscv64 .
+          GOOS=linux GOARCH=loong64 CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-loong64 .
+          GOOS=linux GOARCH=ppc64le CGO_ENABLED=0 go build -trimpath -o /tmp/pw-agent-ppc64le .
 
       - name: PHP lint
         run: find server -name '*.php' -print0 | xargs -0 -n1 php -l
 
       - name: Web Setup tests
         run: php server/tests/setup_core_test.php
+          php server/cli/backend-upgrade.php --self-test
 
       - name: Control Center input-validation tests
         run: php server/tests/v130_command_validation_test.php
+
+      - name: Pinned release Ed25519 PHP verification tests
+        run: php server/tests/release_signature_test.php
+
+      - name: Browser authentication and MySQL tests
+        env:
+          PW_TEST_MYSQL_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=pw_web_ci;charset=utf8mb4'
+          PW_TEST_MYSQL_USER: pw_test
+          PW_TEST_MYSQL_PASSWORD: ci-test-only
+        run: php server/tests/web_auth_test.php
+
+      - name: Owner-approved canary rollout MySQL tests
+        env:
+          PW_TEST_MYSQL_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=pw_web_ci;charset=utf8mb4'
+          PW_TEST_MYSQL_USER: pw_test
+          PW_TEST_MYSQL_PASSWORD: ci-test-only
+        run: php server/tests/fleet_rollout_test.php
+
+      - name: Additive MySQL migration ledger tests
+        env:
+          PW_TEST_MYSQL_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=pw_web_ci;charset=utf8mb4'
+          PW_TEST_MYSQL_USER: pw_test
+          PW_TEST_MYSQL_PASSWORD: ci-test-only
+        run: php server/tests/schema_migrations_test.php
+
+      - name: Self-update architecture consistency (13 CPU variants)
+        run: php server/tests/update_arch_test.php
+
+      - name: Public device fields and API secret redaction
+        run: php server/tests/public_device_test.php
+
+      - name: Signed cPanel installer asset path tests
+        run: php server/tests/install_asset_test.php
 
       - name: Shell syntax
         run: |
           sh -n openwrt/install.sh
           sh -n openwrt/install-update.sh
           sh -n openwrt/install-remote.sh
+          sh scripts/test_bootstrap_signature.sh
+          sh scripts/test_openwrt_install_preflight.sh
 
       - name: JSON validation
         run: find openwrt -name '*.json' -print0 | xargs -0 -n1 jq -e . >/dev/null
 
       - name: Dashboard JavaScript
         run: python3 scripts/check_dashboard_js.py
+
+      - name: Browser login JavaScript
+        run: node --check server/assets/login-v14.js
+
+      - name: Browser and bundled font asset contracts
+        run: python3 scripts/check_control_assets.py
 
       - name: LuCI Control Center JavaScript
         run: node --check openwrt/luci/www/luci-static/resources/view/pw-agent/control.js
@@ -69,7 +131,7 @@ jobs:
       - name: Upload cPanel preview bundle
         uses: actions/upload-artifact@v4
         with:
-          name: pw-agent-v1.3.0-rc.2-cpanel-preview
+          name: pw-agent-v1.4.0-alpha.5-cpanel-preview
           path: |
             dist/pw-agent-cpanel-*.zip
             dist/pw-agent-cpanel-*.sha256

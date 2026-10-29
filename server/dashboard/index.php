@@ -59,6 +59,28 @@ const has=p=>state.permissions.includes('*')||state.permissions.includes(p);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function api(action,data={}){const r=await fetch('api.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({init_data:initData,action,...data})});const j=await r.json().catch(()=>({ok:false,error:'Invalid server response'}));if(!j.ok)throw new Error(j.error||'Request failed');return j}
 function err(e){const x=document.querySelector('#error');x.textContent=e.message||e;x.classList.remove('hidden')}
+function showInstallSteps(raw){
+ // Never concatenate one-time credentials into HTML or a query string.
+ const existing=document.getElementById('pw-install-steps');if(existing)existing.remove();
+ const overlay=document.createElement('div');overlay.id='pw-install-steps';
+ overlay.style.cssText='position:fixed;inset:0;z-index:200;display:grid;place-items:center;background:#020d1ecc;padding:14px';
+ const panel=document.createElement('section');
+ panel.style.cssText='width:min(760px,100%);max-height:90vh;overflow:auto;padding:20px;border-radius:16px;background:#142237;color:#eef4fb;border:1px solid #475569;box-shadow:0 24px 80px #0008';
+ const header=document.createElement('h2');header.textContent='Install on OpenWrt — copy one line at a time';
+ const tip=document.createElement('p');tip.textContent='Press Enter after EACH line. Provision tokens expire after 30 minutes and are single-use. Do not share these commands.';
+ panel.append(header,tip);
+ String(raw).split('\n').filter(x=>x.trim()).forEach((command,i)=>{
+  const row=document.createElement('div');row.style.cssText='display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:10px 0';
+  const pre=document.createElement('code');pre.textContent=String(i+1)+'. '+command;
+  pre.style.cssText='flex:1;min-width:200px;overflow-wrap:anywhere;padding:10px;background:#0b1220;border-radius:8px;direction:ltr;text-align:left';
+  const btn=document.createElement('button');btn.textContent='Copy line '+(i+1);
+  btn.onclick=async()=>{try{await navigator.clipboard.writeText(command);btn.textContent='Copied';}catch(e){window.prompt('Copy this individual line:',command);}};
+  row.append(pre,btn);panel.append(row);
+ });
+ const close=document.createElement('button');close.textContent='Close';close.onclick=()=>overlay.remove();
+ panel.append(close);overlay.append(panel);overlay.addEventListener('click',ev=>{if(ev.target===overlay)overlay.remove();});
+ document.body.append(overlay);
+}
 function fmtTime(s){return s?new Date(s.replace(' ','T')+'Z').toLocaleString():'Never'}
 function bytes(n){n=Number(n||0);if(n>=1073741824)return (n/1073741824).toFixed(2)+' GiB';if(n>=1048576)return (n/1048576).toFixed(1)+' MiB';if(n>=1024)return (n/1024).toFixed(1)+' KiB';return n+' B'}
 function healthState(v){if(v===null||v===undefined||v==='')return ['UNKNOWN','warn'];return Number(v)?['UP','good']:['DOWN','bad']}
@@ -78,10 +100,10 @@ async function renderDevices(){
  document.querySelector('#devices').innerHTML=`<div class="card"><div class="row"><b>Fleet</b><span class="grow"></span>${has('device.manage')?'<button id="groupsBtn">Groups</button><button id="editDev">Edit active</button><button id="provisionDev">Provision / Reinstall</button><button id="addDev">+ Add device</button>':''}</div></div>`+
  rows.map(d=>`<div class="card device ${d.device_id===state.active?'active':''}" data-id="${esc(d.device_id)}"><div class="row"><b>${d.online?'🟢':'🔴'} ${esc(d.display_name)}</b><span class="grow"></span>${d.group_name?'<span class="pill">'+esc(d.group_name)+'</span>':''}${d.maintenance?'<span class="pill warn">Maintenance</span>':''}</div><div class="muted">${esc(d.hostname||d.device_id)} · ${esc(d.location||'No location')} · Agent ${esc(d.agent_version||'-')} · ${fmtTime(d.last_seen)}</div><div>${(JSON.parse(d.tags_json||'[]')).map(t=>'<span class="pill">'+esc(t)+'</span>').join('')}</div></div>`).join('');
  document.querySelectorAll('.device').forEach(x=>x.onclick=async()=>{await api('select_device',{device_id:x.dataset.id});await refresh();});
- const add=document.querySelector('#addDev');if(add)add.onclick=async()=>{const name=prompt('Device name');if(!name)return;const j=await api('device_create',{name});prompt('Run this command on the new OpenWrt router within 30 minutes:',j.install_command);await refresh()};
+ const add=document.querySelector('#addDev');if(add)add.onclick=async()=>{const name=prompt('Device name');if(!name)return;const j=await api('device_create',{name});showInstallSteps(j.install_command);await refresh()};
  const groups=document.querySelector('#groupsBtn');if(groups)groups.onclick=()=>tab('groups');
  const edit=document.querySelector('#editDev');if(edit)edit.onclick=async()=>{if(!state.active)return;const d=(state.summary?.devices||[]).find(x=>x.device_id===state.active);if(!d)return;const groupsData=await api('groups');const groupList=(groupsData.groups||[]).map(x=>x.id+':'+x.name).join(', ');const display_name=prompt('Display name',d.display_name||state.active);if(display_name===null)return;const location=prompt('Location',d.location||'')??'';const tagsRaw=prompt('Tags (comma separated)',(JSON.parse(d.tags_json||'[]')).join(', '))??'';const gid=prompt('Group ID (blank = none). Available: '+groupList,String(d.group_id||''));await api('device_update',{device_id:state.active,display_name,location,tags:tagsRaw.split(',').map(x=>x.trim()).filter(Boolean),group_id:gid||null});await refresh()};
- const provision=document.querySelector('#provisionDev');if(provision)provision.onclick=async()=>{if(!state.active)return;if(!confirm('Generate a new one-time provisioning command for '+state.active+'? Previous unused tokens will be revoked.'))return;const j=await api('device_provision',{device_id:state.active});prompt('Run this command on OpenWrt within 30 minutes:',j.install_command)};
+ const provision=document.querySelector('#provisionDev');if(provision)provision.onclick=async()=>{if(!state.active)return;if(!confirm('Generate a new one-time provisioning command for '+state.active+'? Previous unused tokens will be revoked.'))return;const j=await api('device_provision',{device_id:state.active});showInstallSteps(j.install_command)};
 }
 async function loadTab(name){
  if(name==='devices')return renderDevices();
@@ -149,10 +171,10 @@ async function loadTab(name){
   const j=await api('release_status');
   document.querySelector('#releases').innerHTML=`<div class="card"><div class="row"><b>Signed Release Cache · v${esc(j.version)}</b><span class="grow"></span><button id="syncAll">Sync all architectures</button></div><p class="muted">This replaces the old cPanel Terminal-only sync-release.php workflow. Files are downloaded from the official GitHub Release and SHA256-verified before they enter the protected backend cache.</p></div>`+
   j.releases.map(x=>`<div class="card"><div class="row"><b class="grow">${esc(x.arch)}</b><span class="pill ${x.available?'good':'warn'}">${x.available?'cached':'missing'}</span><button class="syncArch" data-arch="${esc(x.arch)}">Sync</button></div><div class="muted">${x.available?bytes(x.size)+' · '+esc(x.updated_at||''):'No cached bundle for this version.'}</div><div class="muted">${x.sha256?esc(x.sha256):''}</div></div>`).join('');
-  async function syncOne(arch){const x=await api('release_sync',{arch});return x}
+  async function syncOne(arch){const x=await api('release_sync',{arch,confirmed:true});if((x.errors||[]).length)throw new Error(x.errors.map(v=>v.arch+': '+v.error).join('\n'));return x}
   async function withReleaseLock(fn){const btns=document.querySelectorAll('#releases button');btns.forEach(b=>b.disabled=true);try{return await fn()}finally{btns.forEach(b=>b.disabled=false)}}
-  document.querySelectorAll('.syncArch').forEach(b=>b.onclick=()=>withReleaseLock(async()=>{const x=await syncOne(b.dataset.arch);alert('Synced: '+(x.results||[]).map(r=>r.arch).join(', '));await loadTab('releases')}).catch(err));
-  document.querySelector('#syncAll').onclick=()=>{if(!confirm('Download and verify all six architecture bundles for v'+j.version+'?'))return;withReleaseLock(async()=>{const failed=[];for(const row of j.releases){try{await syncOne(row.arch)}catch(e){failed.push(row.arch+': '+e.message)}}if(failed.length)alert('Sync completed with errors:\n'+failed.join('\n'));else alert('All architecture bundles synced.');await loadTab('releases')}).catch(err)};
+  document.querySelectorAll('.syncArch').forEach(b=>b.onclick=()=>{if(!confirm('Download and verify signed '+b.dataset.arch+' assets for v'+j.version+'?'))return;withReleaseLock(async()=>{const x=await syncOne(b.dataset.arch);alert('Synced: '+(x.results||[]).map(r=>r.arch).join(', '));await loadTab('releases')}).catch(err)});
+  document.querySelector('#syncAll').onclick=()=>{if(!confirm('Download and verify all 13 architecture bundles for v'+j.version+'?'))return;withReleaseLock(async()=>{const failed=[];for(const row of j.releases){try{await syncOne(row.arch)}catch(e){failed.push(row.arch+': '+e.message)}}if(failed.length)alert('Sync completed with errors:\n'+failed.join('\n'));else alert('All architecture bundles synced.');await loadTab('releases')}).catch(err)};
   return;
  }
  if(name==='audit'){
