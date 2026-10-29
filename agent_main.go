@@ -92,6 +92,7 @@ var safeID = regexp.MustCompile(`^[A-Za-z0-9_\-]+$`)
 var linkScheme = regexp.MustCompile(`(?i)^(vless|vmess|trojan|ss|ssr|socks|socks5|hysteria2|hy2|tuic|naive|http|https)://`)
 
 func main() {
+	if safeApplyCLIIfRequestedV15() { return }
 	if runCLIIfRequestedV4() {
 		return
 	}
@@ -306,6 +307,10 @@ func (a *Agent) execute(c *Command) (interface{}, error) {
 		return listWiFi()
 	case "wifi.plan_ssid":
 		return planSSIDV14(params)
+	case "wifi.ssid.safe_apply":
+		return safeApplySSIDV15(params)
+	case "wifi.ssid.safe_confirm":
+		return confirmSSIDV15(params)
 	case "wifi.set_ssid":
 		section, e1 := stringParam(params, "section")
 		ssid, e2 := stringParam(params, "ssid")
