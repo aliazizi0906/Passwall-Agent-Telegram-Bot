@@ -1,10 +1,11 @@
 # PW Agent Documentation — English
 
-> **Latest GitHub Release: v1.4.0-alpha.3 (Alpha, NOT stable).** It is the newest public download, not a certified production release; see the [release warnings](RELEASE_NOTES_V1_4_ALPHA_3.md) and [14-workstream matrix](V1_4_EXECUTION.md). v1.3 RC2 remains a previous candidate and v0.6 the older stable baseline.
+> **Latest GitHub Release: v1.4.0-alpha.4 (Alpha, NOT stable).** It is the newest public download, not a certified production release; see the [release warnings](RELEASE_NOTES_V1_4_ALPHA_3.md) and [14-workstream matrix](V1_4_EXECUTION.md). v1.3 RC2 remains a previous candidate and v0.6 the older stable baseline.
 
 [← Project README](../../README.md) · [فارسی](../fa/README.md)
 
 ## Public v1.4 Alpha (Latest, not Stable)
+- [Alpha.4 real network controls, signed backend CLI upgrade and limitations](RELEASE_NOTES_V1_4_ALPHA_4.md)
 - [Alpha.3 release notes: short installer, Wi-Fi rollback, automation and limitations](RELEASE_NOTES_V1_4_ALPHA_3.md)
 - [Wi-Fi Safe Apply static workflow illustration](../assets/previews/wifi-safe-apply-v140.svg)
 - [Alpha.2 release notes, warnings and actionable modules](RELEASE_NOTES_V1_4_ALPHA_2.md)
