@@ -42,3 +42,5 @@ jobs:
 # Format verified native RGB driver.
 
 # Format final UCI rollback helpers.
+
+# Format DNS guard and managed firewall safety checks.
