@@ -1,6 +1,6 @@
 # PW Agent v1.4 development status (not a public release)
 
-Development source branch: `feature/v1.4-secure-browser-control`. **v1.4.0-alpha.1 is the GitHub Latest public download, but is NOT stable or production-certified.** Public distribution does not imply the 14 workstreams are complete.
+Development source branch: `feature/v1.4-secure-browser-control`. **v1.4.0-alpha.2 is the GitHub Latest public download, but is NOT stable or production-certified.** Public distribution does not imply the 14 workstreams are complete.
 
 ## Implemented and under CI
 
@@ -13,7 +13,7 @@ Development source branch: `feature/v1.4-secure-browser-control`. **v1.4.0-alpha
 - Fixed-provider opt-in download probe capped at 2 MiB per run, cooldown enforced; provider receives router public IP. Not a real full-speed or bufferbloat measurement.
 - Read-only ModemManager/uqmi signal discovery (no IMEI/IMSI/SMS), UCI SQM/UPnP status, generic sysfs LED inventory, and local LuCI tabs. DNS encryption tools, Adblock, DDNS, mwan3 and VLAN configurations are also discovered without exposing credentials.
 - **Owner-approved Fleet canary rollouts:** first router only, manual approval before each subsequent wave, command-status and fresh heartbeat verification, pause on failures/offline, cancel/resume controls and persisted MySQL audit. Queued commands cannot be revoked; full fleet rollback remains pending.
-- **Hardware-independent LED identification:** a 1.2-second temporary sysfs brightness pulse with deferred restore, rejecting OS-managed LED triggers; this is not RGB scheduling.
+- **Hardware-independent LED identification and guarded brightness writes:** a 1.2-second temporary sysfs brightness pulse with deferred restore, rejecting OS-managed LED triggers; this is not RGB scheduling.
 - **Static DNS/IPv6 egress audit:** checks public IPv6 route/address and resolver count, while explicitly returning `verified_no_leak=false` and `kill_switch_verified=false` until external path tests exist.
 - CI checks Go compilation and tests, PHP syntax, MySQL authentication and rollout behavior, JS, release signing fixture and cPanel packaging.
 
@@ -37,6 +37,14 @@ Development source branch: `feature/v1.4-secure-browser-control`. **v1.4.0-alpha
 | 12 | Cellular, band/cell lock and SMS/USSD | Read-only QMI/ModemManager signal inventory added; privileged modem adapters pending |
 | 13 | Fleet canary, rollout and rollback | Owner-approved rollout waves and monitoring added; automatic fleet rollback and real-device acceptance tests pending |
 | 14 | CI, incident recovery, security review and stable release | Automated tests expanded; real multi-router upgrade/recovery acceptance testing pending |
+
+## Alpha.2 actionable additions
+
+The web panel now offers **OpenVPN service start/stop/restart** when OpenVPN is installed and the user has `network.modify`, a CIDR rule builder **dry-run only**, manual sysfs LED brightness change when the kernel trigger is `none`, and a permission-scoped embedded browser SSH console. Browser SSH requires independent web login, `terminal.execute` and separate router credentials. Unsupported/hardware-managed functions remain read-only.
+
+![Illustrative OpenVPN and LED controls](../assets/previews/openvpn-led-v140-controls.svg)
+
+![Illustrative dashboard report layout](../assets/previews/control-center-v140-operations.svg)
 
 ## Cross-device compatibility policy
 
