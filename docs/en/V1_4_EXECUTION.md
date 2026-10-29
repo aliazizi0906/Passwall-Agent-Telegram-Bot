@@ -4,7 +4,7 @@ Development source branch: `feature/v1.4-secure-browser-control`. **v1.4.0-alpha
 
 ## Alpha.5 LuCI catalog and UI update
 
-- Live 28-module capability matrix from installed UCI configuration files, searchable/filterable and honesty-scoped to working actions.
+- Live 29-module capability matrix from installed UCI configuration files, searchable/filterable and honesty-scoped to working actions.
 - Confirmed and rollback-protected hostname change, PW-managed LAN static DHCP reservations and named Wi-Fi interface toggling.
 - Shared icon sizing; OpenVPN form grid; dedicated device-scoped responsive SSH terminal, including mobile display and accessibility contract tests.
 - Unimplemented LuCI packages (switch/VLAN, DDNS, UPnP, guest Wi-Fi, storage, full firewall zones and arbitrary third-party extensions) are not advertised as functional.
