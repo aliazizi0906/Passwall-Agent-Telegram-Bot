@@ -299,9 +299,9 @@ function showWifi(){
  ['wifi.list','شبکه‌های وای‌فای','Wi-Fi networks','wifi.read'],
  ['wifi.radios','رادیوهای ۲٫۴/۵/۶','Wi-Fi radios','wifi.read'],
  ['wifi.stations','دستگاه‌های وای‌فای','Wi-Fi stations','wifi.read']
- ],say('اعمال تغییرات شبکه فقط پس از پیاده‌سازی Rollback زمان‌دار فعال می‌شود؛ پیش‌نمایش SSID هیچ تغییری ایجاد نمی‌کند.','Changes will be enabled only after timed safe-apply rollback; an SSID preview never changes the router.'));
+ ],say('تغییر امن SSID با نسخه پشتیبان و تأیید ۹۰ ثانیه‌ای فعال شده است. هر تغییر تأییدنشده روی روتر به‌صورت محلی بازگردانده می‌شود.','Safe SSID changes use a router-local 90-second rollback. Unconfirmed changes are restored without relying on the server.'));
  if(has('wifi.read')){
-  $('page').innerHTML+='<section class="card"><div class="section-title">'+say('پیش‌نمایش تغییر نام شبکه','SSID change preview')+'</div><p class="muted">'+say('ابتدا از «شبکه‌های وای‌فای» شناسه Section را پیدا کن. این فرم فقط تفاوت مقدار فعلی و پیشنهادی را نشان می‌دهد.','Retrieve a named Wi-Fi section from Wi-Fi networks first. This form only compares the current and desired SSID.')+'</p><form data-ssid-plan class="stack"><label>'+say('نام Section','UCI section')+'<input name="section" required pattern="[A-Za-z0-9_-]{1,64}" maxlength="64" autocomplete="off" placeholder="default_radio0"></label><label>'+say('نام جدید Wi-Fi','Desired SSID')+'<input name="ssid" required maxlength="32" autocomplete="off" placeholder="My-WiFi"></label><button class="action primary" type="submit">'+say('پیش‌نمایش بدون تغییر','Preview only (no changes)')+'</button></form></section>';
+  $('page').innerHTML+='<section class="card"><div class="section-title">'+say('پیش‌نمایش تغییر نام شبکه','SSID change preview')+'</div><p class="muted">'+say('ابتدا از «شبکه‌های وای‌فای» شناسه Section را پیدا کن. این فرم فقط تفاوت مقدار فعلی و پیشنهادی را نشان می‌دهد.','Retrieve a named Wi-Fi section from Wi-Fi networks first. This form only compares the current and desired SSID.')+'</p><form data-ssid-plan class="stack"><label>'+say('نام Section','UCI section')+'<input name="section" required pattern="[A-Za-z0-9_-]{1,64}" maxlength="64" autocomplete="off" placeholder="default_radio0"></label><label>'+say('نام جدید Wi-Fi','Desired SSID')+'<input name="ssid" required maxlength="32" autocomplete="off" placeholder="My-WiFi"></label><div class="actions"><button class="action" type="submit">'+say('پیش‌نمایش بدون تغییر','Preview only')+'</button>'+(has('wifi.modify')?'<button class="action primary" type="button" data-safe-ssid-apply>'+say('اعمال امن (بازگشت خودکار)','Safe apply (auto rollback)')+'</button>':'')+'</div></form><p class="warn-note">'+say('پس از اعمال تغییر، اتصال جدید را بررسی و در کمتر از ۹۰ ثانیه تأیید کن. قطع دسترسی باعث بازگردانی خودکار می‌شود.','After applying, verify access and confirm within 90 seconds; otherwise local rollback occurs.')+'</p></section>';
  }
 }
 function showDNS(){
@@ -522,7 +522,7 @@ async function command(id,confirmNeeded,params){
    await new Promise(function(resolve){setTimeout(resolve,1400);});
    var j=await api('command_status',{device_id:state.active,command_id:ret.command_id});
    if(j.command && ['done','failed'].includes(j.command.status)){
-     if(out){if(j.command.status==='done'){out.innerHTML=renderCommandOutput(id,j.command.result||{status:'done'});}else{out.textContent=say('خطا: ','Error: ')+String(j.command.error||'Failed');}}
+     if(out){if(j.command.status==='done'){out.innerHTML=renderCommandOutput(id,j.command.result||{status:'done'});if(id==='wifi.ssid.safe_apply'&&j.command.result&&j.command.result.pending){var tx=String(j.command.result.transaction_id||'');if(/^[a-f0-9]{32}$/.test(tx))out.innerHTML+='<div class="actions" style="margin-top:13px"><button type="button" class="action primary" data-safe-ssid-confirm="'+esc(tx)+'">'+say('تأیید نهایی تغییر Wi-Fi','Confirm Wi-Fi change')+'</button></div>';}}else{out.textContent=say('خطا: ','Error: ')+String(j.command.error||'Failed');}}
      finished=true;break;
    }
   }
@@ -616,6 +616,23 @@ document.addEventListener('submit',function(ev){
   params.limit_kbit=limit;
  }
  command('clients.policy_plan',false,params).catch(function(e){$('notice').textContent=e.message;});
+});
+document.addEventListener('click',function(ev){
+ var apply=ev.target.closest('[data-safe-ssid-apply]');
+ if(apply){
+  if(!has('wifi.modify'))return;
+  var form=apply.closest('form[data-ssid-plan]');if(!form||!form.reportValidity())return;
+  var fd=new FormData(form),section=String(fd.get('section')||''),ssid=String(fd.get('ssid')||'');
+  if(!/^[A-Za-z0-9_-]{1,64}$/.test(section)||!ssid||new TextEncoder().encode(ssid).length>32)return;
+  command('wifi.ssid.safe_apply',true,{section:section,ssid:ssid});
+ }
+ var confirmBtn=ev.target.closest('[data-safe-ssid-confirm]');
+ if(confirmBtn){
+  if(!has('wifi.modify'))return;
+  var id=String(confirmBtn.dataset.safeSsidConfirm||'');
+  if(!/^[a-f0-9]{32}$/.test(id))return;
+  command('wifi.ssid.safe_confirm',true,{transaction_id:id});
+ }
 });
 document.addEventListener('submit',function(ev){
  var f=ev.target.closest('form[data-ssid-plan]');if(!f)return;
