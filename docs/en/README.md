@@ -5,6 +5,7 @@
 [← Project README](../../README.md) · [فارسی](../fa/README.md)
 
 ## Public v1.4 Alpha (Latest, not Stable)
+- [Alpha.5 LuCI capability center, real DHCP/System controls and UX improvements](RELEASE_NOTES_V1_4_ALPHA_5.md)
 - [Alpha.4 real network controls, signed backend CLI upgrade and limitations](RELEASE_NOTES_V1_4_ALPHA_4.md)
 - [Alpha.3 release notes: short installer, Wi-Fi rollback, automation and limitations](RELEASE_NOTES_V1_4_ALPHA_3.md)
 - [Wi-Fi Safe Apply static workflow illustration](../assets/previews/wifi-safe-apply-v140.svg)
