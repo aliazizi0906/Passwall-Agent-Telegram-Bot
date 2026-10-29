@@ -8,7 +8,7 @@
 
 ### v1.4.0-alpha.5 — LuCI capability hub and interface quality
 
-PW Control now includes a **28-module LuCI compatibility catalog** that detects installed UCI modules and labels every entry as actionable, read-only, unavailable, or requiring an adapter. Supported additions include safe hostname changes, static DHCP leases and Wi-Fi interface toggles. The OpenVPN page now uses bounded, responsive card grids, and the SSH terminal has been rewritten with consistent SVG icons and device-specific authentication.
+PW Control now includes a **29-module LuCI compatibility catalog** that detects installed UCI modules and labels every entry as actionable, read-only, unavailable, or requiring an adapter. Supported additions include safe hostname changes, static DHCP leases and Wi-Fi interface toggles. The OpenVPN page now uses bounded, responsive card grids, and the SSH terminal has been rewritten with consistent SVG icons and device-specific authentication.
 
 **This is partial LuCI coverage, not all LuCI:** arbitrary firewall/VLAN/bridge editors, third-party LuCI plugins, DDNS/UPnP, storage mounts, hardware modem adapters and other unsupported functions remain explicitly unavailable. Do not rely on Alpha for unattended remote network changes.
 
