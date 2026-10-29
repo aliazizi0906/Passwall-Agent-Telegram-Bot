@@ -23,7 +23,7 @@ func featureSupportV14(radios []string, passwall, led, modemAdapter, sqm, upnp, 
 	}
 	wifi := unavailable("No OpenWrt UCI wireless radio was detected.")
 	if len(radios) > 0 {
-		wifi = readonly("Wireless radios detected; safe write/rollback not yet enabled.")
+		wifi = supported("Wi-Fi SSID safe apply and local 90-second rollback are available. Password, channels and WAN/firewall mutations require separate certification.")
 	}
 	proxy := unavailable("Passwall2 is not installed; generic OpenWrt monitoring remains available.")
 	if passwall {
@@ -31,7 +31,7 @@ func featureSupportV14(radios []string, passwall, led, modemAdapter, sqm, upnp, 
 	}
 	ledStatus := unavailable("No standard sysfs LED interface was detected.")
 	if led {
-		ledStatus = readonly("Standard sysfs LED inventory; temporary identify requires a user confirmation.")
+		ledStatus = readonly("LED inventory and identification; manual-brightness writes only on LEDs whose kernel trigger is none.")
 	}
 	cellular := unavailable("No recognized cellular command adapter was found.")
 	if modemAdapter {
@@ -51,7 +51,7 @@ func featureSupportV14(radios []string, passwall, led, modemAdapter, sqm, upnp, 
 	}
 	openvpn := unavailable("OpenVPN service not detected.")
 	if ovpn {
-		openvpn = readonly("OpenVPN detected; native provider management not yet enabled.")
+		openvpn = supported("OpenVPN service start/stop/restart supported, with confirmation. CIDR routing rules are preview-only.")
 	}
 	return map[string]featureSupportEntryV14{
 		"system":             supported("Generic OpenWrt network and Agent diagnostics."),
@@ -67,6 +67,8 @@ func featureSupportV14(radios []string, passwall, led, modemAdapter, sqm, upnp, 
 		"cellular":           cellular,
 		"wireguard":          wireguard,
 		"openvpn":            openvpn,
+		"openvpn_route_apply": planned("Routing rules are preview-only until independent path validation and rollback are certified."),
+		"wifi_ssid_safe_apply": func() featureSupportEntryV14 { if len(radios)>0 { return supported("Confirmed 90-second router-local SSID rollback.") };return unavailable("No wireless radio") }(),
 		"network_safe_apply": planned("WAN, firewall, DNS and Wi-Fi changes require a router-local timed rollback watchdog."),
 		"kill_switch":        planned("No IPv4/IPv6 path-failure certification. Static diagnostics are not a leak test."),
 	}
