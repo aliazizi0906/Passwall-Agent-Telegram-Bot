@@ -11,6 +11,7 @@ setup = (server / "setup.php").read_text(encoding="utf-8")
 font = (server / "assets/vazirmatn.css").read_text(encoding="utf-8")
 control_css = (server / "assets/control-v14.css").read_text(encoding="utf-8")
 login_css = (server / "assets/login-v14.css").read_text(encoding="utf-8")
+terminal = (server / "terminal/index.php").read_text(encoding="utf-8")
 assert "name=\"web_username\"" in setup and "name=\"web_password\"" in setup, "Install must require browser credentials"
 assert "../assets/vazirmatn.css" in control and "../assets/vazirmatn.css" in login, "Font CSS link missing"
 assert "fonts/Vazirmatn.woff2" in font, "Missing local offline WOFF2 fallback"
