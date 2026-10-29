@@ -180,17 +180,24 @@ func ledInventoryV14() (map[string]interface{}, error) {
 		colors := strings.Fields(strings.ToLower(readSmallFileV13(filepath.Join(folder, "multi_index"))))
 		sort.Strings(colors)
 		manual := strings.Contains(readSmallFileV13(filepath.Join(folder, "trigger")), "[none]")
-		rgbCapable := manual && len(colors)==3 && strings.Join(colors," ")=="blue green red"
-		if _, e := os.Stat(filepath.Join(folder,"multi_intensity")); e!=nil { rgbCapable=false }
+		rgbCapable := manual && len(colors) == 3 && strings.Join(colors, " ") == "blue green red"
+		if _, e := os.Stat(filepath.Join(folder, "multi_intensity")); e != nil {
+			rgbCapable = false
+		}
 		list = append(list, map[string]interface{}{
 			"name":           name,
 			"brightness":     boundPositiveV14(readSmallFileV13(filepath.Join(folder, "brightness")), 65535),
 			"max_brightness": boundPositiveV14(readSmallFileV13(filepath.Join(folder, "max_brightness")), 65535),
 			"manual_control": manual,
-			"rgb_control": rgbCapable,
+			"rgb_control":    rgbCapable,
 		})
 	}
-	for _, item := range list { if item["rgb_control"] == true { result["can_set_rgb"]=true;break } }
+	for _, item := range list {
+		if item["rgb_control"] == true {
+			result["can_set_rgb"] = true
+			break
+		}
+	}
 	result["leds"] = list
 	return result, nil
 }
