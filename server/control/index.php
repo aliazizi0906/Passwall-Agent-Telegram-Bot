@@ -91,7 +91,7 @@ input[name=username],input[name=password]{background:var(--soft);color:var(--ink
  <div class="brand"><div class="brand-logo">PW</div><div><b>PW Control</b><small>Network Control Center</small></div></div>
  <div class="nav-title">CONTROL PANEL</div>
  <nav class="nav" id="navigation" aria-label="Primary navigation"></nav>
- <div class="nav-foot">PW Control Center · Alpha.2<br>Local LuCI available offline</div>
+ <div class="nav-foot">PW Control Center · LuCI capability matrix<br>Only installed, verified actions are enabled</div>
 </aside>
 <div class="main">
  <header class="topbar">
@@ -123,6 +123,7 @@ var state={fleet:null,active:'',role:'viewer',permissions:[],detail:null,page:'h
 try{state.lang=localStorage.getItem('pwcontrol-lang')==='en'?'en':'fa';state.theme=localStorage.getItem('pwcontrol-theme')==='dark'?'dark':'light';}catch(e){}
 var menu=[
  ['home','01','خانه','Home','وضعیت لحظه‌ای شبکه و روتر','Router and network status'],
+  ['luci','15','مرکز LuCI','LuCI Modules','کاتالوگ قابلیت‌ها، DHCP، تنظیمات سیستم و شبکه','Capability inventory, DHCP, system and network modules'],
  ['internet','02','اینترنت','Internet','کیفیت WAN، DNS و اتصال','WAN, DNS and connectivity'],
  ['proxy','03','فیلترشکن','Proxy','Passwall2 و عملیات مجاز','Passwall2 and supported operations'],
  ['openvpn','13','OpenVPN','OpenVPN','اتصال، سرویس و قوانین مسیر','VPN and route policy tools'],
@@ -149,6 +150,7 @@ var current=function(){return menu.find(function(m){return m[0]===state.page;})|
 function applyTheme(){document.documentElement.dataset.theme=state.theme;document.documentElement.dir=state.lang==='fa'?'rtl':'ltr';document.documentElement.lang=state.lang;$('langBtn').textContent=state.lang==='fa'?'EN':'فا';}
 var navArt={
  home:'<path d="m3 10 9-7 9 7v11H3z"/><path d="M9 21v-8h6v8"/>',
+  luci:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
  internet:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c5 5 5 13 0 18M12 3c-5 5-5 13 0 18"/>',
  proxy:'<path d="M12 2 20 6v6c0 5-3 8-8 10-5-2-8-5-8-10V6z"/><path d="m9 12 2 2 4-4"/>',
  openvpn:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M9 16h6"/>',
@@ -165,7 +167,7 @@ var navArt={
 };
 function navIcon(key){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+(navArt[key]||navArt.system)+'</svg>';}
 function nav(){
- $('navigation').innerHTML=menu.map(function(m){return '<button type="button" class="nav-btn '+(m[0]===state.page?'selected':'')+'" data-nav="'+esc(m[0])+'" '+(m[0]===state.page?'aria-current="page"':'')+'><span class="nav-symbol">'+navIcon(m[0])+'</span>'+esc(say(m[2],m[3]))+'</button>';}).join('');
+ $('navigation').innerHTML=menu.map(function(m){return '<button type="button" class="nav-btn '+(m[0]===state.page?'selected':'')+'" data-nav="'+esc(m[0])+'" '+(m[0]===state.page?'aria-current="page"':'')+'><span class="nav-symbol">'+navIcon(m[0])+'</span><span class="nav-label">'+esc(say(m[2],m[3]))+'</span></button>';}).join('');
  var p=current();$('pageTitle').textContent=say(p[2],p[3]);$('pageDesc').textContent=say(p[4],p[5]);$('topTitle').textContent=say('مرکز کنترل شبکه','Network Control Center');
  $('identity').textContent=(state.fleet?say('نقش کاربری: ','Role: ')+state.role:say('ورود به پنل الزامی است','Authentication required'))+(webAuth?' · Web':'');
  var select=$('devicePicker');var ds=state.fleet && state.fleet.devices || [];
@@ -511,7 +513,7 @@ function showOpenVPN(){
  var controls=has('network.modify')?'<section class="card"><div class="section-title">'+say('اتصال و قطع سرویس OpenVPN','OpenVPN service controls')+'</div><p class="warn-note">'+say('قطع یا راه‌اندازی VPN ممکن است ارتباط روتر را تغییر دهد. فقط با راه دسترسی جایگزین استفاده کن.','Changes can interrupt connectivity; keep independent recovery access.')+'</p><div class="actions">'+
  ['start','stop','restart'].map(function(v){return '<button class="action danger" data-ovpn-mode="'+v+'">'+({start:say('اتصال','Connect'),stop:say('قطع اتصال','Disconnect'),restart:say('اتصال مجدد','Reconnect')}[v])+'</button>';}).join('')+'</div></section>':'';
  $('page').innerHTML='<div class="stack">'+hero()+
- '<section class="card"><div class="section-title">'+navIcon('openvpn')+' OpenVPN</div><p class="muted">'+say('پروفایل‌های واقعی نصب‌شده در OpenWrt را مشاهده کن. کلیدها و مشخصات خصوصی نمایش داده نمی‌شوند.','Inspect real OpenWrt OpenVPN profiles without exposing credentials.')+'</p><div class="actions">'+action('openvpn.status',say('پروفایل‌ها و وضعیت اتصال','Profiles and service'),'network.read',false)+'</div></section>'+controls+
+ '<section class="card"><div class="section-title"><span class="section-icon">'+navIcon('openvpn')+'</span>OpenVPN</div><p class="muted">'+say('پروفایل‌های واقعی نصب‌شده در OpenWrt را مشاهده کن. کلیدها و مشخصات خصوصی نمایش داده نمی‌شوند.','Inspect real OpenWrt OpenVPN profiles without exposing credentials.')+'</p><div class="actions">'+action('openvpn.status',say('پروفایل‌ها و وضعیت اتصال','Profiles and service'),'network.read',false)+'</div></section>'+controls+
  '<section class="card"><div class="section-title">'+say('طراحی و اعتبارسنجی Rule','Route policy builder')+'</div><p class="warn-note">'+say('فعلاً فقط Dry Run است. اعمال Rule روی روتر تا وجود Rollback مستقل غیرفعال است.','Dry run only; rule installation requires independent router-local rollback.')+'</p>'+
  '<form class="stack" data-openvpn-plan><label>'+say('شناسه پروفایل','UCI profile')+'<input required name="profile" pattern="[A-Za-z0-9_-]{1,64}" placeholder="client_a"></label>'+
  '<label>'+say('مقصد CIDR','Destination CIDR')+'<input required name="cidr" dir="ltr" placeholder="192.0.2.0/24"></label>'+
@@ -520,8 +522,8 @@ function showOpenVPN(){
 }
 function showTerminal(){
  if(!has('terminal.execute')){$('page').innerHTML='<div class="empty">'+say('مجوز terminal.execute لازم است.','terminal.execute permission required.')+'</div>';return;}
- if(!webAuth){$('page').innerHTML='<section class="card"><div class="section-title">SSH Console</div><p class="muted">'+say('برای ترمینال یکپارچه از ورود وب استفاده کن.','Sign in with your browser account for embedded terminal.')+'</p><a href="../auth/login.php">Web Login</a></section>';return;}
- $('page').innerHTML='<div class="stack"><section class="card"><div class="section-title">'+navIcon('terminal')+' '+say('ترمینال SSH روتر','Router SSH Console')+'</div><p class="muted">'+say('فرمان‌های SSH فقط با رمز خود روتر و مجوز terminal.execute اجرا می‌شوند. ترمینال تعاملی کامل نیست.','SSH commands require the router password and terminal.execute permission; not a full interactive TTY.')+'</p><iframe class="terminal-frame" title="OpenWrt SSH Console" src="../terminal/" loading="lazy"></iframe></section></div>';
+ if(!webAuth){$('page').innerHTML='<section class="card"><div class="section-title">'+say('ترمینال تحت وب','Web SSH Terminal')+'</div><p class="muted">'+say('برای استفاده از ترمینال یکپارچه وارد حساب وب شو.','Sign in with your browser account for embedded SSH.')+'</p><a href="../auth/login.php">Web Login</a></section>';return;}
+ $('page').innerHTML='<div class="stack"><section class="card terminal-panel"><div class="terminal-header"><div class="section-title"><span class="section-icon">'+navIcon('terminal')+'</span>'+say('ترمینال SSH روتر','Router SSH Console')+'</div><span class="pill">SSH · '+esc(state.active)+'</span></div><p class="muted">'+say('فرمان‌های غیرتعاملی با حساب Dropbear روتر انتخاب‌شده اجرا می‌شوند.','Non-interactive commands run with Dropbear credentials for the selected router.')+'</p><div class="terminal-frame-shell"><iframe class="terminal-frame" title="OpenWrt SSH Console" src="../terminal/?device_id='+encodeURIComponent(state.active)+'" loading="lazy"></iframe></div></section></div>';
 }
 function render(){
  nav();
