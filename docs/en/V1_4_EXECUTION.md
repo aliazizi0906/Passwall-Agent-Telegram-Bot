@@ -1,6 +1,6 @@
 # PW Agent v1.4 development status (not a public release)
 
-Current development branch: `feature/v1.4-secure-browser-control`. Published **Latest** release remains `v1.3.0-rc.2`; do not treat this branch as a production-certified `v1.4` release.
+Development source branch: `feature/v1.4-secure-browser-control`. **v1.4.0-alpha.1 is the GitHub Latest public download, but is NOT stable or production-certified.** Public distribution does not imply the 14 workstreams are complete.
 
 ## Implemented and under CI
 
@@ -54,4 +54,4 @@ php server/tests/web_auth_test.php
 bash scripts/package_cpanel.sh
 ```
 
-No v1.4 tag or production deployment has been made. A cPanel bundle produced by PR CI is a staging preview, not a signed public release. For installation on real routers, wait for a tagged signed build and verify `openssl-util` availability before provisioning.
+Only use the version-pinned, Ed25519-signed GitHub alpha release and verify `openssl-util` before provisioning on a noncritical test router. CI artifacts are not substitutes for signed public release assets. No production deployment or full hardware certification is claimed.
