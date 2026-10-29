@@ -44,3 +44,5 @@ jobs:
 # Format final UCI rollback helpers.
 
 # Format DNS guard and managed firewall safety checks.
+
+# Format alpha.4 capability matrix tests.
