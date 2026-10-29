@@ -19,17 +19,18 @@ func TestFeatureSupportGenericOpenWrtV14(t *testing.T) {
 
 func TestFeatureSupportHardwareV14(t *testing.T) {
 	m := featureSupportV14([]string{"2g", "5g"}, true, true, true, true, true, true, true)
-	if m["wifi"].Status != "read_only" {
-		t.Fatal("WiFi safe apply not implemented")
+	if m["wifi"].Status != "available" {
+		t.Fatal("WiFi SSID safe apply should be discoverable")
 	}
 	if m["passwall2"].Status != "available" {
 		t.Fatal("Passwall2 discovered but not reported")
 	}
-	for _, key := range []string{"cellular", "sqm", "upnp", "wireguard", "openvpn", "led"} {
+	for _, key := range []string{"cellular", "sqm", "upnp", "wireguard", "led"} {
 		if m[key].Status != "read_only" {
 			t.Fatalf("Uncertified write for %s reported %s", key, m[key].Status)
 		}
 	}
+	if m["openvpn"].Status != "available" || m["openvpn_route_apply"].Status == "available" { t.Fatal("OpenVPN service and rule support must be distinct") }
 	if m["led_rgb"].Status != "not_available" {
 		t.Fatal("RGB provider is not evidence of a working RGB controller")
 	}
