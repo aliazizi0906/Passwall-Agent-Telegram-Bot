@@ -268,6 +268,20 @@ func (a *Agent) execute(c *Command) (interface{}, error) {
 	switch c.Action {
 	case "system.status":
 		return systemStatus()
+	case "luci.catalog":
+		return luciModulesListV17(), nil
+	case "luci.system.status":
+		return luciSystemInfoV17()
+	case "luci.system.hostname.set":
+		return luciHostnameSetV17(params)
+	case "luci.dhcp.static.list":
+		return luciStaticDHCPListV17()
+	case "luci.dhcp.static.add":
+		return luciDHCPAddV17(params)
+	case "luci.dhcp.static.delete":
+		return luciDHCPDeleteV17(params)
+	case "luci.wifi.iface.toggle":
+		return luciWifiInterfaceToggleV17(params)
 	case "agent.capabilities":
 		return capabilityReportV13(), nil
 	case "led.status":
