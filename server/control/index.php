@@ -335,7 +335,8 @@ function showGaming(){
  ['network.doctor','عیب‌یابی شبکه','Network doctor','network.read'],
  ['network.policy_status','وضعیت SQM و UPnP','SQM and UPnP inventory','network.read'],
  ['system.interfaces','وضعیت اینترفیس‌ها','Interfaces','system.read']
- ],say('SQM، QoS، UPnP و اولویت دستگاه‌ها پس از تشخیص قابلیت واقعی سخت‌افزار و طراحی تنظیمات برگشت‌پذیر فعال می‌شوند.','SQM/QoS, UPnP and prioritization require capability discovery and recoverable configuration.'));
+ ],say('برای صف‌های موجود SQM امکان تنظیم نرخ Upload/Download با Rollback فعال است. اولویت‌دهی هر دستگاه و UPnP هنوز به آزمون جداگانه نیاز دارد.','Existing SQM queues support upload/download changes with rollback. Per-device priorities and UPnP modifications remain unavailable.'));
+ $('page').innerHTML+=showTrafficShapingV16();
 }
 // Bounded accessible key/value and list renderer; never render untrusted HTML.
 function structuredValue(value,depth){
