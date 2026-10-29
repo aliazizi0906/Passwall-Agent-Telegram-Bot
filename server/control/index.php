@@ -482,6 +482,27 @@ async function automation(){
  parts.push('<section class="card"><p class="muted">'+say('تمامی عملیات با مجوز نقش کاربر و ثبت Audit اجرا می‌شوند؛ تکمیل Ruleهای چندشرطی نیازمند ارزیابی بیشتر است.','Actions respect role permissions and audit logging; advanced multi-condition triggers remain in development.')+'</p></section>');
  $('page').innerHTML='<div class="stack">'+parts.join('')+'</div>';
 }
+function operationalPoliciesV16(){
+ var card='<section class="card"><div class="section-title">'+say('مدیریت عملیاتی شبکه با بازگشت خودکار','Network operations with automatic rollback')+'</div>'+
+ '<p class="warn-note">'+say('برای این عملیات بسته مناسب باید روی روتر نصب باشد. تغییر تا ۱۲۰ ثانیه نیاز به تأیید دارد؛ در غیر این صورت روتر آن را برمی‌گرداند. این مرحله هنوز روی همه سخت‌افزارها تأیید نشده است.','Required OpenWrt packages must exist. Confirm within 120 seconds or the router restores settings. Hardware acceptance is not yet complete.')+'</p>';
+ if(has('network.read')) card+='<div class="actions">'+action('pbr.policy.list',say('نمایش قوانین PBR','List PBR policies'),'network.read',false)+'</div>';
+ if(has('network.modify'))card+=
+ '<form class="stack operational-form" data-config-action="pbr.policy.add"><div class="section-title">'+say('افزودن Rule مسیریابی PBR','Create PBR route policy')+'</div>'+
+ '<label>'+say('نام قانون (با pw_)','Policy name (pw_ prefix)')+'<input name="name" required pattern="pw_[A-Za-z0-9_]{1,44}" placeholder="pw_office"></label>'+
+ '<label>'+say('شبکه مقصد CIDR','Destination CIDR')+'<input name="cidr" required dir="ltr" placeholder="192.0.2.0/24"></label>'+
+ '<label>'+say('نام Interface واقعی در network UCI','Existing OpenWrt network interface')+'<input name="interface" required pattern="[A-Za-z][A-Za-z0-9_]{0,47}" placeholder="vpn"></label>'+
+ '<button class="action primary" type="submit">'+say('ایجاد با Safe Apply','Create with rollback')+'</button></form>'+
+ '<form class="stack operational-form" data-config-action="pbr.policy.delete"><label>'+say('حذف Rule ساخته‌شده توسط PW','Delete PW-managed policy')+'<input name="name" required pattern="pw_[A-Za-z0-9_]{1,44}" placeholder="pw_office"></label><button class="action danger" type="submit">'+say('حذف با Safe Apply','Delete with rollback')+'</button></form>'+
+ '<form class="stack operational-form" data-config-action="openvpn.profile.toggle"><div class="section-title">'+say('فعال/غیرفعال کردن پروفایل OpenVPN','OpenVPN profile activation')+'</div><label>'+say('نام پروفایل OpenVPN','OpenVPN UCI profile')+'<input name="profile" required pattern="[A-Za-z][A-Za-z0-9_]{0,47}"></label><label><select name="enabled" class="select"><option value="1">'+say('فعال','Enable')+'</option><option value="0">'+say('غیرفعال','Disable')+'</option></select></label><button class="action primary" type="submit">'+say('اعمال پروفایل','Apply profile')+'</button></form>'+
+ '<form class="stack operational-form" data-config-action="firewall.wan_guard.set"><div class="section-title">'+say('محافظ مسیر مستقیم LAN به WAN','LAN → WAN forwarding guard')+'</div><p class="muted">'+say('فقط Forward مستقیم LAN→WAN را مسدود می‌کند؛ محافظت کامل DNS/IPv6 یا Kill Switch سراسری نیست.','Blocks direct LAN→WAN forwarding only; not a global DNS/IPv6 leak-proof kill switch.')+'</p><label><select name="enabled" class="select"><option value="1">'+say('فعال','Enable')+'</option><option value="0">'+say('خاموش','Disable')+'</option></select></label><button class="action danger" type="submit">'+say('تغییر Firewall با بازگشت خودکار','Apply firewall guard with rollback')+'</button></form>';
+ card+='</section>';return card;
+}
+function showTrafficShapingV16(){
+ if(!has('network.modify'))return '';
+ return '<section class="card"><div class="section-title">'+say('تنظیم سرعت SQM','SQM queue controls')+'</div><p class="muted">'+say('فقط Queue تعریف‌شده در sqm-scripts قابل ویرایش است؛ این محدودیت سرعت هر دستگاه نیست.','Requires an existing SQM queue. This is interface shaping, not per-device throttling.')+'</p>'+
+ '<form class="stack operational-form" data-config-action="sqm.queue.set"><label>'+say('نام Queue در UCI','SQM UCI queue')+'<input name="section" required pattern="[A-Za-z][A-Za-z0-9_]{0,47}" placeholder="eth1"></label><label>'+say('Download (kbit/s)','Download (kbit/s)')+'<input name="download_kbit" type="number" required min="64" max="10000000" value="20000"></label>'+
+ '<label>'+say('Upload (kbit/s)','Upload (kbit/s)')+'<input name="upload_kbit" type="number" required min="64" max="10000000" value="5000"></label><button class="action primary" type="submit">'+say('اعمال SQM با Rollback','Apply SQM with rollback')+'</button></form></section>';
+}
 function showOpenVPN(){
  var controls=has('network.modify')?'<section class="card"><div class="section-title">'+say('اتصال و قطع سرویس OpenVPN','OpenVPN service controls')+'</div><p class="warn-note">'+say('قطع یا راه‌اندازی VPN ممکن است ارتباط روتر را تغییر دهد. فقط با راه دسترسی جایگزین استفاده کن.','Changes can interrupt connectivity; keep independent recovery access.')+'</p><div class="actions">'+
  ['start','stop','restart'].map(function(v){return '<button class="action danger" data-ovpn-mode="'+v+'">'+({start:say('اتصال','Connect'),stop:say('قطع اتصال','Disconnect'),restart:say('اتصال مجدد','Reconnect')}[v])+'</button>';}).join('')+'</div></section>':'';
@@ -491,7 +512,7 @@ function showOpenVPN(){
  '<form class="stack" data-openvpn-plan><label>'+say('شناسه پروفایل','UCI profile')+'<input required name="profile" pattern="[A-Za-z0-9_-]{1,64}" placeholder="client_a"></label>'+
  '<label>'+say('مقصد CIDR','Destination CIDR')+'<input required name="cidr" dir="ltr" placeholder="192.0.2.0/24"></label>'+
  '<label>'+say('مسیر','Routing policy')+'<select class="select" name="mode"><option value="through_vpn">'+say('از VPN','Through VPN')+'</option><option value="bypass_vpn">'+say('مستقیم','Direct / Bypass')+'</option></select></label>'+
- '<button type="submit" class="action primary">'+say('تست Rule بدون تغییر','Validate without applying')+'</button></form></section>'+resultBox()+'</div>';
+ '<button type="submit" class="action primary">'+say('تست Rule بدون تغییر','Validate without applying')+'</button></form></section>'+operationalPoliciesV16()+resultBox()+'</div>';
 }
 function showTerminal(){
  if(!has('terminal.execute')){$('page').innerHTML='<div class="empty">'+say('مجوز terminal.execute لازم است.','terminal.execute permission required.')+'</div>';return;}
@@ -543,7 +564,7 @@ async function command(id,confirmNeeded,params){
    await new Promise(function(resolve){setTimeout(resolve,1400);});
    var j=await api('command_status',{device_id:state.active,command_id:ret.command_id});
    if(j.command && ['done','failed'].includes(j.command.status)){
-     if(out){if(j.command.status==='done'){out.innerHTML=renderCommandOutput(id,j.command.result||{status:'done'});if(id==='wifi.ssid.safe_apply'&&j.command.result&&j.command.result.pending){var tx=String(j.command.result.transaction_id||'');if(/^[a-f0-9]{32}$/.test(tx))out.innerHTML+='<div class="actions" style="margin-top:13px"><button type="button" class="action primary" data-safe-ssid-confirm="'+esc(tx)+'">'+say('تأیید نهایی تغییر Wi-Fi','Confirm Wi-Fi change')+'</button></div>';}}else{out.textContent=say('خطا: ','Error: ')+String(j.command.error||'Failed');}}
+     if(out){if(j.command.status==='done'){out.innerHTML=renderCommandOutput(id,j.command.result||{status:'done'});if(j.command.result&&j.command.result.pending){var tx=String(j.command.result.transaction_id||'');if(/^[a-f0-9]{32}$/.test(tx)){var wf=id==='wifi.ssid.safe_apply';out.innerHTML+='<div class="actions" style="margin-top:13px"><button type="button" class="action primary" '+(wf?'data-safe-ssid-confirm':'data-config-confirm')+'="'+esc(tx)+'">'+say('تأیید تنظیمات پس از تست اتصال','Confirm tested configuration')+'</button></div>';}}}else{out.textContent=say('خطا: ','Error: ')+String(j.command.error||'Failed');}}
      finished=true;break;
    }
   }
