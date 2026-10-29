@@ -41,6 +41,9 @@ func capabilityReportV13() map[string]interface{} {
 					radios = append(radios, "5g")
 				} else if strings.Contains(mode, "11g") {
 					radios = append(radios, "2g")
+				} else {
+					// Vendor radio with no standard band/hwmode still supports Wi-Fi inventory.
+					radios = append(radios, "unknown")
 				}
 			}
 		}
