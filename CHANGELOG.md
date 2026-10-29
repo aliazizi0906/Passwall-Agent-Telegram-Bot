@@ -2,6 +2,19 @@
 
 All notable PW Agent changes are documented here. GitHub may classify an RC-tagged build as a regular Release for discoverability; this is not a claim of feature-complete, production-certified support.
 
+## [1.4.0-alpha.3] — experimental GitHub Latest (29 October 2026)
+
+**Not Stable/GA.** Existing v1.4 limitations and real-hardware acceptance requirements still apply.
+
+- Replaced lengthy nested-shell OpenWrt install and reprovision commands with **six copyable, individually executable lines** and private temporary bootstrap downloads.
+- New router-local 90-second **Wi-Fi SSID Safe Apply**, with durable backup, independent watchdog and unconfirmed-change recovery after reboot or service restart; explicit confirmation via web UI.
+- Allowlisted and confirmed DNS/DHCP/NTP service restart controls; improved apk/opkg package inventory.
+- Added scoped alert/schedule creation and management controls, bounded live monitoring refresh, and fixed read-only command allowlists.
+- Expanded Go/PHP security regression tests and a fast CI gate.
+- OpenVPN route rules, general firewall/WAN and all-client policies, hardware RGB, advanced modem adapter and automatic backend update **remain incomplete**.
+
+See [English alpha.3 release notes](docs/en/RELEASE_NOTES_V1_4_ALPHA_3.md) and [Persian notes](docs/fa/RELEASE_NOTES_V1_4_ALPHA_3.md).
+
 ## [1.4.0-alpha.2] — Experimental GitHub Latest (29 October 2026)
 
 **Status:** Public Alpha / Latest, **not** production-certified or stable. Hardware-specific and network-critical controls remain restricted.
