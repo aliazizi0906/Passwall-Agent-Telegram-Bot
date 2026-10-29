@@ -64,6 +64,7 @@ jobs:
 
       - name: Web Setup tests
         run: php server/tests/setup_core_test.php
+          php server/cli/backend-upgrade.php --self-test
 
       - name: Control Center input-validation tests
         run: php server/tests/v130_command_validation_test.php
