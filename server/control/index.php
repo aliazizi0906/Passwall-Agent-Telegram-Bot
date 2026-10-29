@@ -91,7 +91,7 @@ input[name=username],input[name=password]{background:var(--soft);color:var(--ink
  <div class="brand"><div class="brand-logo">PW</div><div><b>PW Control</b><small>Network Control Center</small></div></div>
  <div class="nav-title">CONTROL PANEL</div>
  <nav class="nav" id="navigation" aria-label="Primary navigation"></nav>
- <div class="nav-foot">PW Control Center · Release candidate<br>Local LuCI available offline</div>
+ <div class="nav-foot">PW Control Center · Alpha.2<br>Local LuCI available offline</div>
 </aside>
 <div class="main">
  <header class="topbar">
@@ -107,7 +107,7 @@ input[name=username],input[name=password]{background:var(--soft);color:var(--ink
   <div id="notice" role="status" aria-live="polite"></div>
   <div class="headline"><div><h2 id="pageTitle"></h2><p id="pageDesc"></p></div><select id="devicePicker" class="select" aria-label="Router" hidden></select></div>
   <section id="page" aria-live="polite"><div class="empty">Connecting…</div></section>
-  <footer>PW Control Center · v1.4 development preview · Legacy dashboard also available</footer>
+  <footer>PW Control Center · v1.4.0-alpha.2 · Experimental · Not production-certified</footer>
  </main>
 </div></div>
 <script>
@@ -313,11 +313,11 @@ function showDNS(){
  ],say('DNS رمزنگاری‌شده، تفکیک ترافیک ایران، نشت DNS/IPv6 و Kill Switch تا زمان تست بسته‌ها و مسیرها فعلاً فقط در برنامه توسعه هستند.','Encrypted/split DNS, IPv6 leak blocking and kill switch need validated packet-path tests.'));
 }
 function showLED(){
- readPanel(say('چراغ‌های روتر','Router LEDs'),say('نمایش چراغ‌های عمومی sysfs در همه مدل‌های دارای LED و شناسایی اختصاصی GoogleWifiLED؛ بدون تغییر در کنترلر سخت‌افزار.','Read-only sysfs LED discovery on any OpenWrt board, plus GoogleWifiLED detection. No write operations.'),[
+ readPanel(say('چراغ‌های روتر','Router LEDs'),say('LEDهای دارای کنترل دستی را می‌توان تنظیم کرد؛ چراغ‌های تحت مدیریت سیستم فقط قابل مشاهده‌اند.','Per-LED manual brightness control where the kernel trigger is none; driver-managed LEDs stay read-only.'),[
   ['system.leds','چراغ‌های sysfs','Read sysfs LEDs','system.read'],
   ['led.status','وضعیت GoogleWifiLED','GoogleWifiLED status','system.read'],
   ['agent.capabilities','شناسایی سخت‌افزار','Hardware capabilities','system.read']
- ],say('تغییر رنگ، روشنایی، الگوها و زمان‌بندی فقط پس از ساخت Adapter ایمن برای سخت‌افزار مربوطه فعال می‌شود.','RGB, brightness, patterns and scheduling require model-specific verified drivers before being enabled.'));
+ ],say('RGB، الگوها و زمان‌بندی هنوز نیازمند درایور تأییدشده‌اند؛ روشنایی دستی از لیست LEDها قابل تغییر است.','RGB, patterns and scheduling still need hardware adapters; manual sysfs brightness is configurable from LED inventory.'));
 }
 function showCellular(){
  readPanel(say('مودم و سیم‌کارت','Cellular modem'),say('کشف مودم‌های جانبی با ModemManager یا uqmi و نمایش فقط شدت سیگنال؛ شناسه سیم‌کارت، IMSI و IMEI ارسال نمی‌شوند.','Read-only ModemManager/uqmi discovery and whitelisted signal metrics. No subscriber identifiers are sent.'),[
