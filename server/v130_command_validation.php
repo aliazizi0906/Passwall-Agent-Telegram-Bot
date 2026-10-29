@@ -111,7 +111,7 @@ function dash_v130_safe_params(string $action,array $params,bool $confirmed): ar
     if($action==='luci.wifi.iface.toggle'){
         if(!$confirmed)throw new RuntimeException('Wi-Fi interface change requires confirmation');
         $section=(string)($params['section']??'');
-        if(!preg_match('/^[A-Za-z][A-Za-z0-9_]{0,47}$/D',$section)||!is_bool($params['enabled']??null))
+        if(!(preg_match('/^[A-Za-z][A-Za-z0-9_]{0,47}$/D',$section)||preg_match('/^@wifi-iface\\[(0|[1-9][0-9]?)\\]$/D',$section))||!is_bool($params['enabled']??null))
             throw new RuntimeException('Invalid Wi-Fi interface');
         return ['section'=>$section,'enabled'=>$params['enabled']];
     }
