@@ -40,3 +40,5 @@ jobs:
 # Format final safe configuration lock guard.
 
 # Format verified native RGB driver.
+
+# Format final UCI rollback helpers.
