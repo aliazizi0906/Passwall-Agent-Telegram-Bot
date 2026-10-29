@@ -129,6 +129,11 @@ func restoreWifiSafeAtV15(root, wireless string, reload func() error) error {
 	if err != nil || len(data) == 0 || len(data) > 2<<20 {
 		return errors.New("Wi-Fi backup unavailable; manual recovery required")
 	}
+	// Discard any uncommitted UCI delta left by a failed uci set/commit.
+	// Without this, a later wifi reload could reapply the unsafe SSID.
+	if uci := commandPath("uci"); uci != "" {
+		_, _ = runOutput(8*time.Second, uci, "revert", "wireless")
+	}
 	temp := wireless + ".pw-safe-restore"
 	if err := os.WriteFile(temp, data, 0600); err != nil {
 		return err
@@ -216,7 +221,10 @@ func launchWifiWatchdogV15(id string) error {
 	cmd.Stdin = null
 	cmd.Stdout = null
 	cmd.Stderr = null
-	return cmd.Start()
+	if err := cmd.Start(); err != nil { return err }
+	// Reap the detached watchdog without waiting for it to finish here.
+	go func() { _ = cmd.Wait() }()
+	return nil
 }
 func safeApplySSIDV15(params map[string]interface{}) (map[string]interface{}, error) {
 	section, e1 := stringParam(params, "section")
