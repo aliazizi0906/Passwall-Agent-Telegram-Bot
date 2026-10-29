@@ -561,6 +561,32 @@ document.addEventListener('click',function(ev){
  }).catch(function(e){$('notice').textContent=e.message;}).finally(function(){b.disabled=false;});
 });
 document.addEventListener('click',function(ev){
+ var b=ev.target.closest('[data-ovpn-mode]');
+ if(b){
+  if(!has('network.modify'))return;
+  var mode=b.dataset.ovpnMode;
+  if(!['start','stop','restart'].includes(mode))return;
+  command('openvpn.service.control',true,{mode:mode}).catch(function(e){$('notice').textContent=e.message;});
+  return;
+ }
+ var led=ev.target.closest('[data-led-apply]');
+ if(!led)return;
+ if(!has('system.modify'))return;
+ var name=led.dataset.ledApply;
+ if(!/^[A-Za-z0-9:_+.-]{1,96}$/.test(name)||name==='.'||name==='..')return;
+ var scope=led.closest('.device-row'),input=scope&&scope.querySelector('[data-led-level]');
+ var level=input?Number(input.value):NaN;
+ if(!input||!Number.isInteger(level)||level<0||level>Number(input.max)){$('notice').textContent=say('شدت روشنایی معتبر نیست.','Invalid brightness level.');return;}
+ command('led.brightness.set',true,{name:name,brightness:level}).catch(function(e){$('notice').textContent=e.message;});
+});
+document.addEventListener('submit',function(ev){
+ var form=ev.target.closest('form[data-openvpn-plan]');if(!form)return;
+ ev.preventDefault();if(!has('network.read'))return;
+ var f=new FormData(form);
+ command('openvpn.route.plan',false,{profile:String(f.get('profile')||''),cidr:String(f.get('cidr')||''),mode:String(f.get('mode')||'')})
+ .catch(function(e){$('notice').textContent=e.message;});
+});
+document.addEventListener('click',function(ev){
  var b=ev.target.closest('[data-led-identify]');if(!b)return;
  var name=String(b.dataset.ledIdentify||'');
  if(!/^[A-Za-z0-9:_+.-]{1,96}$/.test(name)||name==='.'||name==='..'||!has('system.modify'))return;
