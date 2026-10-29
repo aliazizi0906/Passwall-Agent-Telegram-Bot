@@ -2,6 +2,16 @@
 
 All notable PW Agent changes are documented here. GitHub may classify an RC-tagged build as a regular Release for discoverability; this is not a claim of feature-complete, production-certified support.
 
+## [1.4.0-alpha.5] — LuCI capability catalog and responsive UX (29 October 2026)
+
+- New live 28-module OpenWrt LuCI capability hub; action/read-only/unavailable/adapter-needed statuses, search, filter and module routing.
+- Added locally rollback-protected UCI hostname change, LAN static DHCP lease add/delete, and named wireless interface enable/disable.
+- Fixed distorted SVG icons in OpenVPN, SSH and toolbar, rebuilt the embedded terminal with selected-device scoping, readable LTR output and responsive fields.
+- Reorganized real OpenVPN/PBR and firewall operations into responsive cards; clarified route dry-run vs real PBR apply.
+- Expanded Go/PHP contract tests and front-end JavaScript/CSS/terminal checks. **No claim of all LuCI plugin parity or live router visual certification.**
+
+[English notes](docs/en/RELEASE_NOTES_V1_4_ALPHA_5.md) · [فارسی](docs/fa/RELEASE_NOTES_V1_4_ALPHA_5.md)
+
 ## [1.4.0-alpha.4] — Scoped network and hardware actions (experimental, 29 October 2026)
 
 - Real named UCI PBR create/delete, OpenVPN profile enable/disable, SQM rate configuration, MAC-based LAN→WAN rule block/unblock, Wi-Fi radio channel changes, LAN→WAN forwarding guard and client port-53 DNS guard.
