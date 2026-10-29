@@ -65,6 +65,11 @@ chmod 0644 "$STAGE/backend/install/remote.sh"
 [ -f "$STAGE/backend/auth/login.php" ]
 [ -f "$STAGE/backend/web_auth.php" ]
 [ -f "$STAGE/backend/assets/vazirmatn.css" ]
+[ -s "$STAGE/backend/assets/fonts/Vazirmatn.woff2" ]
+[ -s "$STAGE/backend/assets/fonts/OFL.txt" ]
+[ -f "$STAGE/backend/assets/control-v14.css" ]
+[ -f "$STAGE/backend/assets/login-v14.css" ]
+[ -f "$STAGE/backend/assets/login-v14.js" ]
 
 [ -f "$STAGE/backend/setup.php" ]
 [ -f "$STAGE/backend/health.php" ]
