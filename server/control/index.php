@@ -433,6 +433,22 @@ async function automation(){
  parts.push('<section class="card"><p class="muted">'+say('برای ویرایش کامل از داشبورد قبلی استفاده کن؛ موتور قوانین شرطی پیشرفته در نسخه 1.3 توسعه می‌یابد.','Use the legacy dashboard for full editing; advanced conditional automation is planned for v1.3.')+'</p><a href="../dashboard/">'+say('داشبورد قبلی','Legacy dashboard')+'</a></section>');
  $('page').innerHTML='<div class="stack">'+parts.join('')+'</div>';
 }
+function showOpenVPN(){
+ var controls=has('network.modify')?'<section class="card"><div class="section-title">'+say('اتصال و قطع سرویس OpenVPN','OpenVPN service controls')+'</div><p class="warn-note">'+say('قطع یا راه‌اندازی VPN ممکن است ارتباط روتر را تغییر دهد. فقط با راه دسترسی جایگزین استفاده کن.','Changes can interrupt connectivity; keep independent recovery access.')+'</p><div class="actions">'+
+ ['start','stop','restart'].map(function(v){return '<button class="action danger" data-ovpn-mode="'+v+'">'+({start:say('اتصال','Connect'),stop:say('قطع اتصال','Disconnect'),restart:say('اتصال مجدد','Reconnect')}[v])+'</button>';}).join('')+'</div></section>':'';
+ $('page').innerHTML='<div class="stack">'+hero()+
+ '<section class="card"><div class="section-title">'+navIcon('openvpn')+' OpenVPN</div><p class="muted">'+say('پروفایل‌های واقعی نصب‌شده در OpenWrt را مشاهده کن. کلیدها و مشخصات خصوصی نمایش داده نمی‌شوند.','Inspect real OpenWrt OpenVPN profiles without exposing credentials.')+'</p><div class="actions">'+action('openvpn.status',say('پروفایل‌ها و وضعیت اتصال','Profiles and service'),'network.read',false)+'</div></section>'+controls+
+ '<section class="card"><div class="section-title">'+say('طراحی و اعتبارسنجی Rule','Route policy builder')+'</div><p class="warn-note">'+say('فعلاً فقط Dry Run است. اعمال Rule روی روتر تا وجود Rollback مستقل غیرفعال است.','Dry run only; rule installation requires independent router-local rollback.')+'</p>'+
+ '<form class="stack" data-openvpn-plan><label>'+say('شناسه پروفایل','UCI profile')+'<input required name="profile" pattern="[A-Za-z0-9_-]{1,64}" placeholder="client_a"></label>'+
+ '<label>'+say('مقصد CIDR','Destination CIDR')+'<input required name="cidr" dir="ltr" placeholder="192.0.2.0/24"></label>'+
+ '<label>'+say('مسیر','Routing policy')+'<select class="select" name="mode"><option value="through_vpn">'+say('از VPN','Through VPN')+'</option><option value="bypass_vpn">'+say('مستقیم','Direct / Bypass')+'</option></select></label>'+
+ '<button type="submit" class="action primary">'+say('تست Rule بدون تغییر','Validate without applying')+'</button></form></section>'+resultBox()+'</div>';
+}
+function showTerminal(){
+ if(!has('terminal.execute')){$('page').innerHTML='<div class="empty">'+say('مجوز terminal.execute لازم است.','terminal.execute permission required.')+'</div>';return;}
+ if(!webAuth){$('page').innerHTML='<section class="card"><div class="section-title">SSH Console</div><p class="muted">'+say('برای ترمینال یکپارچه از ورود وب استفاده کن.','Sign in with your browser account for embedded terminal.')+'</p><a href="../auth/login.php">Web Login</a></section>';return;}
+ $('page').innerHTML='<div class="stack"><section class="card"><div class="section-title">'+navIcon('terminal')+' '+say('ترمینال SSH روتر','Router SSH Console')+'</div><p class="muted">'+say('فرمان‌های SSH فقط با رمز خود روتر و مجوز terminal.execute اجرا می‌شوند. ترمینال تعاملی کامل نیست.','SSH commands require the router password and terminal.execute permission; not a full interactive TTY.')+'</p><iframe class="terminal-frame" title="OpenWrt SSH Console" src="../terminal/" loading="lazy"></iframe></section></div>';
+}
 function render(){
  nav();
  if(!state.fleet){$('page').innerHTML='<div class="empty">'+say('برای ورود از حساب وب یا مینی‌اپ تلگرام استفاده کن.','Sign in with your web account or Telegram Mini App.')+'</div>';return;}
