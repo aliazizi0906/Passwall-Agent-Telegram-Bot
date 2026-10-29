@@ -55,3 +55,12 @@ expectFailure('OpenVPN service shell injection','openvpn.service.control',['mode
 expectOkay('OpenVPN safe route dry-run','openvpn.route.plan',['profile'=>'office','mode'=>'through_vpn','cidr'=>'192.0.2.0/24'],false,['profile'=>'office','mode'=>'through_vpn','cidr'=>'192.0.2.0/24']);
 expectFailure('OpenVPN invalid CIDR','openvpn.route.plan',['profile'=>'office','mode'=>'through_vpn','cidr'=>'invalid'],false);
 expectFailure('OpenVPN injection profile','openvpn.route.plan',['profile'=>'office;touch','mode'=>'bypass_vpn','cidr'=>'192.0.2.0/24'],false);
+
+
+expectOkay('Wi-Fi safe apply confirmed','wifi.ssid.safe_apply',['section'=>'default_radio0','ssid'=>'PW Secure'],true,['section'=>'default_radio0','ssid'=>'PW Secure']);
+expectFailure('Wi-Fi safe apply requires confirmation','wifi.ssid.safe_apply',['section'=>'default_radio0','ssid'=>'PW Secure'],false);
+expectFailure('Wi-Fi safe apply refuses injection','wifi.ssid.safe_apply',['section'=>'radio0;reboot','ssid'=>'PW Secure'],true);
+expectFailure('Wi-Fi safe apply rejects long SSID','wifi.ssid.safe_apply',['section'=>'default_radio0','ssid'=>str_repeat('Z',33)],true);
+expectOkay('Wi-Fi rollback confirmation','wifi.ssid.safe_confirm',['transaction_id'=>str_repeat('a',32)],true,['transaction_id'=>str_repeat('a',32)]);
+expectFailure('Wi-Fi rollback ID validation','wifi.ssid.safe_confirm',['transaction_id'=>'../file'],true);
+expectFailure('Wi-Fi rollback must confirm','wifi.ssid.safe_confirm',['transaction_id'=>str_repeat('a',32)],false);
