@@ -1,17 +1,17 @@
 # PW Agent Documentation — English
 
-> **Latest GitHub Release: v1.3.0-rc.2.** This release is marked Latest, while retaining the RC tag and its not-production-certified status. Use the [installation guide](INSTALL_V1_3.md), [upgrade guide](UPGRADE_V1_3.md) and [implementation status](CONTROL_CENTER_PROGRESS.md). Historical sections document the v0.6 baseline.
+> **Latest GitHub Release: v1.4.0-alpha.1 (Alpha, NOT stable).** It is the newest public download, not a certified production release; see the [release warnings](RELEASE_NOTES_V1_4_ALPHA_LATEST.md) and [14-workstream matrix](V1_4_EXECUTION.md). v1.3 RC2 remains a previous candidate and v0.6 the older stable baseline.
 
 [← Project README](../../README.md) · [فارسی](../fa/README.md)
 
-## Unreleased v1.4 development
+## Public v1.4 Alpha (Latest, not Stable)
 - [All 14 workstreams and test gates](V1_4_EXECUTION.md)
 
 ## Menu
 
 | Section | Description |
 |---|---|
-| [Install v1.3 RC](INSTALL_V1_3.md) | Current GitHub Latest release (RC-tagged) installation |
+| [Install v1.3 RC](INSTALL_V1_3.md) | Older v1.3 RC2 staging installation |
 | [Legacy install](INSTALL.md) | Stable v0.6.0 installation guide |
 | [Release notes](RELEASE_NOTES_V1_3_RC.md) | v1.3.0-rc.2 changes and limitations |
 | [Features](FEATURES.md) | Complete feature overview |
