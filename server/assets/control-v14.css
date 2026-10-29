@@ -168,7 +168,7 @@ footer{margin-top:36px;opacity:.85}
    box-shadow:0 14px 45px #0004
  }
  :root[dir=ltr] .sidebar{transform:translateX(-110%)}
- .shell.menu-open .sidebar,.shell.menu-open:root[dir=ltr] .sidebar{transform:translateX(0)}
+ .shell.menu-open .sidebar{transform:translateX(0)}
  .sidebar .brand{padding:8px 10px 20px;margin-bottom:15px;border-bottom:1px solid #ffffff1c;white-space:normal}
  .brand small,.nav-title,.nav-foot{display:block}
  .sidebar .nav{display:grid;gap:3px}
