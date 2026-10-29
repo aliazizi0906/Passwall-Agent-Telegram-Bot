@@ -31,7 +31,7 @@ type configSnapshotV6 struct {
 func configPackagesForActionV6(action string) []string {
 	switch {
 	case strings.HasPrefix(action, "wifi."):
-		if action == "wifi.reload" {
+		if action == "wifi.reload" || action == "wifi.ssid.safe_apply" || action == "wifi.ssid.safe_confirm" {
 			return nil
 		}
 		return []string{"wireless"}
