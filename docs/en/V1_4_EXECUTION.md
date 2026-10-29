@@ -2,6 +2,14 @@
 
 Development source branch: `feature/v1.4-secure-browser-control`. **v1.4.0-alpha.4 is the GitHub Latest public download, but is NOT stable or production-certified.** Public distribution does not imply the 14 workstreams are complete.
 
+## Alpha.5 LuCI catalog and UI update
+
+- Live 28-module capability matrix from installed UCI configuration files, searchable/filterable and honesty-scoped to working actions.
+- Confirmed and rollback-protected hostname change, PW-managed LAN static DHCP reservations and named Wi-Fi interface toggling.
+- Shared icon sizing; OpenVPN form grid; dedicated device-scoped responsive SSH terminal, including mobile display and accessibility contract tests.
+- Unimplemented LuCI packages (switch/VLAN, DDNS, UPnP, guest Wi-Fi, storage, full firewall zones and arbitrary third-party extensions) are not advertised as functional.
+- Independent real-hardware visual/regression testing and all-plugin acceptance remain outstanding.
+
 ## Alpha.4 actual actions and acceptance limits
 
 - **PBR:** create/delete PW-managed policies for existing logical network interfaces with independent rollback; package pbr required. Not a full split-tunnel/kill-switch guarantee.
