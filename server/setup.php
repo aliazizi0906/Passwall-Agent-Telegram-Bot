@@ -175,6 +175,7 @@ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&isset($_POST['install'])){
                     'device_name'=>$deviceName,
                     'arch'=>$arch,
                     'router_command'=>pw_setup_router_command((string)$form['base_url'],$provisionToken),
+                    'provision_token'=>$provisionToken,
                     'cron'=>pw_setup_cron_command($root),
                     'health_url'=>rtrim((string)$form['base_url'],'/').'/health.php',
                     'release'=>$release,
@@ -239,8 +240,15 @@ Initial router: <code><?=setup_h($success['device_id'])?></code> — <?=setup_h(
 <div class="card">
 <h2>1. Install the Agent on OpenWrt</h2>
 <p class="muted">This provisioning token expires in 30 minutes and is single-use.</p>
-<pre id="routerCommand"><?=setup_h($success['router_command'])?></pre>
-<button type="button" onclick="copyText('routerCommand')">Copy router command</button>
+<p class="muted">Paste <strong>one line at a time</strong> and press Enter after each. Do not paste the full block into a restricted router terminal. Use a fresh token if it expires (30 min).</p>
+<?php foreach(pw_setup_router_steps((string)$success['base_url'],(string)$success['provision_token']) as $i=>$line): ?>
+<div style="display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap">
+<strong style="min-width:25px"><?=($i+1)?>.</strong>
+<code id="routerStep<?=$i?>" dir="ltr" style="display:block;flex:1;min-width:220px;overflow-wrap:anywhere;padding:11px;background:var(--card2);border-radius:9px"><?=setup_h($line)?></code>
+<button type="button" onclick="copyText('routerStep<?=$i?>')">Copy line <?=($i+1)?></button>
+</div>
+<?php endforeach; ?>
+<p class="muted">If wget is unavailable, substitute step 4 with: <code>curl -fLsS -o /tmp/pw.sh "$PW_SERVER_BASE/install/remote.sh"</code>. If installation fails, do not reuse a consumed or expired token. Protect and rotate exposed provisioning tokens.</p>
 </div>
 
 <div class="card">
