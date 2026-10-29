@@ -82,10 +82,12 @@ body{letter-spacing:0;-webkit-font-smoothing:antialiased}
 input[name=username],input[name=password]{background:var(--soft);color:var(--ink);border:1px solid var(--border);border-radius:11px;padding:12px;width:100%;max-width:500px}
 @media(prefers-reduced-motion:reduce){.action,.chip-btn{transition:none}}
 </style>
+<link rel="stylesheet" href="../assets/control-v14.css">
 </head>
 <body data-web-auth="<?= $browserUid?'1':'0' ?>" data-web-csrf="<?=htmlspecialchars($browserCsrf,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')?>">
-<div class="shell">
-<aside class="sidebar">
+<div class="shell" id="appShell">
+<button type="button" class="menu-backdrop" id="navBackdrop" aria-label="بستن منوی کناری" tabindex="-1"></button>
+<aside class="sidebar" id="appSidebar" aria-label="ناوبری پنل">
  <div class="brand"><div class="brand-logo">PW</div><div><b>PW Control</b><small>Network Control Center</small></div></div>
  <div class="nav-title">CONTROL PANEL</div>
  <nav class="nav" id="navigation" aria-label="Primary navigation"></nav>
@@ -93,7 +95,7 @@ input[name=username],input[name=password]{background:var(--soft);color:var(--ink
 </aside>
 <div class="main">
  <header class="topbar">
-  <div><h1 id="topTitle">PW Control Center</h1><small id="identity">Telegram authentication required</small></div>
+  <div class="toolbar-leading"><button type="button" class="chip-btn menu-btn" id="menuBtn" aria-label="باز کردن منوی کناری" aria-controls="appSidebar" aria-expanded="false">☰</button><div class="toolbar-heading"><h1 id="topTitle">PW Control Center</h1><small id="identity">Telegram authentication required</small></div></div>
   <div class="topbar-actions">
    <?php if($browserUid): ?><form method="post" action="../auth/login.php" style="margin:0"><input type="hidden" name="csrf" value="<?=htmlspecialchars($browserCsrf,ENT_QUOTES,'UTF-8')?>"><button class="chip-btn" name="logout" value="1" type="submit" title="خروج از پنل">خروج</button></form><?php else: ?><a class="chip-btn" href="../auth/login.php" title="ورود مستقل پنل وب">ورود وب</a><?php endif; ?>
    <button type="button" class="chip-btn" id="refreshBtn" aria-label="Refresh">↻</button>
@@ -554,10 +556,15 @@ document.addEventListener('click',function(event){
  var b=event.target.closest('[data-nav],[data-router],[data-command],[data-action-param]');
  if(!b)return;
  if(b.dataset.actionParam){var id=b.dataset.paramId||'';if(!/^[A-Za-z0-9_-]{1,96}$/.test(id))return;var mutation=b.dataset.actionParam!=='passwall2.node.test';command(b.dataset.actionParam,mutation,{id:id});return;}
- if(b.dataset.nav){state.page=b.dataset.nav;render();window.scrollTo(0,0);}
+ if(b.dataset.nav){state.page=b.dataset.nav;closeMenu();render();window.scrollTo(0,0);}
  else if(b.dataset.router){api('select_device',{device_id:b.dataset.router}).then(refresh).catch(function(e){$('notice').textContent=e.message;});}
  else if(b.dataset.command){command(b.dataset.command,b.dataset.confirm==='1');}
 });
+function closeMenu(){document.getElementById('appShell').classList.remove('menu-open');$('menuBtn').setAttribute('aria-expanded','false');}
+$('menuBtn').addEventListener('click',function(){var app=$('appShell');var opened=app.classList.toggle('menu-open');$('menuBtn').setAttribute('aria-expanded',opened?'true':'false');if(opened){var current=document.querySelector('.sidebar .nav-btn.selected');(current||document.querySelector('.sidebar .nav-btn'))?.focus();}});
+$('navBackdrop').addEventListener('click',function(){closeMenu();$('menuBtn').focus();});
+document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&$('appShell').classList.contains('menu-open')){closeMenu();$('menuBtn').focus();}});
+window.addEventListener('resize',function(){if(window.innerWidth>850)closeMenu();});
 $('devicePicker').addEventListener('change',function(e){api('select_device',{device_id:e.target.value}).then(refresh).catch(function(err){$('notice').textContent=err.message;});});
 $('refreshBtn').onclick=refresh;
 $('langBtn').onclick=function(){state.lang=state.lang==='fa'?'en':'fa';try{localStorage.setItem('pwcontrol-lang',state.lang);}catch(e){}applyTheme();render();};
