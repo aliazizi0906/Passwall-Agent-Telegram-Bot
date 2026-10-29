@@ -2,6 +2,17 @@
 
 All notable PW Agent changes are documented here. GitHub may classify an RC-tagged build as a regular Release for discoverability; this is not a claim of feature-complete, production-certified support.
 
+## [1.4.0-alpha.4] — Scoped network and hardware actions (experimental, 29 October 2026)
+
+- Real named UCI PBR create/delete, OpenVPN profile enable/disable, SQM rate configuration, MAC-based LAN→WAN rule block/unblock, Wi-Fi radio channel changes, LAN→WAN forwarding guard and client port-53 DNS guard.
+- Independent router-local 120-second config snapshot/watchdog/confirm/rollback workflow, including startup recovery; existing SSID 90-second safe apply retained.
+- Linux native 3-channel RGB sysfs LED colors with channel-order validation, only when the hardware exposes multi_intensity/multi_index and trigger none.
+- cPanel CLI-only signed backend update utility: Ed25519/SHA256 verified ZIP, restricted paths, pre-upgrade copies, rollback and acceptance; no browser-triggered self-upgrade.
+- Operation forms, backend allowlists, strict role permissions and Go/PHP tests.
+- **Still unsupported:** full kill-switch/DNS leak guarantees, client-specific rate limits, guest/password setup, modem-specific SMS/band lock, vendor LED schedules and live power-loss certification.
+
+[English release notes](docs/en/RELEASE_NOTES_V1_4_ALPHA_4.md) · [فارسی](docs/fa/RELEASE_NOTES_V1_4_ALPHA_4.md)
+
 ## [1.4.0-alpha.3] — experimental GitHub Latest (29 October 2026)
 
 **Not Stable/GA.** Existing v1.4 limitations and real-hardware acceptance requirements still apply.
