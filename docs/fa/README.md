@@ -5,6 +5,7 @@
 [← صفحه اصلی پروژه](../../README.md) · [English](../en/README.md)
 
 ## نسخه عمومی Alpha v1.4 (Latest، نه Stable)
+- [آلفا ۵: ماژول‌های LuCI، اکشن‌های سیستم و DHCP و اصلاح کامل آیکون‌ها](RELEASE_NOTES_V1_4_ALPHA_5.md)
 - [آلفا ۴: اکشن‌های شبکه، مدیریت RGB، ارتقای امضاشده و محدودیت‌ها](RELEASE_NOTES_V1_4_ALPHA_4.md)
 - [یادداشت نسخه آلفا ۳: نصب کوتاه، بازگشت امن Wi-Fi و محدودیت‌ها](RELEASE_NOTES_V1_4_ALPHA_3.md)
 - [تصویر نمونه Safe Apply وای‌فای](../assets/previews/wifi-safe-apply-v140.svg)
