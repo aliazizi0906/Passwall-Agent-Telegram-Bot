@@ -367,6 +367,22 @@ function renderCommandOutput(actionName,result){
   return typeof x==='string'?x.slice(0,2048):x;
  }
  var safe=clean(result,0);
+ if(actionName==='luci.catalog'&&safe&&Array.isArray(safe.modules)){
+  return '<div class="luci-filter"><input type="search" data-luci-search placeholder="'+say('جست‌وجوی ماژول LuCI','Search LuCI modules')+'" aria-label="LuCI module search"><select class="select" data-luci-status><option value="all">'+say('همه ماژول‌ها','All modules')+'</option><option value="partial">'+say('دارای امکانات','Partially actionable')+'</option><option value="not_implemented">'+say('نیازمند توسعه','Adapter needed')+'</option><option value="unavailable">'+say('پکیج نصب نیست','Package unavailable')+'</option></select></div>'+
+    '<div class="luci-catalog">'+safe.modules.map(function(m){
+      var st=String(m.state||'unavailable'),page=String(m.page||''),valid=menu.some(function(x){return x[0]===page;});
+      var title=String(m.title||m.id||''),detail=String(m.detail||'');
+      var caption=st==='partial'?say('بخشی از اکشن‌ها فعال','Partial actions'):st==='not_implemented'?say('نیازمند Adapter','Adapter needed'):say('پکیج یافت نشد','Unavailable');
+      var actionButton=valid&&st==='partial'?'<button class="action primary" type="button" data-nav="'+esc(page)+'">'+say('باز کردن بخش','Open module')+'</button>':'';
+      return '<article class="luci-item" data-module-state="'+esc(st)+'" data-module-text="'+esc((title+' '+detail).toLowerCase())+'"><div class="luci-item-heading">'+navIcon(valid?page:'luci')+'<h3>'+esc(title)+'</h3></div><span class="pill '+(st==='partial'?'ok':st==='unavailable'?'bad':'')+'">'+caption+'</span><p>'+esc(detail)+'</p><div class="actions">'+actionButton+'</div></article>';
+    }).join('')+'</div>';
+ }
+ if(actionName==='luci.dhcp.static.list'&&safe&&Array.isArray(safe.leases)){
+  return '<div class="section-title">'+say('رزروهای IP','Static IP reservations')+' ('+safe.leases.length+')</div>'+
+   (safe.leases.length?safe.leases.map(function(x){
+     return '<div class="device-row"><div><strong>'+esc(x.name||x.section)+'</strong><small dir="ltr">'+esc(x.ip||'—')+' · '+esc(x.mac||'—')+'</small></div><span class="pill '+(x.managed_by_pw?'ok':'')+'">'+(x.managed_by_pw?'PW managed':say('فقط مشاهده','Read only'))+'</span></div>';
+   }).join(''):'<div class="empty">'+say('رزرو DHCP ثبت نشده است','No static reservations')+'</div>');
+ }
  if(actionName==='system.leds'&&safe&&Array.isArray(safe.leds)){
   return '<div class="section-title">'+say('چراغ‌های شناسایی‌شده','Detected LEDs')+' ('+safe.leds.length+')</div>'+
   (safe.leds.map(function(item){
@@ -509,6 +525,22 @@ function showTrafficShapingV16(){
  '<form class="stack operational-form" data-config-action="sqm.queue.set"><label>'+say('نام Queue در UCI','SQM UCI queue')+'<input name="section" required pattern="[A-Za-z][A-Za-z0-9_]{0,47}" placeholder="eth1"></label><label>'+say('Download (kbit/s)','Download (kbit/s)')+'<input name="download_kbit" type="number" required min="64" max="10000000" value="20000"></label>'+
  '<label>'+say('Upload (kbit/s)','Upload (kbit/s)')+'<input name="upload_kbit" type="number" required min="64" max="10000000" value="5000"></label><button class="action primary" type="submit">'+say('اعمال SQM با Rollback','Apply SQM with rollback')+'</button></form></section>';
 }
+function showLuci(){
+ var read=has('system.read')?'<div class="actions">'+action('luci.catalog',say('شناسایی قابلیت‌های نصب‌شده','Detect installed LuCI capabilities'),'system.read',false)+action('luci.system.status',say('تنظیمات عمومی سیستم','Current system settings'),'system.read',false)+'</div>':'';
+ var hostname=(has('system.modify')&&has('network.modify'))?
+ '<form class="stack operational-form" data-luci-form="luci.system.hostname.set"><div class="section-title">'+say('تغییر نام روتر','Change router hostname')+'</div><p class="muted">'+say('تغییر با Snapshot و تأیید ۱۲۰ ثانیه‌ای انجام می‌شود.','Change uses local snapshot and 120-second confirmation.')+'</p><label>'+say('نام جدید (یک بخش DNS)','New single-label hostname')+'<input name="hostname" required pattern="[A-Za-z][A-Za-z0-9-]{0,62}" maxlength="63" placeholder="OpenWrt-Gale"></label><button class="action primary" type="submit">'+say('اعمال امن نام روتر','Safely update hostname')+'</button></form>':'';
+ var dhcp=(has('network.read')?'<div class="actions">'+action('luci.dhcp.static.list',say('رزروهای DHCP','List static DHCP leases'),'network.read',false)+'</div>':'')+
+ (has('network.modify')?'<form class="stack operational-form" data-luci-form="luci.dhcp.static.add"><div class="section-title">'+say('افزودن رزرو DHCP','Create DHCP static lease')+'</div><label>MAC<input name="mac" dir="ltr" pattern="([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}" required placeholder="02:11:22:33:44:55"></label><label>IPv4 '+say('داخل LAN','on LAN')+'<input name="ip" dir="ltr" required placeholder="192.168.1.80"></label><label>'+say('نام دستگاه','Device name')+'<input name="name" pattern="[A-Za-z][A-Za-z0-9-]{0,62}" required placeholder="office-printer"></label><button class="action primary" type="submit">'+say('افزودن با بازگشت خودکار','Create with auto rollback')+'</button></form>'+
+ '<form class="stack operational-form" data-luci-form="luci.dhcp.static.delete"><div class="section-title">'+say('حذف رزرو ساخته‌شده توسط PW','Delete PW-managed lease')+'</div><label>MAC<input name="mac" dir="ltr" required pattern="([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}" placeholder="02:11:22:33:44:55"></label><button class="action danger" type="submit">'+say('حذف با بازگشت خودکار','Remove with auto rollback')+'</button></form>':'');
+ var wifi=has('wifi.modify')&&has('network.modify')?
+ '<form class="stack operational-form" data-luci-form="luci.wifi.iface.toggle"><div class="section-title">'+say('فعال/غیرفعال‌سازی SSID','Enable/disable Wi-Fi interface')+'</div><p class="warn-note">'+say('ممکن است ارتباط بی‌سیم قطع شود؛ اگر تأیید نکنی روتر تنظیمات قبلی را بازمی‌گرداند.','Wireless connection may drop; an unconfirmed change is rolled back locally.')+'</p><label>'+say('شناسه Wi-Fi Interface در UCI','Named UCI wifi-iface')+'<input name="section" required pattern="[A-Za-z][A-Za-z0-9_]{0,47}" placeholder="default_radio0"></label><label>'+say('عملیات','Action')+'<select name="enabled" class="select"><option value="1">'+say('روشن','Enable')+'</option><option value="0">'+say('خاموش','Disable')+'</option></select></label><button class="action primary" type="submit">'+say('اعمال امن','Safe apply')+'</button></form>':'';
+ $('page').innerHTML='<div class="stack">'+hero()+
+ '<section class="card"><div class="section-title"><span class="section-icon">'+navIcon('luci')+'</span>'+say('مرکز مدیریت LuCI','LuCI capability center')+'</div><p class="muted">'+say('این بخش قابلیت‌های نصب‌شده روی روتر را بررسی می‌کند؛ پوشش همه افزونه‌ها و درایورهای LuCI تضمین نشده است. اکشن فاقد پشتوانه واقعی عمداً در دسترس نیست.','Live installed-package capability inventory. Full parity with all LuCI plugins and drivers is not guaranteed. Unsupported actions are explicitly unavailable.')+'</p>'+read+'</section>'+
+ '<div class="grid"><section class="card"><div class="section-title">'+say('تنظیمات System','System settings')+'</div>'+hostname+(hostname?'':'<p class="muted">'+say('مجوز تغییر تنظیمات موجود نیست.','Mutation permission not available.')+'</p>')+'</section>'+
+ '<section class="card"><div class="section-title">'+say('رزروهای DHCP','DHCP static leases')+'</div><div class="stack">'+dhcp+'</div></section></div>'+
+ '<section class="card"><div class="section-title">'+say('شبکه بی‌سیم','Wireless interfaces')+'</div>'+wifi+'</section>'+
+ resultBox()+'</div>';
+}
 function showOpenVPN(){
  var controls=has('network.modify')?'<section class="card"><div class="section-title">'+say('اتصال و قطع سرویس OpenVPN','OpenVPN service controls')+'</div><p class="warn-note">'+say('قطع یا راه‌اندازی VPN ممکن است ارتباط روتر را تغییر دهد. فقط با راه دسترسی جایگزین استفاده کن.','Changes can interrupt connectivity; keep independent recovery access.')+'</p><div class="actions">'+
  ['start','stop','restart'].map(function(v){return '<button class="action danger" data-ovpn-mode="'+v+'">'+({start:say('اتصال','Connect'),stop:say('قطع اتصال','Disconnect'),restart:say('اتصال مجدد','Reconnect')}[v])+'</button>';}).join('')+'</div></section>':'';
@@ -529,7 +561,7 @@ function render(){
  nav();
  if(!state.fleet){$('page').innerHTML='<div class="empty">'+say('برای ورود از حساب وب یا مینی‌اپ تلگرام استفاده کن.','Sign in with your web account or Telegram Mini App.')+'</div>';return;}
  if(!state.active){$('page').innerHTML='<div class="empty">'+say('هیچ روتر فعالی وجود ندارد.','No active router.')+'</div>';return;}
- if(state.page==='home')home();else if(state.page==='internet')internet();else if(state.page==='proxy')proxy();else if(state.page==='openvpn')showOpenVPN();else if(state.page==='terminal')showTerminal();else if(state.page==='routers')routers();else if(state.page==='clients')showClients();else if(state.page==='wifi')showWifi();else if(state.page==='dns')showDNS();else if(state.page==='gaming')showGaming();else if(state.page==='led')showLED();else if(state.page==='cellular')showCellular();else if(state.page==='system')system();else if(state.page==='automation'){automation();}else{
+ if(state.page==='home')home();else if(state.page==='luci')showLuci();else if(state.page==='internet')internet();else if(state.page==='proxy')proxy();else if(state.page==='openvpn')showOpenVPN();else if(state.page==='terminal')showTerminal();else if(state.page==='routers')routers();else if(state.page==='clients')showClients();else if(state.page==='wifi')showWifi();else if(state.page==='dns')showDNS();else if(state.page==='gaming')showGaming();else if(state.page==='led')showLED();else if(state.page==='cellular')showCellular();else if(state.page==='system')system();else if(state.page==='automation'){automation();}else{
  var plans={
   clients:[say('مدیریت دستگاه‌های شبکه','LAN client management'),say('فهرست کلاینت‌ها، محدودیت سرعت، مسدودسازی، زمان‌بندی و اولویت‌بندی پس از توسعه API مجاز نمایش داده می‌شود.','Live client list, rate limits, blocking, schedules and priorities require an authorized agent API.'),['DHCP / ARP','MAC identity','Live RX/TX','Rate limit','Block / unblock','Parental schedules']],
   wifi:[say('مدیریت Wi-Fi','Wi-Fi management'),say('مدیریت SSID، رمز، ۲٫۴/۵ گیگاهرتز، شبکه مهمان، QR و انتخاب کانال ایمن همراه با Rollback.','SSID, password, 2.4/5 GHz, guest Wi-Fi, QR, safe channel selection and rollback.'),['SSID & WPA2/WPA3','Guest isolation','Channel scan','QR codes','Safe rollback']],
