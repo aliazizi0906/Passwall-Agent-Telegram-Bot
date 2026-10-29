@@ -6,9 +6,9 @@ Current development branch: `feature/v1.4-secure-browser-control`. Published **L
 
 - Security hardening: device detail and update API responses now use a strict public-field allowlist rather than exposing `secret_sealed` or raw metadata; CI validates redaction.
 - Secure independent web username/password set by cPanel Web Setup; hashed credentials, HTTPS session, CSRF, RBAC/device scoping, rate-limited login, idle timeout, credential reset/revocation by Telegram Owner. Sessions without their original password fingerprint now fail closed, including after password rotation.
-- Refreshed RTL/LTR web UI and inline SVG navigation icons.
+- Refreshed RTL/LTR web UI, native SVG navigation, a mobile drawer with keyboard/Escape closing, responsive network cards, two-column secure browser login and password-visibility toggle served from an external script allowed by CSP.
 - Pinned Vazirmatn font with local verified WOFF2 inside the cPanel build, pinned CDN fallback and system-font final fallback. No runtime Node.js.
-- More OpenWrt CPU targets; Passwall2 optional for generic OpenWrt functions, hardware capabilities explicitly checked.
+- More OpenWrt CPU targets; Passwall2 optional for generic OpenWrt functions, hardware capabilities explicitly checked. `agent.capabilities` exposes honest per-router `feature_support` statuses (`available`, `read_only`, `not_available`, `planned`) rather than assuming that a service or RGB/4G driver exists for every model.
 - **cPanel-hosted router bootstrap:** the signed initial installer is bundled at `/install/remote.sh`; token-authorized, POST-only cPanel cache can stream architecture-specific signed archives before consuming the one-time provisioning token. GitHub Release is a fallback when the cache is unavailable. The router still checks SHA256 and **Ed25519 signatures** with its pinned key; `openssl`, `base64` and `sha256sum` are required.
 - Fixed-provider opt-in download probe capped at 2 MiB per run, cooldown enforced; provider receives router public IP. Not a real full-speed or bufferbloat measurement.
 - Read-only ModemManager/uqmi signal discovery (no IMEI/IMSI/SMS), UCI SQM/UPnP status, generic sysfs LED inventory, and local LuCI tabs. DNS encryption tools, Adblock, DDNS, mwan3 and VLAN configurations are also discovered without exposing credentials.
