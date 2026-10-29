@@ -66,7 +66,8 @@ func capabilityReportV13() map[string]interface{} {
 			"cellular":         false, // Vendor/provider present does not prove an attached modem; consult cellular.status.
 			"cell_lock":        false,
 			"sms":              false,
-			"led_rgb":          hasGoogleWifiLEDProviderV13(),
+			"led_rgb":          false, // Only provider discovery exists; no safe RGB write API.
+            "led_rgb_provider_detected": hasGoogleWifiLEDProviderV13(),
 			"sqm":              exists("/etc/config/sqm") && commandPath("tc") != "",
 			"led_sysfs":        exists("/sys/class/leds"),
 			"cellular_adapter": modemProviderV14(),
@@ -74,6 +75,16 @@ func capabilityReportV13() map[string]interface{} {
 			"wireguard":        commandPath("wg") != "",
 			"openvpn":          exists("/etc/init.d/openvpn"),
 		},
+		"feature_support": featureSupportV14(
+            radios,
+            exists("/etc/config/passwall2"),
+            exists("/sys/class/leds"),
+            modemProviderV14()!="",
+            exists("/etc/config/sqm") && commandPath("tc")!="",
+            exists("/etc/init.d/miniupnpd"),
+            commandPath("wg")!="",
+            exists("/etc/init.d/openvpn"),
+        ),
 		"limits": map[string]interface{}{
 			"can_control_led": false,
 			"can_lock_tower":  false,
