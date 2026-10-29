@@ -430,6 +430,9 @@ func clientInternetBlockV16(params map[string]interface{}) (map[string]interface
 		if cfg.SectionType[key] != "rule" {
 			return map[string]interface{}{"changed": false, "already_unblocked": true}, nil
 		}
+		if cfg.Options[key]["name"] != "PW internet block "+mac.String() {
+			return nil, errors.New("client block rule is not owned by PW Agent")
+		}
 		return configSafeApplyV16("firewall", [][]string{{"delete", "firewall." + key}})
 	}
 	if cfg.SectionType[key] != "" {
@@ -532,6 +535,9 @@ func vpnWANGuardV16(params map[string]interface{}) (map[string]interface{}, erro
 	if !enable {
 		if cfg.SectionType[name] != "rule" {
 			return map[string]interface{}{"changed": false, "already_disabled": true}, nil
+		}
+		if cfg.Options[name]["name"] != "PW block direct LAN-to-WAN forwarding" {
+			return nil, errors.New("WAN guard rule is not owned by PW Agent")
 		}
 		return configSafeApplyV16("firewall", [][]string{{"delete", "firewall." + name}})
 	}
