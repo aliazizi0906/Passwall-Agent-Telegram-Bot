@@ -1,10 +1,11 @@
 # PW Agent Documentation — English
 
-> **Latest GitHub Release: v1.4.0-alpha.2 (Alpha, NOT stable).** It is the newest public download, not a certified production release; see the [release warnings](RELEASE_NOTES_V1_4_ALPHA_LATEST.md) and [14-workstream matrix](V1_4_EXECUTION.md). v1.3 RC2 remains a previous candidate and v0.6 the older stable baseline.
+> **Latest GitHub Release: v1.4.0-alpha.3 (Alpha, NOT stable).** It is the newest public download, not a certified production release; see the [release warnings](RELEASE_NOTES_V1_4_ALPHA_3.md) and [14-workstream matrix](V1_4_EXECUTION.md). v1.3 RC2 remains a previous candidate and v0.6 the older stable baseline.
 
 [← Project README](../../README.md) · [فارسی](../fa/README.md)
 
 ## Public v1.4 Alpha (Latest, not Stable)
+- [Alpha.3 release notes: short installer, Wi-Fi rollback, automation and limitations](RELEASE_NOTES_V1_4_ALPHA_3.md)
 - [Alpha.2 release notes, warnings and actionable modules](RELEASE_NOTES_V1_4_ALPHA_2.md)
 - [New operational dashboard SVG preview](../assets/previews/control-center-v140-operations.svg)
 - [OpenVPN and LED control SVG preview](../assets/previews/openvpn-led-v140-controls.svg)
