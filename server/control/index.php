@@ -443,7 +443,10 @@ function system(){
  action('agent.capabilities',say('شناسایی سخت‌افزار','Hardware capabilities'),'system.read',false)+
  action('system.interfaces',say('اینترفیس‌های شبکه','Network interfaces'),'system.read',false)+
  action('system.backup.create',say('ارسال بکاپ در تلگرام','Send backup to Telegram'),'backup.create',true)+
- action('agent.update.check',say('بررسی آپدیت','Check updates'),'system.read',false)+
+ action('system.services',say('سرویس‌های OpenWrt','OpenWrt services'),'system.read',false)+
+  action('system.packages',say('پکیج‌های نصب‌شده (apk/opkg)','Installed packages (apk/opkg)'),'system.read',false)+
+  action('system.package_updates',say('آپدیت پکیج‌ها (فقط مشاهده)','Available package updates (read only)'),'system.read',false)+
+  action('agent.update.check',say('بررسی آپدیت','Check updates'),'system.read',false)+
  action('agent.update.apply',say('نصب آپدیت Agent','Update agent'),'agent.update',true)+'</div></section>'+resultBox()+
  (state.role==='owner'&&init?'<section class="card"><div class="section-title">'+say('مهاجرت دیتابیس','Database migrations')+'</div><p class="muted">'+say('مهاجرت‌های افزودنی بدون حذف داده؛ ابتدا بکاپ دیتابیس تهیه کن. اجرای تغییر فقط با تأیید Owner تلگرام مجاز است.','Additive, non-destructive migrations. Back up MySQL first; only Telegram Owner may apply.')+'</p><div class="actions"><button class="action" data-migration="status">'+say('نمایش وضعیت','Show status')+'</button><button class="action danger" data-migration="apply">'+say('اجرای مهاجرت تأییدشده','Apply confirmed migrations')+'</button></div><div id="migrationInfo" class="muted" aria-live="polite"></div></section>':'')+
  (state.role==='owner'&&init?'<section class="card"><div class="section-title">'+say('تنظیم ورود مستقل وب','Configure browser login')+'</div><p class="muted">'+say('فقط Owner از داخل Telegram Mini App می‌تواند نام کاربری و رمز پنل را ایجاد یا بازنشانی کند.','Only a Telegram Owner can create or reset the web login credentials.')+'</p><form data-web-admin class="stack"><input required name="username" placeholder="admin" autocomplete="username" pattern="[a-z][a-z0-9._-]{2,31}" minlength="3" maxlength="32"><input required type="password" name="password" autocomplete="new-password" minlength="12" maxlength="256" placeholder="Password (12+ characters)"><button type="submit" class="action primary">'+say('ثبت نام کاربری و رمز','Save login credentials')+'</button></form></section>':'')+
@@ -715,6 +718,16 @@ $('refreshBtn').onclick=refresh;
 $('langBtn').onclick=function(){state.lang=state.lang==='fa'?'en':'fa';try{localStorage.setItem('pwcontrol-lang',state.lang);}catch(e){}applyTheme();render();};
 $('themeBtn').onclick=function(){state.theme=state.theme==='light'?'dark':'light';try{localStorage.setItem('pwcontrol-theme',state.theme);}catch(e){}applyTheme();render();};
 applyTheme();refresh();
+// Limited live monitoring refreshes only view-only pages, never editing forms.
+setInterval(function(){
+ if(document.visibilityState==='hidden'||state.busy||!state.fleet)return;
+ if(!['home','internet'].includes(state.page))return;
+ api('summary').then(function(r){
+  state.fleet=r.fleet;state.active=r.active_device_id||state.active;
+  return state.active?api('device_detail',{device_id:state.active}):null;
+ }).then(function(d){if(d && !state.busy && ['home','internet'].includes(state.page)){state.detail=d;render();}})
+ .catch(function(e){var el=$('notice');if(el)el.textContent=say('همگام‌سازی زنده ناموفق بود: ','Live refresh failed: ')+e.message;});
+},20000);
 })();
 </script>
 </body>
