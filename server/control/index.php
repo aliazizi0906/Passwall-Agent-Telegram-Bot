@@ -572,6 +572,37 @@ document.addEventListener('click',function(ev){
     'Pending: '+((result.migration&&result.migration.pending)||[]).join(', ');
  }).catch(function(e){$('notice').textContent=e.message;}).finally(function(){b.disabled=false;});
 });
+document.addEventListener('submit',function(ev){
+ var a=ev.target.closest('form[data-alert-create]');
+ var b=ev.target.closest('form[data-schedule-create]');
+ if(!a&&!b)return;
+ ev.preventDefault();
+ var f=new FormData(a||b);
+ if(a){
+  if(!has('alert.manage'))return;
+  var metric=String(f.get('metric')||''),operator=String(f.get('operator')||''),threshold=Number(f.get('threshold')),duration=Number(f.get('duration'));
+  if(!['cpu_percent','memory_percent','packet_loss','node_relay_ms','dns_down','internet_down','passwall_down'].includes(metric)||!['>','>=','=='].includes(operator)||!Number.isFinite(threshold)||!Number.isInteger(duration)||duration<0||duration>86400)return;
+  api('alert_create',{device_id:state.active,metric,operator,threshold,duration_seconds:duration,cooldown_seconds:900}).then(automation).catch(function(e){$('notice').textContent=e.message;});
+ }
+ if(b){
+  if(!has('schedule.manage'))return;
+  var name=String(f.get('name')||''),action=String(f.get('action')||''),minutes=Number(f.get('minutes'));
+  if(!name||name.length>80||!['system.backup.create','passwall2.restart'].includes(action)||!Number.isInteger(minutes)||minutes<15||minutes>10080)return;
+  if(!window.confirm(say('برنامه فعال خواهد شد. ادامه می‌دهی؟','Create and enable this recurring action?')))return;
+  api('schedule_create',{device_id:state.active,name,command_action:action,params:{},schedule_type:'interval',schedule_spec:{every_minutes:minutes}}).then(automation).catch(function(e){$('notice').textContent=e.message;});
+ }
+});
+document.addEventListener('click',function(ev){
+ var b=ev.target.closest('[data-alert-toggle],[data-alert-delete],[data-schedule-toggle],[data-schedule-delete]');
+ if(!b)return;
+ var isAlert=!!(b.dataset.alertToggle||b.dataset.alertDelete);
+ var isDelete=b.hasAttribute('data-alert-delete')||b.hasAttribute('data-schedule-delete');
+ var id=Number(b.dataset.alertToggle||b.dataset.alertDelete||b.dataset.scheduleToggle||b.dataset.scheduleDelete);
+ if(!Number.isInteger(id)||id<=0||!has(isAlert?'alert.manage':'schedule.manage'))return;
+ if(isDelete&&!window.confirm(say('این قانون حذف شود؟','Delete this rule?')))return;
+ var action=(isAlert?'alert_':'schedule_')+(isDelete?'delete':'toggle');
+ api(action,{device_id:state.active,id,enabled:b.dataset.enable==='1'}).then(automation).catch(function(e){$('notice').textContent=e.message;});
+});
 document.addEventListener('click',function(ev){
  var b=ev.target.closest('[data-ovpn-mode]');
  if(b){
