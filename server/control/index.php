@@ -95,12 +95,12 @@ input[name=username],input[name=password]{background:var(--soft);color:var(--ink
 </aside>
 <div class="main">
  <header class="topbar">
-  <div class="toolbar-leading"><button type="button" class="chip-btn menu-btn" id="menuBtn" aria-label="باز کردن منوی کناری" aria-controls="appSidebar" aria-expanded="false">☰</button><div class="toolbar-heading"><h1 id="topTitle">PW Control Center</h1><small id="identity">Telegram authentication required</small></div></div>
+  <div class="toolbar-leading"><button type="button" class="chip-btn menu-btn" id="menuBtn" aria-label="باز کردن منوی کناری" aria-controls="appSidebar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div class="toolbar-heading"><h1 id="topTitle">PW Control Center</h1><small id="identity">Telegram authentication required</small></div></div>
   <div class="topbar-actions">
    <?php if($browserUid): ?><form method="post" action="../auth/login.php" style="margin:0"><input type="hidden" name="csrf" value="<?=htmlspecialchars($browserCsrf,ENT_QUOTES,'UTF-8')?>"><button class="chip-btn" name="logout" value="1" type="submit" title="خروج از پنل">خروج</button></form><?php else: ?><a class="chip-btn" href="../auth/login.php" title="ورود مستقل پنل وب">ورود وب</a><?php endif; ?>
-   <button type="button" class="chip-btn" id="refreshBtn" aria-label="Refresh">↻</button>
+   <button type="button" class="chip-btn" id="refreshBtn" aria-label="Refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7V3h-4M20 3l-4 4A9 9 0 1 0 21 12"/></svg></button>
    <button type="button" class="chip-btn" id="langBtn">EN</button>
-   <button type="button" class="chip-btn" id="themeBtn" aria-label="Toggle color theme">◐</button>
+   <button type="button" class="chip-btn" id="themeBtn" aria-label="Toggle color theme"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14a8.5 8.5 0 0 1-10.5-10.5 8.5 8.5 0 1 0 10.5 10.5z"/></svg></button>
   </div>
  </header>
  <main class="content">
