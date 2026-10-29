@@ -18,6 +18,13 @@ function dash_v130_safe_params(string $action,array $params,bool $confirmed): ar
         if(!preg_match('/^[a-f0-9]{32}$/D',$id))throw new RuntimeException('Invalid Wi-Fi transaction ID');
         return ['transaction_id'=>$id];
     }
+    if($action==='system.service.restart'){
+        if(!$confirmed)throw new RuntimeException('Service restart requires confirmation');
+        $service=(string)($params['name']??'');
+        if(!in_array($service,['dnsmasq','odhcpd','sysntpd'],true))
+            throw new RuntimeException('Service is not approved for remote restart');
+        return ['name'=>$service];
+    }
     if($action==='led.brightness.set'){
         if(!$confirmed)throw new RuntimeException('LED brightness change requires confirmation');
         $name=(string)($params['name']??'');
