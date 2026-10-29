@@ -86,6 +86,19 @@ function dash_v130_safe_params(string $action,array $params,bool $confirmed): ar
             return ['enabled'=>$params['enabled']];
         }
     }
+    if($action==='led.rgb.set'){
+        if(!$confirmed)throw new RuntimeException('RGB change requires explicit confirmation');
+        $name=(string)($params['name']??'');
+        if(!preg_match('/^[A-Za-z0-9:_+.-]{1,96}$/D',$name)||$name==='.'||$name==='..')
+            throw new RuntimeException('Invalid native RGB LED name');
+        $result=['name'=>$name];
+        foreach(['red','green','blue'] as $color){
+            $value=$params[$color]??null;
+            if(!is_int($value)||$value<0||$value>255)throw new RuntimeException('Invalid RGB intensity: '.$color);
+            $result[$color]=$value;
+        }
+        return $result;
+    }
     if($action==='led.brightness.set'){
         if(!$confirmed)throw new RuntimeException('LED brightness change requires confirmation');
         $name=(string)($params['name']??'');
