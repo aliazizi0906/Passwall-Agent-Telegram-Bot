@@ -39,7 +39,7 @@ $cmd=pw_setup_router_command('https://example.com/network/control','abcdefghijkl
 expect_true(str_contains($cmd,"PW_SERVER_BASE='https://example.com/network/control'"),'router command lost subdirectory base URL');
 expect_true(str_contains($cmd,"PW_AGENT_VERSION='v".pw_setup_version()."'"),'router command is not pinned to the backend Agent version');
 expect_true(!str_contains($cmd,'/home/'),'router command contains a hardcoded home path');
-expect_true(str_contains($cmd,'https://example.com/network/control/install/remote.sh'),'bootstrap must use the configured cPanel domain');
+expect_true(str_contains($cmd,'$PW_SERVER_BASE/install/remote.sh'),'bootstrap must download from the exported configured cPanel domain');
 $steps=pw_setup_router_steps('https://example.com/network/control','abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-');
 expect_true(count($steps)===6,'expected six individually executable commands');
 foreach($steps as $i=>$step){
