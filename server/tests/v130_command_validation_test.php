@@ -64,3 +64,10 @@ expectFailure('Wi-Fi safe apply rejects long SSID','wifi.ssid.safe_apply',['sect
 expectOkay('Wi-Fi rollback confirmation','wifi.ssid.safe_confirm',['transaction_id'=>str_repeat('a',32)],true,['transaction_id'=>str_repeat('a',32)]);
 expectFailure('Wi-Fi rollback ID validation','wifi.ssid.safe_confirm',['transaction_id'=>'../file'],true);
 expectFailure('Wi-Fi rollback must confirm','wifi.ssid.safe_confirm',['transaction_id'=>str_repeat('a',32)],false);
+
+
+expectOkay('Allowlisted DNS restart','system.service.restart',['name'=>'dnsmasq'],true,['name'=>'dnsmasq']);
+expectFailure('DNS restart without confirmation','system.service.restart',['name'=>'dnsmasq'],false);
+expectFailure('Dangerous network restart denied','system.service.restart',['name'=>'network'],true);
+expectFailure('Dangerous firewall restart denied','system.service.restart',['name'=>'firewall'],true);
+expectFailure('Command injection service name denied','system.service.restart',['name'=>'dnsmasq;reboot'],true);
