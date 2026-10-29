@@ -71,3 +71,22 @@ func TestIdentifyLEDV14RejectsUnsafeNamesAndManagedTriggers(t *testing.T) {
 		t.Errorf("should refuse driver-managed LED: %v", err)
 	}
 }
+
+func TestSetLEDBrightnessV14Guarded(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, "blue:status")
+	if err := os.MkdirAll(dir, 0755); err != nil { t.Fatal(err) }
+	write := func(name, value string) { if err := os.WriteFile(filepath.Join(dir,name), []byte(value),0600); err != nil { t.Fatal(err) } }
+	write("trigger", "none timer [none] netdev")
+	write("max_brightness","255")
+	write("brightness","23")
+	before, max, err := setLEDBrightnessAtV14(root,"blue:status",80)
+	if err != nil || before != 23 || max != 255 { t.Fatalf("unexpected result %d %d %v",before,max,err) }
+	raw, err := os.ReadFile(filepath.Join(dir,"brightness"))
+	if err != nil || string(raw) != "80" { t.Fatalf("not set: %q %v",raw,err) }
+	if _,_,err := setLEDBrightnessAtV14(root,"blue:status",256); err == nil { t.Fatal("accepted out-of-range brightness") }
+	if _,_,err := setLEDBrightnessAtV14(root,"../bad",10); err == nil { t.Fatal("accepted traversal") }
+	write("trigger","none [netdev] timer")
+	if _,_,err := setLEDBrightnessAtV14(root,"blue:status",40); err == nil { t.Fatal("modified kernel-managed LED") }
+	raw,_=os.ReadFile(filepath.Join(dir,"brightness")); if string(raw)!="80" { t.Fatal("unexpected write on managed LED") }
+}
