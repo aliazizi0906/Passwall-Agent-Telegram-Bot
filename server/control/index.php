@@ -361,13 +361,23 @@ function renderCommandOutput(actionName,result){
  }
  var safe=clean(result,0);
  if(actionName==='system.leds'&&safe&&Array.isArray(safe.leds)){
-   return '<div class="section-title">'+say('چراغ‌های شناسایی‌شده','Discovered sysfs LEDs')+' ('+safe.leds.length+')</div>'+
-     (safe.leds.map(function(item){
-       var name=String(item.name||'');
-       var valid=/^[A-Za-z0-9:_+.-]{1,96}$/.test(name)&&name!=='.'&&name!=='..';
-       return '<div class="device-row"><div><strong>'+esc(name)+'</strong><small>'+say('شدت فعلی: ','Brightness: ')+esc(item.brightness||0)+' / '+esc(item.max_brightness||0)+'</small></div>'+
-        (valid&&has('system.modify')?'<button class="action" data-led-identify="'+esc(name)+'">'+say('شناسایی چراغ (۱ ثانیه)','Identify (1 sec)')+'</button>':'')+'</div>';
-     }).join('')||'<div class="empty">'+say('چراغ قابل شناسایی نیست','No LEDs discovered')+'</div>');
+  return '<div class="section-title">'+say('چراغ‌های شناسایی‌شده','Detected LEDs')+' ('+safe.leds.length+')</div>'+
+  (safe.leds.map(function(item){
+    var name=String(item.name||''),max=Number(item.max_brightness)||0;
+    var manual=!!item.manual_control&&max>0&&max<=65535;
+    var valid=/^[A-Za-z0-9:_+.-]{1,96}$/.test(name)&&name!=='.'&&name!=='..';
+    var control=valid&&manual&&has('system.modify')?
+     '<div class="led-adjust"><label>'+say('روشنایی','Brightness')+' <input type="number" min="0" max="'+max+'" step="1" value="'+Number(item.brightness||0)+'" data-led-level="'+esc(name)+'"></label><button type="button" class="action primary" data-led-apply="'+esc(name)+'">'+say('اعمال','Apply')+'</button><button type="button" class="action" data-led-identify="'+esc(name)+'">'+say('شناسایی','Identify')+'</button></div>':
+     '<span class="pill">'+say('کنترل دستی موجود نیست','Manual control unavailable')+'</span>';
+    return '<div class="device-row"><div><strong>'+esc(name)+'</strong><small>'+say('شدت فعلی: ','Current brightness: ')+esc(item.brightness||0)+' / '+max+'</small></div>'+control+'</div>';
+  }).join('')||'<div class="empty">'+say('چراغی پیدا نشد','No LEDs detected')+'</div>');
+ }
+ if(actionName==='openvpn.status'&&safe){
+   return '<div class="section-title">OpenVPN <span class="pill '+(safe.installed?'ok':'bad')+'">'+(safe.installed?'Installed':'Unavailable')+'</span></div>'+
+    (safe.warning?'<p class="warn-note">'+esc(safe.warning)+'</p>':'')+
+    (Array.isArray(safe.profiles)?safe.profiles.map(function(p){
+       return '<div class="device-row"><div><strong>'+esc(p.name||'—')+'</strong><small>'+say('پروفایل ','Profile ')+(p.configured?'✓':'—')+'</small></div><span class="pill '+(p.enabled?'ok':'')+'">'+(p.enabled?say('فعال','Enabled'):say('غیرفعال','Disabled'))+'</span></div>';
+    }).join(''):'')+'<div class="result-table">'+structuredValue(safe.service||{reason:safe.reason||'—'},0)+'</div>';
  }
  if(actionName==='system.clients'&&safe&&Array.isArray(safe.clients)){
   var clients=safe.clients;
