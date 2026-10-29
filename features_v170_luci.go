@@ -74,7 +74,19 @@ func luciModulesListV17() map[string]interface{} {
   }
   state:="unavailable"
   if present{
-   if len(m.actions)>0{state="partial"}else{state="not_implemented"}
+   if len(m.actions)==0 {state="not_implemented"}else{
+    state="read_only"
+    for _,action:=range m.actions{
+     switch action {
+     case "luci.system.hostname.set","luci.dhcp.static.add","luci.dhcp.static.delete","luci.wifi.iface.toggle",
+      "wifi.ssid.safe_apply","wifi.channel.safe_apply","firewall.wan_guard.set","firewall.dns53_guard.set",
+      "clients.internet.block","led.brightness.set","led.rgb.set","openvpn.profile.toggle","openvpn.service.control",
+      "passwall2.restart","pbr.policy.add","pbr.policy.delete","sqm.queue.set",
+      "system.service.restart","system.backup.create","terminal.exec":
+      state="partial"
+     }
+    }
+   }
   }
   modules=append(modules,luciModuleV17{m.id,m.title,m.group,m.pkg,state,m.detail,m.page,append([]string{},m.actions...)})
  }
@@ -83,10 +95,11 @@ func luciModulesListV17() map[string]interface{} {
 func luciSystemInfoV17()(map[string]interface{},error){
  cfg,e:=loadUCIConfig("system");if e!=nil{return nil,e}
  info:=map[string]interface{}{"hostname":"","timezone":"","zonename":""}
- for _,options:=range cfg.Options{
-  if x:=options["hostname"];x!=""{info["hostname"]=x}
-  if x:=options["timezone"];x!=""{info["timezone"]=x}
-  if x:=options["zonename"];x!=""{info["zonename"]=x}
+ for section,typ:=range cfg.SectionType{
+  if typ!="system"{continue}
+  options:=cfg.Options[section]
+  info["hostname"]=options["hostname"];info["timezone"]=options["timezone"];info["zonename"]=options["zonename"]
+  break
  }
  return info,nil
 }
