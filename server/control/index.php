@@ -504,10 +504,10 @@ async function automation(){
  $('page').innerHTML='<div class="stack">'+parts.join('')+'</div>';
 }
 function operationalPoliciesV16(){
- var card='<section class="card"><div class="section-title">'+say('مدیریت عملیاتی شبکه با بازگشت خودکار','Network operations with automatic rollback')+'</div>'+
+ var card='<section class="card vpn-ops"><div class="section-title">'+say('مدیریت عملیاتی شبکه با بازگشت خودکار','Network operations with automatic rollback')+'</div>'+
  '<p class="warn-note">'+say('برای این عملیات بسته مناسب باید روی روتر نصب باشد. تغییر تا ۱۲۰ ثانیه نیاز به تأیید دارد؛ در غیر این صورت روتر آن را برمی‌گرداند. این مرحله هنوز روی همه سخت‌افزارها تأیید نشده است.','Required OpenWrt packages must exist. Confirm within 120 seconds or the router restores settings. Hardware acceptance is not yet complete.')+'</p>';
  if(has('network.read')) card+='<div class="actions">'+action('pbr.policy.list',say('نمایش قوانین PBR','List PBR policies'),'network.read',false)+'</div>';
- if(has('network.modify'))card+=
+ if(has('network.modify'))card+='<div class="vpn-operation-grid">'+
  '<form class="stack operational-form" data-config-action="pbr.policy.add"><div class="section-title">'+say('افزودن Rule مسیریابی PBR','Create PBR route policy')+'</div>'+
  '<label>'+say('نام قانون (با pw_)','Policy name (pw_ prefix)')+'<input name="name" required pattern="pw_[A-Za-z0-9_]{1,44}" placeholder="pw_office"></label>'+
  '<label>'+say('شبکه مقصد CIDR','Destination CIDR')+'<input name="cidr" required dir="ltr" placeholder="192.0.2.0/24"></label>'+
@@ -517,6 +517,7 @@ function operationalPoliciesV16(){
  '<form class="stack operational-form" data-config-action="openvpn.profile.toggle"><div class="section-title">'+say('فعال/غیرفعال کردن پروفایل OpenVPN','OpenVPN profile activation')+'</div><label>'+say('نام پروفایل OpenVPN','OpenVPN UCI profile')+'<input name="profile" required pattern="[A-Za-z][A-Za-z0-9_]{0,47}"></label><label><select name="enabled" class="select"><option value="1">'+say('فعال','Enable')+'</option><option value="0">'+say('غیرفعال','Disable')+'</option></select></label><button class="action primary" type="submit">'+say('اعمال پروفایل','Apply profile')+'</button></form>'+
  '<form class="stack operational-form" data-config-action="firewall.wan_guard.set"><div class="section-title">'+say('محافظ مسیر مستقیم LAN به WAN','LAN → WAN forwarding guard')+'</div><p class="muted">'+say('فقط Forward مستقیم LAN→WAN را مسدود می‌کند؛ محافظت کامل DNS/IPv6 یا Kill Switch سراسری نیست.','Blocks direct LAN→WAN forwarding only; not a global DNS/IPv6 leak-proof kill switch.')+'</p><label><select name="enabled" class="select"><option value="1">'+say('فعال','Enable')+'</option><option value="0">'+say('خاموش','Disable')+'</option></select></label><button class="action danger" type="submit">'+say('تغییر Firewall با بازگشت خودکار','Apply firewall guard with rollback')+'</button></form>'+
  '<form class="stack operational-form" data-config-action="firewall.dns53_guard.set"><div class="section-title">'+say('محافظت از DNS کلاسیک کلاینت‌ها','Client classic DNS port 53 guard')+'</div><p class="muted">'+say('DNS با TCP/UDP روی پورت ۵۳ از LAN به WAN مسدود می‌شود. این گزینه DoH/DoT یا DNS صادرشده توسط خود روتر را پوشش نمی‌دهد.','Blocks forwarded LAN→WAN TCP/UDP port 53 only. It does not prevent DoH/DoT or router-originated DNS.')+'</p><label><select name="enabled" class="select"><option value="1">'+say('فعال','Enable')+'</option><option value="0">'+say('خاموش','Disable')+'</option></select></label><button class="action danger" type="submit">'+say('اعمال محافظ DNS با Rollback','Apply DNS guard with rollback')+'</button></form>';
+ if(has('network.modify'))card+='</div>';
  card+='</section>';return card;
 }
 function showTrafficShapingV16(){
@@ -546,8 +547,8 @@ function showOpenVPN(){
  ['start','stop','restart'].map(function(v){return '<button class="action danger" data-ovpn-mode="'+v+'">'+({start:say('اتصال','Connect'),stop:say('قطع اتصال','Disconnect'),restart:say('اتصال مجدد','Reconnect')}[v])+'</button>';}).join('')+'</div></section>':'';
  $('page').innerHTML='<div class="stack">'+hero()+
  '<section class="card"><div class="section-title"><span class="section-icon">'+navIcon('openvpn')+'</span>OpenVPN</div><p class="muted">'+say('پروفایل‌های واقعی نصب‌شده در OpenWrt را مشاهده کن. کلیدها و مشخصات خصوصی نمایش داده نمی‌شوند.','Inspect real OpenWrt OpenVPN profiles without exposing credentials.')+'</p><div class="actions">'+action('openvpn.status',say('پروفایل‌ها و وضعیت اتصال','Profiles and service'),'network.read',false)+'</div></section>'+controls+
- '<section class="card"><div class="section-title">'+say('طراحی و اعتبارسنجی Rule','Route policy builder')+'</div><p class="warn-note">'+say('فعلاً فقط Dry Run است. اعمال Rule روی روتر تا وجود Rollback مستقل غیرفعال است.','Dry run only; rule installation requires independent router-local rollback.')+'</p>'+
- '<form class="stack" data-openvpn-plan><label>'+say('شناسه پروفایل','UCI profile')+'<input required name="profile" pattern="[A-Za-z0-9_-]{1,64}" placeholder="client_a"></label>'+
+ '<section class="card"><div class="section-title">'+say('طراحی و اعتبارسنجی Rule','Route policy builder')+'</div><p class="warn-note">'+say('این فرم فقط اعتبارسنجی است. ایجاد Rule واقعی با Rollback در کارت‌های مدیریتی پایین انجام می‌شود.','This form validates only. Real PBR rule installation with timed rollback is available in the controls below.')+'</p>'+
+ '<form class="stack vpn-plan-form" data-openvpn-plan><label>'+say('شناسه پروفایل','UCI profile')+'<input required name="profile" pattern="[A-Za-z0-9_-]{1,64}" placeholder="client_a"></label>'+
  '<label>'+say('مقصد CIDR','Destination CIDR')+'<input required name="cidr" dir="ltr" placeholder="192.0.2.0/24"></label>'+
  '<label>'+say('مسیر','Routing policy')+'<select class="select" name="mode"><option value="through_vpn">'+say('از VPN','Through VPN')+'</option><option value="bypass_vpn">'+say('مستقیم','Direct / Bypass')+'</option></select></label>'+
  '<button type="submit" class="action primary">'+say('تست Rule بدون تغییر','Validate without applying')+'</button></form></section>'+operationalPoliciesV16()+resultBox()+'</div>';
