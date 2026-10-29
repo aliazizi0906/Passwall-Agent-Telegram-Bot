@@ -49,7 +49,10 @@ func isMutationActionV5(action string) bool {
 		"system.service.restart", "network.wan.reconnect", "firewall.redirect.toggle",
 		"agent.update.apply", "terminal.exec", "config.rollback_snapshot",
 		"led.brightness.set", "openvpn.service.control",
-		"wifi.ssid.safe_apply", "wifi.ssid.safe_confirm":
+		"wifi.ssid.safe_apply", "wifi.ssid.safe_confirm",
+		"openvpn.profile.toggle", "pbr.policy.add", "pbr.policy.delete",
+		"clients.internet.block", "sqm.queue.set", "wifi.channel.safe_apply",
+		"firewall.wan_guard.set", "config.safe.confirm":
 		return true
 	default:
 		return false
