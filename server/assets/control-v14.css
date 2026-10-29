@@ -234,3 +234,11 @@ footer{margin-top:36px;opacity:.85}
  .led-adjust{width:100%}.led-adjust label{flex:1}
  .terminal-frame{min-height:510px;height:80vh}
 }
+
+
+/* Keep the report readable even if v1.3's #feedback selector remains in the legacy inline CSS. */
+#feedback.result-region{font-family:'Vazirmatn',Tahoma,system-ui,sans-serif;font-size:13px;line-height:1.8;direction:inherit;text-align:start;white-space:normal;max-height:none;overflow:visible;padding:16px;overflow-wrap:anywhere}
+#feedback.result-region .result-kv{max-width:100%}
+#feedback.result-region .result-value{white-space:pre-wrap}
+#feedback.result-region .result-pair{box-shadow:none}
+@media(max-width:600px){#feedback.result-region{padding:11px}}
