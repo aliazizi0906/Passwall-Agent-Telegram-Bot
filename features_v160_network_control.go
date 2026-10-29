@@ -553,25 +553,36 @@ func vpnWANGuardV16(params map[string]interface{}) (map[string]interface{}, erro
 	})
 }
 
-
- // dnsPortGuardV16 is limited to client-originated classic DNS (TCP/UDP 53)
- // forwarded from the LAN to WAN zone. Router-generated DNS, DoH and DoT are
- // explicitly not covered. It cannot be described as full DNS leak protection.
-func dnsPortGuardV16(params map[string]interface{}) (map[string]interface{},error) {
- enabled,ok:=params["enabled"].(bool);if !ok{return nil,errors.New("enabled boolean required")}
- cfg,e:=loadUCIConfig("firewall");if e!=nil{return nil,e}
- name:="pw_dns53_guard"
- if !enabled {
-  if cfg.SectionType[name]!="rule"{return map[string]interface{}{"changed":false,"already_disabled":true},nil}
-  if cfg.Options[name]["name"]!="PW block LAN WAN DNS port 53"{return nil,errors.New("DNS rule is not owned by PW Agent")}
-  return configSafeApplyV16("firewall",[][]string{{"delete","firewall."+name}})
- }
- if cfg.SectionType[name]!=""{return nil,errors.New("reserved DNS rule name already exists")}
- return configSafeApplyV16("firewall",[][]string{
-  {"set","firewall."+name+"=rule"},
-  {"set","firewall."+name+".name=PW block LAN WAN DNS port 53"},
-  {"set","firewall."+name+".src=lan"},{"set","firewall."+name+".dest=wan"},
-  {"set","firewall."+name+".proto=tcp udp"},{"set","firewall."+name+".dest_port=53"},
-  {"set","firewall."+name+".target=REJECT"},{"set","firewall."+name+".family=any"},
- })
+// dnsPortGuardV16 is limited to client-originated classic DNS (TCP/UDP 53)
+// forwarded from the LAN to WAN zone. Router-generated DNS, DoH and DoT are
+// explicitly not covered. It cannot be described as full DNS leak protection.
+func dnsPortGuardV16(params map[string]interface{}) (map[string]interface{}, error) {
+	enabled, ok := params["enabled"].(bool)
+	if !ok {
+		return nil, errors.New("enabled boolean required")
+	}
+	cfg, e := loadUCIConfig("firewall")
+	if e != nil {
+		return nil, e
+	}
+	name := "pw_dns53_guard"
+	if !enabled {
+		if cfg.SectionType[name] != "rule" {
+			return map[string]interface{}{"changed": false, "already_disabled": true}, nil
+		}
+		if cfg.Options[name]["name"] != "PW block LAN WAN DNS port 53" {
+			return nil, errors.New("DNS rule is not owned by PW Agent")
+		}
+		return configSafeApplyV16("firewall", [][]string{{"delete", "firewall." + name}})
+	}
+	if cfg.SectionType[name] != "" {
+		return nil, errors.New("reserved DNS rule name already exists")
+	}
+	return configSafeApplyV16("firewall", [][]string{
+		{"set", "firewall." + name + "=rule"},
+		{"set", "firewall." + name + ".name=PW block LAN WAN DNS port 53"},
+		{"set", "firewall." + name + ".src=lan"}, {"set", "firewall." + name + ".dest=wan"},
+		{"set", "firewall." + name + ".proto=tcp udp"}, {"set", "firewall." + name + ".dest_port=53"},
+		{"set", "firewall." + name + ".target=REJECT"}, {"set", "firewall." + name + ".family=any"},
+	})
 }
