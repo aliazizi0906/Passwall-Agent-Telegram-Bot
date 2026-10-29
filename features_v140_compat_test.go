@@ -25,11 +25,12 @@ func TestFeatureSupportHardwareV14(t *testing.T) {
 	if m["passwall2"].Status != "available" {
 		t.Fatal("Passwall2 discovered but not reported")
 	}
-	for _, key := range []string{"cellular", "sqm", "upnp", "wireguard", "led"} {
+	for _, key := range []string{"cellular", "upnp", "wireguard", "led"} {
 		if m[key].Status != "read_only" {
 			t.Fatalf("Uncertified write for %s reported %s", key, m[key].Status)
 		}
 	}
+	if m["sqm"].Status != "available" { t.Fatal("installed SQM queue controls are available with scoped rollback") }
 	if m["openvpn"].Status != "available" || m["openvpn_route_apply"].Status == "available" {
 		t.Fatal("OpenVPN service and rule support must be distinct")
 	}
