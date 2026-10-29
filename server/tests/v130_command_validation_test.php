@@ -103,3 +103,16 @@ expectFailure('Native RGB rejects path traversal','led.rgb.set',['name'=>'../led
 expectOkay('DNS guard action','firewall.dns53_guard.set',['enabled'=>true],true,['enabled'=>true]);
 expectFailure('DNS guard requires confirmation','firewall.dns53_guard.set',['enabled'=>true],false);
 expectFailure('DNS guard state must be boolean','firewall.dns53_guard.set',['enabled'=>'yes'],true);
+
+
+expectOkay('LuCI hostname','luci.system.hostname.set',['hostname'=>'Gale-Router'],true,['hostname'=>'Gale-Router']);
+expectFailure('LuCI hostname must confirm','luci.system.hostname.set',['hostname'=>'Gale-Router'],false);
+expectFailure('LuCI hostname injection','luci.system.hostname.set',['hostname'=>'bad;rm'],true);
+expectOkay('LuCI static lease','luci.dhcp.static.add',['mac'=>'02:11:22:33:44:55','ip'=>'192.168.1.50','name'=>'printer'],true,['mac'=>'02:11:22:33:44:55','ip'=>'192.168.1.50','name'=>'printer']);
+expectFailure('LuCI invalid lease IP','luci.dhcp.static.add',['mac'=>'02:11:22:33:44:55','ip'=>'abc','name'=>'printer'],true);
+expectFailure('LuCI DHCP lease needs confirmation','luci.dhcp.static.add',['mac'=>'02:11:22:33:44:55','ip'=>'192.168.1.50','name'=>'printer'],false);
+expectOkay('LuCI lease deletion','luci.dhcp.static.delete',['mac'=>'02:11:22:33:44:55'],true,['mac'=>'02:11:22:33:44:55']);
+expectFailure('LuCI multicast delete rejected','luci.dhcp.static.delete',['mac'=>'01:00:5e:00:00:fb'],true);
+expectOkay('LuCI Wi-Fi interface toggle','luci.wifi.iface.toggle',['section'=>'default_radio0','enabled'=>false],true,['section'=>'default_radio0','enabled'=>false]);
+expectFailure('LuCI Wi-Fi toggle requires confirmation','luci.wifi.iface.toggle',['section'=>'default_radio0','enabled'=>true],false);
+expectFailure('LuCI Wi-Fi section injection','luci.wifi.iface.toggle',['section'=>'radio0;reboot','enabled'=>false],true);
