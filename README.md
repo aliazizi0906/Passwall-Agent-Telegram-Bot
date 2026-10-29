@@ -2,9 +2,17 @@
 
 **OpenWrt + Passwall2 · Telegram Mini App · Local LuCI · cPanel PHP/MySQL**
 
-[GitHub Latest: v1.4.0-alpha.4 (NOT stable)](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/latest) · [Previous production baseline: v0.6.0](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0) · [فارسی](#فارسی) · [Install v1.3 RC](docs/en/INSTALL_V1_3.md) · [Upgrade from v0.6](docs/en/UPGRADE_V1_3.md) · [Implementation status](docs/en/CONTROL_CENTER_PROGRESS.md) · [Changelog](CHANGELOG.md)
+[GitHub Latest: v1.4.0-alpha.5 (NOT stable)](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/latest) · [Previous production baseline: v0.6.0](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0) · [فارسی](#فارسی) · [Install v1.3 RC](docs/en/INSTALL_V1_3.md) · [Upgrade from v0.6](docs/en/UPGRADE_V1_3.md) · [Implementation status](docs/en/CONTROL_CENTER_PROGRESS.md) · [Changelog](CHANGELOG.md)
 
 > **Public release status:** `v1.4.0-alpha.4` is the experimental GitHub Latest, but its `alpha.3` label means it is **NOT Stable/GA or production-certified**. Do not deploy it on essential routers without an isolated staging setup, verified backups, and a tested recovery path. The `v0.6.0` release remains the previous stable baseline; `v1.3.0-rc.2` is an older release candidate.
+
+### v1.4.0-alpha.5 — LuCI capability hub and interface quality
+
+PW Control now includes a **28-module LuCI compatibility catalog** that detects installed UCI modules and labels every entry as actionable, read-only, unavailable, or requiring an adapter. Supported additions include safe hostname changes, static DHCP leases and Wi-Fi interface toggles. The OpenVPN page now uses bounded, responsive card grids, and the SSH terminal has been rewritten with consistent SVG icons and device-specific authentication.
+
+**This is partial LuCI coverage, not all LuCI:** arbitrary firewall/VLAN/bridge editors, third-party LuCI plugins, DDNS/UPnP, storage mounts, hardware modem adapters and other unsupported functions remain explicitly unavailable. Do not rely on Alpha for unattended remote network changes.
+
+[English release notes](docs/en/RELEASE_NOTES_V1_4_ALPHA_5.md) · [یادداشت فارسی](docs/fa/RELEASE_NOTES_V1_4_ALPHA_5.md)
 
 ## v1.4.0-alpha.4 — scoped operational controls (GitHub Latest, NOT Stable)
 
