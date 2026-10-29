@@ -3,7 +3,7 @@
 **Status:** Experimental GitHub Latest, not Stable. This is NOT a complete clone of all LuCI pages, plugins or hardware adapters.
 
 ## Working additions
-- **LuCI capability hub:** inspect 28 OpenWrt System, Status, Network, Wireless, VPN and Services modules from the router. Classifies each as actionable, read-only, package unavailable or adapter not implemented. Includes search, status filters and links to the corresponding PW Control section.
+- **LuCI capability hub:** inspect 29 OpenWrt System, Status, Network, Wireless, VPN and Services modules from the router. Classifies each as actionable, read-only, package unavailable or adapter not implemented. Includes search, status filters and links to the corresponding PW Control section.
 - **Safe hostname change:** edit a named system UCI hostname, snapshot `/etc/config/system`, launch independent 120-second recovery timer and require explicit confirmation.
 - **LAN static DHCP reservations:** show existing reservations without secrets, add a new MAC/IP/name host reservation only within the configured LAN subnet and remove only a matching PW-managed reservation. Uses `dnsmasq` reload, local backup and rollback. Never overwrites another reservation.
 - **Wi-Fi interface toggles:** enable/disable a named `wifi-iface` with an independently recovering, confirmation-gated UCI transaction. A disconnected Wi-Fi client may need to reconnect before confirming.
