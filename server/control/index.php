@@ -368,12 +368,12 @@ function renderCommandOutput(actionName,result){
  }
  var safe=clean(result,0);
  if(actionName==='luci.catalog'&&safe&&Array.isArray(safe.modules)){
-  return '<div class="luci-filter"><input type="search" data-luci-search placeholder="'+say('جست‌وجوی ماژول LuCI','Search LuCI modules')+'" aria-label="LuCI module search"><select class="select" data-luci-status><option value="all">'+say('همه ماژول‌ها','All modules')+'</option><option value="partial">'+say('دارای امکانات','Partially actionable')+'</option><option value="not_implemented">'+say('نیازمند توسعه','Adapter needed')+'</option><option value="unavailable">'+say('پکیج نصب نیست','Package unavailable')+'</option></select></div>'+
+  return '<div class="luci-filter"><input type="search" data-luci-search placeholder="'+say('جست‌وجوی ماژول LuCI','Search LuCI modules')+'" aria-label="LuCI module search"><select class="select" data-luci-status><option value="all">'+say('همه ماژول‌ها','All modules')+'</option><option value="partial">'+say('دارای اکشن','Actionable')+'</option><option value="read_only">'+say('فقط مشاهده','Read only')+'</option><option value="not_implemented">'+say('نیازمند توسعه','Adapter needed')+'</option><option value="unavailable">'+say('پکیج نصب نیست','Package unavailable')+'</option></select></div>'+
     '<div class="luci-catalog">'+safe.modules.map(function(m){
       var st=String(m.state||'unavailable'),page=String(m.page||''),valid=menu.some(function(x){return x[0]===page;});
       var title=String(m.title||m.id||''),detail=String(m.detail||'');
-      var caption=st==='partial'?say('بخشی از اکشن‌ها فعال','Partial actions'):st==='not_implemented'?say('نیازمند Adapter','Adapter needed'):say('پکیج یافت نشد','Unavailable');
-      var actionButton=valid&&st==='partial'?'<button class="action primary" type="button" data-nav="'+esc(page)+'">'+say('باز کردن بخش','Open module')+'</button>':'';
+      var caption=st==='partial'?say('اکشن‌های قابل اجرا','Actionable controls'):st==='read_only'?say('فقط مشاهده','Read only'):st==='not_implemented'?say('نیازمند Adapter','Adapter needed'):say('پکیج یافت نشد','Unavailable');
+      var actionButton=valid&&(st==='partial'||st==='read_only')?'<button class="action primary" type="button" data-nav="'+esc(page)+'">'+say('باز کردن بخش','Open module')+'</button>':'';
       return '<article class="luci-item" data-module-state="'+esc(st)+'" data-module-text="'+esc((title+' '+detail).toLowerCase())+'"><div class="luci-item-heading">'+navIcon(valid?page:'luci')+'<h3>'+esc(title)+'</h3></div><span class="pill '+(st==='partial'?'ok':st==='unavailable'?'bad':'')+'">'+caption+'</span><p>'+esc(detail)+'</p><div class="actions">'+actionButton+'</div></article>';
     }).join('')+'</div>';
  }
