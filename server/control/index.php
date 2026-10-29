@@ -497,7 +497,8 @@ function operationalPoliciesV16(){
  '<button class="action primary" type="submit">'+say('ایجاد با Safe Apply','Create with rollback')+'</button></form>'+
  '<form class="stack operational-form" data-config-action="pbr.policy.delete"><label>'+say('حذف Rule ساخته‌شده توسط PW','Delete PW-managed policy')+'<input name="name" required pattern="pw_[A-Za-z0-9_]{1,44}" placeholder="pw_office"></label><button class="action danger" type="submit">'+say('حذف با Safe Apply','Delete with rollback')+'</button></form>'+
  '<form class="stack operational-form" data-config-action="openvpn.profile.toggle"><div class="section-title">'+say('فعال/غیرفعال کردن پروفایل OpenVPN','OpenVPN profile activation')+'</div><label>'+say('نام پروفایل OpenVPN','OpenVPN UCI profile')+'<input name="profile" required pattern="[A-Za-z][A-Za-z0-9_]{0,47}"></label><label><select name="enabled" class="select"><option value="1">'+say('فعال','Enable')+'</option><option value="0">'+say('غیرفعال','Disable')+'</option></select></label><button class="action primary" type="submit">'+say('اعمال پروفایل','Apply profile')+'</button></form>'+
- '<form class="stack operational-form" data-config-action="firewall.wan_guard.set"><div class="section-title">'+say('محافظ مسیر مستقیم LAN به WAN','LAN → WAN forwarding guard')+'</div><p class="muted">'+say('فقط Forward مستقیم LAN→WAN را مسدود می‌کند؛ محافظت کامل DNS/IPv6 یا Kill Switch سراسری نیست.','Blocks direct LAN→WAN forwarding only; not a global DNS/IPv6 leak-proof kill switch.')+'</p><label><select name="enabled" class="select"><option value="1">'+say('فعال','Enable')+'</option><option value="0">'+say('خاموش','Disable')+'</option></select></label><button class="action danger" type="submit">'+say('تغییر Firewall با بازگشت خودکار','Apply firewall guard with rollback')+'</button></form>';
+ '<form class="stack operational-form" data-config-action="firewall.wan_guard.set"><div class="section-title">'+say('محافظ مسیر مستقیم LAN به WAN','LAN → WAN forwarding guard')+'</div><p class="muted">'+say('فقط Forward مستقیم LAN→WAN را مسدود می‌کند؛ محافظت کامل DNS/IPv6 یا Kill Switch سراسری نیست.','Blocks direct LAN→WAN forwarding only; not a global DNS/IPv6 leak-proof kill switch.')+'</p><label><select name="enabled" class="select"><option value="1">'+say('فعال','Enable')+'</option><option value="0">'+say('خاموش','Disable')+'</option></select></label><button class="action danger" type="submit">'+say('تغییر Firewall با بازگشت خودکار','Apply firewall guard with rollback')+'</button></form>'+
+ '<form class="stack operational-form" data-config-action="firewall.dns53_guard.set"><div class="section-title">'+say('محافظت از DNS کلاسیک کلاینت‌ها','Client classic DNS port 53 guard')+'</div><p class="muted">'+say('DNS با TCP/UDP روی پورت ۵۳ از LAN به WAN مسدود می‌شود. این گزینه DoH/DoT یا DNS صادرشده توسط خود روتر را پوشش نمی‌دهد.','Blocks forwarded LAN→WAN TCP/UDP port 53 only. It does not prevent DoH/DoT or router-originated DNS.')+'</p><label><select name="enabled" class="select"><option value="1">'+say('فعال','Enable')+'</option><option value="0">'+say('خاموش','Disable')+'</option></select></label><button class="action danger" type="submit">'+say('اعمال محافظ DNS با Rollback','Apply DNS guard with rollback')+'</button></form>';
  card+='</section>';return card;
 }
 function showTrafficShapingV16(){
@@ -652,11 +653,11 @@ document.addEventListener('submit',function(ev){
  var perms={'pbr.policy.add':'network.modify','pbr.policy.delete':'network.modify',
   'openvpn.profile.toggle':'network.modify','sqm.queue.set':'network.modify',
   'clients.internet.block':'firewall.modify','wifi.channel.safe_apply':'wifi.modify',
-  'firewall.wan_guard.set':'firewall.modify'};
+  'firewall.wan_guard.set':'firewall.modify','firewall.dns53_guard.set':'firewall.modify'};
  if(!Object.prototype.hasOwnProperty.call(perms,actionName)||!has(perms[actionName]))return;
  var fd=new FormData(form),params={};
  for(var pair of fd.entries())params[pair[0]]=String(pair[1]);
- if(actionName==='openvpn.profile.toggle'||actionName==='firewall.wan_guard.set')params.enabled=params.enabled==='1';
+ if(actionName==='openvpn.profile.toggle'||actionName==='firewall.wan_guard.set'||actionName==='firewall.dns53_guard.set')params.enabled=params.enabled==='1';
  if(actionName==='clients.internet.block')params.blocked=params.blocked==='1';
  command(actionName,true,params).catch(function(e){var n=$('notice');if(n)n.textContent=e.message;});
 });
