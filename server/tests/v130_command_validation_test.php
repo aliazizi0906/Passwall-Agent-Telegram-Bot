@@ -92,3 +92,9 @@ expectOkay('WAN guard enabled','firewall.wan_guard.set',['enabled'=>true],true,[
 expectFailure('WAN guard must confirm','firewall.wan_guard.set',['enabled'=>true],false);
 expectOkay('UCI safe confirm','config.safe.confirm',['transaction_id'=>str_repeat('a',32)],true,['transaction_id'=>str_repeat('a',32)]);
 expectFailure('UCI safe confirm invalid ID','config.safe.confirm',['transaction_id'=>'../../bad'],true);
+
+
+expectOkay('Native RGB control','led.rgb.set',['name'=>'rgb:status','red'=>255,'green'=>40,'blue'=>0],true,['name'=>'rgb:status','red'=>255,'green'=>40,'blue'=>0]);
+expectFailure('Native RGB requires confirmation','led.rgb.set',['name'=>'rgb:status','red'=>255,'green'=>40,'blue'=>0],false);
+expectFailure('Native RGB out of range','led.rgb.set',['name'=>'rgb:status','red'=>256,'green'=>40,'blue'=>0],true);
+expectFailure('Native RGB rejects path traversal','led.rgb.set',['name'=>'../led','red'=>255,'green'=>40,'blue'=>0],true);
