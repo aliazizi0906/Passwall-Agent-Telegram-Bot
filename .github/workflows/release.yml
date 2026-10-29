@@ -1,5 +1,5 @@
 name: Release
-# Explicit maintainer-approved v1.4.0-alpha.4 publication as non-GA GitHub Latest.
+# Explicit maintainer-approved v1.4.0-alpha.5 publication as non-GA GitHub Latest.
 # Publish only after strict Go/PHP/JS tests, key validation, multiarch build and cPanel signing.
 # Alpha.3 includes private short-line provisioning, Wi-Fi safe rollback and live controls.
 
@@ -23,7 +23,7 @@ permissions:
 jobs:
   release:
     # Feature-branch publishing requires an explicit, exact commit marker.
-    # v1.4.0-alpha.4 may be the latest public download but MUST NOT claim stable GA.
+    # v1.4.0-alpha.5 may be the latest public download but MUST NOT claim stable GA.
     if: (github.ref != 'refs/heads/feature/v1.3-control-center' || contains(github.event.head_commit.message, '[publish-rc]')) && (github.ref != 'refs/heads/feature/v1.4-secure-browser-control' || contains(github.event.head_commit.message, '[publish-alpha-latest]'))
     runs-on: ubuntu-latest
     steps:
@@ -39,7 +39,7 @@ jobs:
           set -euo pipefail
           if [ "$GITHUB_REF" = "refs/heads/feature/v1.4-secure-browser-control" ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
             RELEASE_TAG="v$(php -r 'require "server/setup_core.php"; echo pw_setup_version();')"
-            [ "$RELEASE_TAG" = "v1.4.0-alpha.4" ] || { echo "Only v1.4.0-alpha.4 may publish from this feature branch" >&2; exit 1; }
+            [ "$RELEASE_TAG" = "v1.4.0-alpha.5" ] || { echo "Only v1.4.0-alpha.5 may publish from this feature branch" >&2; exit 1; }
           elif [ "$GITHUB_REF" = "refs/heads/feature/v1.3-control-center" ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
             RELEASE_TAG="v$(php -r 'require "server/setup_core.php"; echo pw_setup_version();')"
             [[ "$RELEASE_TAG" == v1.3.0-rc.* ]] || { echo "Only RC versions may publish from the feature branch" >&2; exit 1; }
@@ -49,7 +49,7 @@ jobs:
               if [ "$GITHUB_REF_NAME" = "feature/v1.3-control-center" ]; then
                 [[ "$RELEASE_TAG" == v1.3.0-rc.* ]] || exit 1
               elif [ "$GITHUB_REF_NAME" = "feature/v1.4-secure-browser-control" ]; then
-                [ "$RELEASE_TAG" = "v1.4.0-alpha.4" ] || exit 1
+                [ "$RELEASE_TAG" = "v1.4.0-alpha.5" ] || exit 1
               else
                 echo "Only main can publish stable releases" >&2
                 exit 1
@@ -199,12 +199,12 @@ jobs:
           fi
           release_args=()
           notes_args=(--generate-notes)
-          if [ "$RELEASE_TAG" = "v1.4.0-alpha.4" ]; then
+          if [ "$RELEASE_TAG" = "v1.4.0-alpha.5" ]; then
             # Deliberately mark GitHub Latest while preserving alpha in the tag
             # and showing a prominent non-stable warning in release notes.
             # Do not apply --prerelease here: GitHub excludes those from Latest.
             release_args+=(--latest)
-            notes_args=(--notes-file docs/en/RELEASE_NOTES_V1_4_ALPHA_4.md)
+            notes_args=(--notes-file docs/en/RELEASE_NOTES_V1_4_ALPHA_5.md)
           elif [[ "$RELEASE_TAG" == *-rc.* || "$RELEASE_TAG" == *-beta.* || "$RELEASE_TAG" == *-alpha.* ]]; then
             release_args+=(--prerelease)
             if [[ "$RELEASE_TAG" == v1.3.0-rc.* ]]; then
