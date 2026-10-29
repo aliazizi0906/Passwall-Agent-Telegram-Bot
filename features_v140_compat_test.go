@@ -30,7 +30,9 @@ func TestFeatureSupportHardwareV14(t *testing.T) {
 			t.Fatalf("Uncertified write for %s reported %s", key, m[key].Status)
 		}
 	}
-	if m["sqm"].Status != "available" { t.Fatal("installed SQM queue controls are available with scoped rollback") }
+	if m["sqm"].Status != "available" {
+		t.Fatal("installed SQM queue controls are available with scoped rollback")
+	}
 	if m["openvpn"].Status != "available" || m["openvpn_route_apply"].Status == "available" {
 		t.Fatal("OpenVPN service and rule support must be distinct")
 	}
