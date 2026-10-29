@@ -49,7 +49,7 @@ foreach($steps as $i=>$step){
 expect_true(str_starts_with($steps[0],'export PW_SERVER_BASE='),'base not exported');
 expect_true(str_starts_with($steps[1],'export PW_PROVISION_TOKEN='),'token not exported');
 expect_true(str_contains($steps[3],'mktemp -d')&&str_contains($steps[3],'wget -O "$tmp/pw.sh"'),'wget bootstrap missing');
-expect_true(str_contains($steps[4],'sh -n /tmp/pw.sh'),'shell syntax validation missing');
+expect_true(str_contains($steps[4],'sh -n "$tmp/pw.sh"'),'shell syntax validation missing');
 expect_true($steps[5]==='unset PW_PROVISION_TOKEN','token cleanup missing');
 expect_true(str_contains($cmd,'test -s'), 'bootstrap can execute empty downloads');
 
