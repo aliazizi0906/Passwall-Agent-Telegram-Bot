@@ -100,14 +100,14 @@ func restoreConfigAtV16(root, configRoot string, reload func(string) error) erro
 	if e != nil {
 		return e
 	}
-	target := filepath.Join(configRoot,t.Package)
+	target := filepath.Join(configRoot, t.Package)
 	backup, e := os.ReadFile(filepath.Join(configSafeDirV16(root), "original"))
 	if e != nil || len(backup) < 1 || len(backup) > 2<<20 {
 		return errors.New("missing original UCI file; manual recovery needed")
 	}
 	if configRoot == "/etc/config" {
 		if uci := commandPath("uci"); uci != "" {
-		_, _ = runOutput(8*time.Second, uci, "revert", t.Package)
+			_, _ = runOutput(8*time.Second, uci, "revert", t.Package)
 		}
 	}
 	tmp := target + ".pw-restore"
