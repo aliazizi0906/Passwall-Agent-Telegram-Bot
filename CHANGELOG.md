@@ -10,6 +10,7 @@ All notable PW Agent changes are documented here. GitHub may classify an RC-tagg
 - Permission-scoped browser SSH terminal embedded inside the PW Control interface, using web-session CSRF validation and encrypted per-command Dropbear credentials.
 - Confirmed, hardware-guarded brightness writes for manually controlled sysfs LEDs; refuses active kernel triggers and validates the brightness range.
 - OpenVPN profile inventory, user-confirmed start/stop/restart service operations, and strict CIDR rule **dry-run** (not an installed route).
+- Passwall2 enable/disable service buttons gated by permission and explicit confirmation.
 - Structured, escaped, expandable result tables replacing generic raw JSON and fixing loss of the result after one command.
 - Responsive operational control cards, SVG navigation icons and labelled static illustrative screenshots for OpenVPN, LED and reports.
 - Signed multi-architecture cPanel/OpenWrt release publishing, new unit/API validation.
