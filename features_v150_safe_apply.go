@@ -257,6 +257,9 @@ func safeApplySSIDV15(params map[string]interface{}) (map[string]interface{}, er
 	id := hex.EncodeToString(nonce)
 	var result map[string]interface{}
 	err = safeLockV15(wifiSafeApplyRootV15, func() error {
+		if _, pending := os.Stat(configSafeDirV16(wifiSafeApplyRootV15)); pending == nil {
+			return errors.New("another UCI change is pending confirmation")
+		}
 		tx, e := beginWiFiSafeAtV15(wifiSafeApplyRootV15, wifiSafeApplyConfigV15, id, section, wifiSafeApplySecondsV15*time.Second)
 		if e != nil {
 			return e
