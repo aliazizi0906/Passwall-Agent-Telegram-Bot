@@ -333,6 +333,22 @@ function showGaming(){
  ['system.interfaces','وضعیت اینترفیس‌ها','Interfaces','system.read']
  ],say('SQM، QoS، UPnP و اولویت دستگاه‌ها پس از تشخیص قابلیت واقعی سخت‌افزار و طراحی تنظیمات برگشت‌پذیر فعال می‌شوند.','SQM/QoS, UPnP and prioritization require capability discovery and recoverable configuration.'));
 }
+// Bounded accessible key/value and list renderer; never render untrusted HTML.
+function structuredValue(value,depth){
+ if(depth>6)return '<span class="muted">…</span>';
+ if(value==null)return '<span class="muted">—</span>';
+ if(typeof value==='boolean')return '<span class="pill '+(value?'ok':'bad')+'">'+(value?say('بله','Yes'):say('خیر','No'))+'</span>';
+ if(typeof value!=='object')return '<span class="result-value">'+esc(value)+'</span>';
+ if(Array.isArray(value)){
+  if(!value.length)return '<span class="muted">'+say('موردی وجود ندارد','No records')+'</span>';
+  return '<div class="result-array">'+value.slice(0,60).map(function(item,i){
+    return '<details class="result-group" '+(i<3?'open':'')+'><summary>'+say('ردیف ','Item ')+(i+1)+'</summary>'+structuredValue(item,depth+1)+'</details>';
+  }).join('')+'</div>';
+ }
+ return '<dl class="result-kv">'+Object.keys(value).slice(0,70).map(function(key){
+  return '<div class="result-pair"><dt>'+esc(key.replace(/_/g,' '))+'</dt><dd>'+structuredValue(value[key],depth+1)+'</dd></div>';
+ }).join('')+'</dl>';
+}
 function renderCommandOutput(actionName,result){
  var keysensitive=/(^|_)(password|secret|token|private|credential|psk|auth|key|data_b64|sealed|url|link)(_|$)/i;
  function clean(x,depth){
@@ -403,7 +419,7 @@ function renderCommandOutput(actionName,result){
    return '<div class="status-row"><span>'+esc(entry[0])+'</span><span>'+esc(Array.isArray(entry[1])?entry[1].join(', ')||'—':entry[1]?'✓':'—')+'</span></div>';
   }).join('');
  }
- return '<pre id="feedback">'+esc(JSON.stringify(safe,null,2).slice(0,24000))+'</pre>';
+ return '<div class="result-table">'+structuredValue(safe,0)+'</div>';
 }
 function pending(title,summary,bullets){
  $('page').innerHTML='<div class="grid"><section class="card info"><span class="pill">'+say('در دست توسعه · فعلاً غیرفعال','Planned · Not yet implemented')+'</span><h3>'+esc(title)+'</h3><p>'+esc(summary)+'</p><div class="tags">'+bullets.map(function(b){return '<span class="tag">'+esc(b)+'</span>';}).join('')+'</div></section><section class="card"><div class="section-title">'+say('سازگاری و امنیت','Compatibility & safety')+'</div><p class="muted">'+say('تا وقتی Agent قابلیت سخت‌افزاری مربوط را اعلام نکند و API عملیات با RBAC و Rollback آزمایش نشود، کنترل تغییردهنده‌ای فعال نمی‌شود.','No mutating controls are enabled until the agent advertises the required capability and the API action passes RBAC and rollback testing.')+'</p><p class="warn-note" style="margin-top:16px">'+say('برای دستگاه‌های ناسازگار نباید تنظیمات ساختگی یا موفقیت ظاهری نمایش داده شود.','Unsupported hardware must not show fake settings or simulated success.')+'</p></section></div>';
@@ -494,7 +510,7 @@ async function command(id,confirmNeeded,params){
    await new Promise(function(resolve){setTimeout(resolve,1400);});
    var j=await api('command_status',{device_id:state.active,command_id:ret.command_id});
    if(j.command && ['done','failed'].includes(j.command.status)){
-     if(out){var box=out.parentElement; if(j.command.status==='done'&&j.command.result){box.innerHTML='<div class="section-title">'+esc(id)+'</div>'+renderCommandOutput(id,j.command.result); if(!box.querySelector('#feedback')){var nextOut=document.createElement('pre');nextOut.id='feedback';nextOut.style.display='none';box.appendChild(nextOut);}}else{out.textContent=JSON.stringify({status:j.command.status,error:j.command.error},null,2).slice(0,20000);}}
+     if(out){if(j.command.status==='done'){out.innerHTML=renderCommandOutput(id,j.command.result||{status:'done'});}else{out.textContent=say('خطا: ','Error: ')+String(j.command.error||'Failed');}}
      finished=true;break;
    }
   }
