@@ -374,6 +374,14 @@ function renderCommandOutput(actionName,result){
     return '<div class="device-row"><div><strong>'+esc(name)+'</strong><small>'+say('شدت فعلی: ','Current brightness: ')+esc(item.brightness||0)+' / '+max+'</small></div>'+control+'</div>';
   }).join('')||'<div class="empty">'+say('چراغی پیدا نشد','No LEDs detected')+'</div>');
  }
+ if(actionName==='system.services'&&safe&&Array.isArray(safe.services)){
+   return '<div class="section-title">'+say('سرویس‌های روتر','Router services')+' ('+safe.services.length+')</div>'+
+     safe.services.map(function(s){
+      var name=String(s.name||'');
+      var allowed=['dnsmasq','odhcpd','sysntpd'].includes(name)&&!!s.installed;
+      return '<div class="device-row"><div><strong>'+esc(name)+'</strong><small>'+esc(s.status||'unknown')+' · '+(s.enabled?'Autostart':'Manual')+'</small></div><div class="actions"><span class="pill '+(s.status==='running'?'ok':'')+'">'+esc(s.installed?s.status:'Not installed')+'</span>'+(allowed&&has('system.modify')?'<button class="action" data-safe-service-restart="'+esc(name)+'">'+say('ری‌استارت','Restart')+'</button>':'')+'</div></div>';
+     }).join('');
+ }
  if(actionName==='openvpn.status'&&safe){
    return '<div class="section-title">OpenVPN <span class="pill '+(safe.installed?'ok':'bad')+'">'+(safe.installed?'Installed':'Unavailable')+'</span></div>'+
     (safe.warning?'<p class="warn-note">'+esc(safe.warning)+'</p>':'')+
@@ -605,6 +613,13 @@ document.addEventListener('click',function(ev){
  if(isDelete&&!window.confirm(say('این قانون حذف شود؟','Delete this rule?')))return;
  var action=(isAlert?'alert_':'schedule_')+(isDelete?'delete':'toggle');
  api(action,{device_id:state.active,id,enabled:b.dataset.enable==='1'}).then(automation).catch(function(e){$('notice').textContent=e.message;});
+});
+document.addEventListener('click',function(ev){
+ var b=ev.target.closest('[data-safe-service-restart]');if(!b)return;
+ if(!has('system.modify'))return;
+ var name=String(b.dataset.safeServiceRestart||'');
+ if(!['dnsmasq','odhcpd','sysntpd'].includes(name))return;
+ command('system.service.restart',true,{name:name});
 });
 document.addEventListener('click',function(ev){
  var b=ev.target.closest('[data-ovpn-mode]');
