@@ -13,7 +13,7 @@ function upgrade_path_is_safe(string $name): bool {
     if($name===''||strlen($name)>260||str_contains($name,"\0")||str_contains($name,'\\')||str_starts_with($name,'/')
        ||str_contains($name,'//'))return false;
     foreach(explode('/',$name) as $part){if($part===''||$part==='.'||$part==='..')return false;}
-    $forbidden=['config.php','config.example.php','.env','.runtime','logs','backups','releases','cache','tests','cli'];
+    $forbidden=['config.php','config.example.php','.env','.runtime','logs','backups','releases','cache','tests'];
     foreach(explode('/',$name) as $part){if(in_array($part,$forbidden,true))return false;}
     return true;
 }
@@ -99,6 +99,15 @@ function upgrade_main(array $argv): void {
     if(!$lock||!flock($lock,LOCK_EX|LOCK_NB))upgrade_fail('Another backend upgrade is active');
     try{
       if(in_array('--rollback',$argv,true)){upgrade_rollback($root,$private);return;}
+      if(in_array('--accept',$argv,true)){
+        if(!is_file($private.'/manifest.json'))upgrade_fail('No pending backend upgrade to accept');
+        $dest=$private.'/history-'.gmdate('YmdHis').'-'.bin2hex(random_bytes(3));
+        if(!mkdir($dest,0700))upgrade_fail('Cannot archive prior rollback data');
+        if(is_dir($private.'/old')&&!rename($private.'/old',$dest.'/old'))upgrade_fail('Could not archive old backend files');
+        if(!rename($private.'/manifest.json',$dest.'/manifest.json'))upgrade_fail('Could not archive old manifest');
+        echo "Upgrade accepted. Archived files remain private under ".$dest."\n";
+        return;
+      }
       $args=[];
       for($i=1;$i<count($argv);$i++)if(str_starts_with($argv[$i],'--')&&isset($argv[$i+1])&&!str_starts_with($argv[$i+1],'--'))$args[$argv[$i]]=$argv[++$i];
       $apply=in_array('--apply',$argv,true);
