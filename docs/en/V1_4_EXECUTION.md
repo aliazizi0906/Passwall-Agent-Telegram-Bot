@@ -1,6 +1,15 @@
-# PW Agent v1.4 development status (not a public release)
+# PW Agent v1.4 engineering status (public Alpha, not Stable)
 
-Development source branch: `feature/v1.4-secure-browser-control`. **v1.4.0-alpha.2 is the GitHub Latest public download, but is NOT stable or production-certified.** Public distribution does not imply the 14 workstreams are complete.
+Development source branch: `feature/v1.4-secure-browser-control`. **v1.4.0-alpha.3 is the GitHub Latest public download, but is NOT stable or production-certified.** Public distribution does not imply the 14 workstreams are complete.
+
+## Alpha.3 additions and acceptance
+
+- **One-line-per-paste OpenWrt installation:** six short, independent commands with one-button copying in cPanel Setup and Fleet Provision. Each line uses a private temporary directory and a pinned Agent version. Single-use token is never added to a URL.
+- **SSID Safe Apply (experimental):** durable original UCI wireless file, 90-second independent watchdog, confirm action, router boot/restart rollback recovery and bounded validation. Tested at unit/CI level; physical router/power-off acceptance remains outstanding.
+- **DNS/DHCP/NTP safe service operations:** fixed allowlist with confirmation; arbitrary root shell and remote network/firewall restarts remain prohibited.
+- **Monitoring and automation:** permission-scoped web alert CRUD and recurring schedule controls; bounded visible-page refresh. Requires working cPanel Cron.
+- **Compatibility:** apk and opkg package inventory and fix for read-only dashboard command allowlists.
+- **Fast CI:** separate workflow runs Go/PHP/UI/Shell validations, in addition to release's multi-architecture signed build.
 
 ## Implemented and under CI
 
