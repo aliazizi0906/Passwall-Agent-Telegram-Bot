@@ -25,6 +25,67 @@ function dash_v130_safe_params(string $action,array $params,bool $confirmed): ar
             throw new RuntimeException('Service is not approved for remote restart');
         return ['name'=>$service];
     }
+    if(in_array($action,['pbr.policy.add','pbr.policy.delete','openvpn.profile.toggle',
+                          'clients.internet.block','sqm.queue.set','wifi.channel.safe_apply',
+                          'firewall.wan_guard.set','config.safe.confirm'],true)){
+        if(!$confirmed)throw new RuntimeException('Configuration mutation requires explicit confirmation');
+        $idPattern='/^[A-Za-z][A-Za-z0-9_]{0,47}$/D';
+        if($action==='config.safe.confirm'){
+            $id=(string)($params['transaction_id']??'');
+            if(!preg_match('/^[a-f0-9]{32}$/D',$id))throw new RuntimeException('Invalid transaction');
+            return ['transaction_id'=>$id];
+        }
+        if($action==='pbr.policy.delete'){
+            $name=(string)($params['name']??'');
+            if(!preg_match($idPattern,$name)||!str_starts_with($name,'pw_'))
+                throw new RuntimeException('Only PW-managed PBR policy names may be deleted');
+            return ['name'=>$name];
+        }
+        if($action==='pbr.policy.add'){
+            $name=(string)($params['name']??'');
+            $interface=(string)($params['interface']??'');
+            $cidr=(string)($params['cidr']??'');
+            $parts=explode('/',$cidr);
+            if(!preg_match($idPattern,$name)||!str_starts_with($name,'pw_')
+              ||!preg_match($idPattern,$interface)||strlen($cidr)>64||count($parts)!==2
+              ||filter_var($parts[0],FILTER_VALIDATE_IP)===false
+              ||!ctype_digit($parts[1])||(int)$parts[1]<1||(int)$parts[1]>(filter_var($parts[0],FILTER_VALIDATE_IP,FILTER_FLAG_IPV6)?128:32))
+                throw new RuntimeException('Invalid PBR policy fields');
+            return ['name'=>$name,'cidr'=>$cidr,'interface'=>$interface];
+        }
+        if($action==='openvpn.profile.toggle'){
+            $profile=(string)($params['profile']??'');
+            if(!preg_match($idPattern,$profile)||!is_bool($params['enabled']??null))
+                throw new RuntimeException('Invalid OpenVPN profile toggle');
+            return ['profile'=>$profile,'enabled'=>$params['enabled']];
+        }
+        if($action==='clients.internet.block'){
+            $mac=(string)($params['mac']??'');
+            if(!preg_match('/^(?:[a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}$/D',$mac)||!is_bool($params['blocked']??null))
+                throw new RuntimeException('Invalid MAC or blocked flag');
+            return ['mac'=>strtolower($mac),'blocked'=>$params['blocked']];
+        }
+        if($action==='sqm.queue.set'){
+            $section=(string)($params['section']??'');
+            $d=(string)($params['download_kbit']??'');
+            $u=(string)($params['upload_kbit']??'');
+            if(!preg_match($idPattern,$section)||!ctype_digit($d)||!ctype_digit($u)
+              ||(int)$d<64||(int)$d>10000000||(int)$u<64||(int)$u>10000000)
+                throw new RuntimeException('Invalid SQM queue/rates');
+            return ['section'=>$section,'download_kbit'=>$d,'upload_kbit'=>$u];
+        }
+        if($action==='wifi.channel.safe_apply'){
+            $radio=(string)($params['radio']??'');
+            $channel=(string)($params['channel']??'');
+            if(!preg_match($idPattern,$radio)||!($channel==='auto'||(ctype_digit($channel)&&(int)$channel>=1&&(int)$channel<=233)))
+                throw new RuntimeException('Invalid radio/channel');
+            return ['radio'=>$radio,'channel'=>$channel];
+        }
+        if($action==='firewall.wan_guard.set'){
+            if(!is_bool($params['enabled']??null))throw new RuntimeException('Invalid WAN guard state');
+            return ['enabled'=>$params['enabled']];
+        }
+    }
     if($action==='led.brightness.set'){
         if(!$confirmed)throw new RuntimeException('LED brightness change requires confirmation');
         $name=(string)($params['name']??'');
