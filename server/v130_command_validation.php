@@ -3,6 +3,21 @@ declare(strict_types=1);
 
 // Pure input validation: safe to use in PHPUnit/CLI without loading runtime secrets.
 function dash_v130_safe_params(string $action,array $params,bool $confirmed): array {
+    if($action==='wifi.ssid.safe_apply'){
+        if(!$confirmed)throw new RuntimeException('Wi-Fi safe apply requires explicit confirmation');
+        $section=(string)($params['section']??'');
+        $ssid=(string)($params['ssid']??'');
+        if(!preg_match('/^[A-Za-z0-9_-]{1,64}$/D',$section))throw new RuntimeException('Invalid Wi-Fi section');
+        if($ssid===''||strlen($ssid)>32||trim($ssid)===''||!preg_match('//u',$ssid)||preg_match('/[\\x00-\\x1F\\x7F]/',$ssid))
+            throw new RuntimeException('SSID must be valid UTF-8 and 1-32 bytes');
+        return ['section'=>$section,'ssid'=>$ssid];
+    }
+    if($action==='wifi.ssid.safe_confirm'){
+        if(!$confirmed)throw new RuntimeException('Wi-Fi confirmation requires explicit consent');
+        $id=(string)($params['transaction_id']??'');
+        if(!preg_match('/^[a-f0-9]{32}$/D',$id))throw new RuntimeException('Invalid Wi-Fi transaction ID');
+        return ['transaction_id'=>$id];
+    }
     if($action==='led.brightness.set'){
         if(!$confirmed)throw new RuntimeException('LED brightness change requires confirmation');
         $name=(string)($params['name']??'');
