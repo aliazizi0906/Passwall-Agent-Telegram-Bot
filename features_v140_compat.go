@@ -54,21 +54,26 @@ func featureSupportV14(radios []string, passwall, led, modemAdapter, sqm, upnp, 
 		openvpn = supported("OpenVPN service start/stop/restart supported, with confirmation. CIDR routing rules are preview-only.")
 	}
 	return map[string]featureSupportEntryV14{
-		"system":             supported("Generic OpenWrt network and Agent diagnostics."),
-		"fleet":              supported("Router management lives in the cPanel backend; hardware-only modules are optional."),
-		"clients":            readonly("Client discovery is available; blocking/limits require local rollback and verified nftables/tc."),
-		"wifi":               wifi,
-		"passwall2":          proxy,
-		"dns":                readonly("Current DNS and route state only; leak-proof policy writes are not certified."),
-		"sqm":                sqmStatus,
-		"upnp":               upnpStatus,
-		"led":                ledStatus,
-		"led_rgb":            unavailable("RGB write driver is not implemented or hardware-certified."),
-		"cellular":           cellular,
-		"wireguard":          wireguard,
-		"openvpn":            openvpn,
+		"system":              supported("Generic OpenWrt network and Agent diagnostics."),
+		"fleet":               supported("Router management lives in the cPanel backend; hardware-only modules are optional."),
+		"clients":             readonly("Client discovery is available; blocking/limits require local rollback and verified nftables/tc."),
+		"wifi":                wifi,
+		"passwall2":           proxy,
+		"dns":                 readonly("Current DNS and route state only; leak-proof policy writes are not certified."),
+		"sqm":                 sqmStatus,
+		"upnp":                upnpStatus,
+		"led":                 ledStatus,
+		"led_rgb":             unavailable("RGB write driver is not implemented or hardware-certified."),
+		"cellular":            cellular,
+		"wireguard":           wireguard,
+		"openvpn":             openvpn,
 		"openvpn_route_apply": planned("Routing rules are preview-only until independent path validation and rollback are certified."),
-		"wifi_ssid_safe_apply": func() featureSupportEntryV14 { if len(radios)>0 { return supported("Confirmed 90-second router-local SSID rollback.") };return unavailable("No wireless radio") }(),
+		"wifi_ssid_safe_apply": func() featureSupportEntryV14 {
+			if len(radios) > 0 {
+				return supported("Confirmed 90-second router-local SSID rollback.")
+			}
+			return unavailable("No wireless radio")
+		}(),
 		"network_safe_apply": planned("WAN, firewall, DNS and Wi-Fi changes require a router-local timed rollback watchdog."),
 		"kill_switch":        planned("No IPv4/IPv6 path-failure certification. Static diagnostics are not a leak test."),
 	}

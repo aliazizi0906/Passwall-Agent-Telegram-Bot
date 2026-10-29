@@ -459,7 +459,9 @@ func packagesV3(updatesOnly bool) (map[string]interface{}, error) {
 		manager = "opkg"
 		path = commandPath("opkg")
 		args = []string{"list-installed"}
-		if updatesOnly { args = []string{"list-upgradable"} }
+		if updatesOnly {
+			args = []string{"list-upgradable"}
+		}
 	} else if updatesOnly {
 		args = []string{"list", "-u"}
 	}

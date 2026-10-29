@@ -30,7 +30,9 @@ func TestFeatureSupportHardwareV14(t *testing.T) {
 			t.Fatalf("Uncertified write for %s reported %s", key, m[key].Status)
 		}
 	}
-	if m["openvpn"].Status != "available" || m["openvpn_route_apply"].Status == "available" { t.Fatal("OpenVPN service and rule support must be distinct") }
+	if m["openvpn"].Status != "available" || m["openvpn_route_apply"].Status == "available" {
+		t.Fatal("OpenVPN service and rule support must be distinct")
+	}
 	if m["led_rgb"].Status != "not_available" {
 		t.Fatal("RGB provider is not evidence of a working RGB controller")
 	}
