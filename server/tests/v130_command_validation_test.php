@@ -98,3 +98,8 @@ expectOkay('Native RGB control','led.rgb.set',['name'=>'rgb:status','red'=>255,'
 expectFailure('Native RGB requires confirmation','led.rgb.set',['name'=>'rgb:status','red'=>255,'green'=>40,'blue'=>0],false);
 expectFailure('Native RGB out of range','led.rgb.set',['name'=>'rgb:status','red'=>256,'green'=>40,'blue'=>0],true);
 expectFailure('Native RGB rejects path traversal','led.rgb.set',['name'=>'../led','red'=>255,'green'=>40,'blue'=>0],true);
+
+
+expectOkay('DNS guard action','firewall.dns53_guard.set',['enabled'=>true],true,['enabled'=>true]);
+expectFailure('DNS guard requires confirmation','firewall.dns53_guard.set',['enabled'=>true],false);
+expectFailure('DNS guard state must be boolean','firewall.dns53_guard.set',['enabled'=>'yes'],true);
