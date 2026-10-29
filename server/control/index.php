@@ -289,7 +289,8 @@ function showClients(){
   ['system.clients','دریافت لیست دستگاه‌ها','List clients','system.read'],
   ['system.interfaces','اینترفیس‌های شبکه','Network interfaces','system.read'],
   ['network.dhcp_leases','اجاره‌های DHCP','DHCP leases','network.read']
- ],say('مسدودسازی دستگاه، محدودیت سرعت، زمان‌بندی و اولویت‌دهی به قوانین nftables/tc آزمایش‌شده روی روتر نیاز دارند. فعلاً غیرفعال‌اند.','Blocking, limits, schedules and priorities require tested nftables/tc policies; not active yet.'));
+ ],say('مسدودسازی دسترسی اینترنت LAN به WAN بر اساس MAC با Rollback واقعی فعال است؛ محدودیت سرعت اختصاصی هر دستگاه هنوز آماده نیست.','MAC-based LAN→WAN blocking uses a timed router-local rollback. Per-device rate limiting is not yet implemented.'));
+ if(has('firewall.modify'))$('page').innerHTML+='<section class="card"><div class="section-title">'+say('مسدودسازی اینترنت دستگاه','Block client WAN internet access')+'</div><p class="muted">'+say('فقط Forward شبکه LAN به WAN را بر اساس MAC کنترل می‌کند؛ روی شبکه‌های مهمان یا VLAN دیگر، بدون Rule مجزا اثری ندارد.','Matches MAC traffic from LAN to WAN only; not a universal client ban across all zones or VLANs.')+'</p><form class="stack operational-form" data-config-action="clients.internet.block"><label>MAC<input name="mac" dir="ltr" required placeholder="02:11:22:33:44:55" pattern="([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}"></label><label><select name="blocked" class="select"><option value="1">'+say('مسدودسازی','Block internet')+'</option><option value="0">'+say('رفع مسدودی','Unblock internet')+'</option></select></label><button type="submit" class="action danger">'+say('اعمال با بازگشت خودکار','Apply with rollback')+'</button></form></section>';
  if(has('system.read')){
   $('page').innerHTML+='<section class="card"><div class="section-title">'+say('پیش‌نمایش سیاست دستگاه (بدون اجرا)','Client policy dry run (no changes)')+'</div><p class="muted">'+say('MAC دستگاه و نوع سیاست را وارد کن. این فرم هیچ اتصال یا تنظیمی را تغییر نمی‌دهد.','Enter a client MAC and policy. No firewall, connection or configuration is changed.')+'</p><form class="stack" data-client-policy><input name="mac" maxlength="24" required placeholder="02:11:22:33:44:55" dir="ltr" aria-label="Client MAC"><select name="mode" aria-label="Policy"><option value="block">Block</option><option value="unblock">Unblock</option><option value="limit">Speed limit (kbit/s)</option></select><input name="limit_kbit" type="number" min="64" max="1000000" step="1" placeholder="1024 (only for limit)" aria-label="Speed limit"><button class="action" type="submit">'+say('نمایش پیش‌نمایش','Preview policy')+'</button></form></section>';
  }
@@ -300,6 +301,7 @@ function showWifi(){
  ['wifi.radios','رادیوهای ۲٫۴/۵/۶','Wi-Fi radios','wifi.read'],
  ['wifi.stations','دستگاه‌های وای‌فای','Wi-Fi stations','wifi.read']
  ],say('تغییر امن SSID با نسخه پشتیبان و تأیید ۹۰ ثانیه‌ای فعال شده است. هر تغییر تأییدنشده روی روتر به‌صورت محلی بازگردانده می‌شود.','Safe SSID changes use a router-local 90-second rollback. Unconfirmed changes are restored without relying on the server.'));
+ if(has('wifi.modify'))$('page').innerHTML+='<section class="card"><div class="section-title">'+say('کانال رادیوی وای‌فای','Wi-Fi radio channel')+'</div><p class="warn-note">'+say('تغییر کانال ممکن است دستگاه‌های متصل را موقتاً قطع کند. پس از اتصال مجدد، تغییر را تأیید کن.','Channel change can disconnect clients. Confirm after reconnecting; unconfirmed changes are automatically rolled back.')+'</p><form class="stack operational-form" data-config-action="wifi.channel.safe_apply"><label>'+say('شناسه رادیو UCI','UCI radio section')+'<input name="radio" required pattern="[A-Za-z][A-Za-z0-9_]{0,47}" placeholder="radio0"></label><label>'+say('کانال یا auto','Channel or auto')+'<input name="channel" required placeholder="auto"></label><button type="submit" class="action primary">'+say('اعمال کانال با Rollback','Apply channel with rollback')+'</button></form></section>';
  if(has('wifi.read')){
   $('page').innerHTML+='<section class="card"><div class="section-title">'+say('پیش‌نمایش تغییر نام شبکه','SSID change preview')+'</div><p class="muted">'+say('ابتدا از «شبکه‌های وای‌فای» شناسه Section را پیدا کن. این فرم فقط تفاوت مقدار فعلی و پیشنهادی را نشان می‌دهد.','Retrieve a named Wi-Fi section from Wi-Fi networks first. This form only compares the current and desired SSID.')+'</p><form data-ssid-plan class="stack"><label>'+say('نام Section','UCI section')+'<input name="section" required pattern="[A-Za-z0-9_-]{1,64}" maxlength="64" autocomplete="off" placeholder="default_radio0"></label><label>'+say('نام جدید Wi-Fi','Desired SSID')+'<input name="ssid" required maxlength="32" autocomplete="off" placeholder="My-WiFi"></label><div class="actions"><button class="action" type="submit">'+say('پیش‌نمایش بدون تغییر','Preview only')+'</button>'+(has('wifi.modify')?'<button class="action primary" type="button" data-safe-ssid-apply>'+say('اعمال امن (بازگشت خودکار)','Safe apply (auto rollback)')+'</button>':'')+'</div></form><p class="warn-note">'+say('پس از اعمال تغییر، اتصال جدید را بررسی و در کمتر از ۹۰ ثانیه تأیید کن. قطع دسترسی باعث بازگردانی خودکار می‌شود.','After applying, verify access and confirm within 90 seconds; otherwise local rollback occurs.')+'</p></section>';
  }
@@ -641,6 +643,26 @@ document.addEventListener('click',function(ev){
  var name=String(b.dataset.safeServiceRestart||'');
  if(!['dnsmasq','odhcpd','sysntpd'].includes(name))return;
  command('system.service.restart',true,{name:name});
+});
+document.addEventListener('submit',function(ev){
+ var form=ev.target.closest('form.operational-form[data-config-action]');if(!form)return;
+ ev.preventDefault();if(!form.reportValidity())return;
+ var actionName=String(form.dataset.configAction||'');
+ var perms={'pbr.policy.add':'network.modify','pbr.policy.delete':'network.modify',
+  'openvpn.profile.toggle':'network.modify','sqm.queue.set':'network.modify',
+  'clients.internet.block':'firewall.modify','wifi.channel.safe_apply':'wifi.modify',
+  'firewall.wan_guard.set':'firewall.modify'};
+ if(!Object.prototype.hasOwnProperty.call(perms,actionName)||!has(perms[actionName]))return;
+ var fd=new FormData(form),params={};
+ for(var pair of fd.entries())params[pair[0]]=String(pair[1]);
+ if(actionName==='openvpn.profile.toggle'||actionName==='firewall.wan_guard.set')params.enabled=params.enabled==='1';
+ if(actionName==='clients.internet.block')params.blocked=params.blocked==='1';
+ command(actionName,true,params).catch(function(e){var n=$('notice');if(n)n.textContent=e.message;});
+});
+document.addEventListener('click',function(ev){
+ var btn=ev.target.closest('[data-config-confirm]');if(!btn||!has('network.modify'))return;
+ var id=String(btn.dataset.configConfirm||'');if(!/^[a-f0-9]{32}$/.test(id))return;
+ command('config.safe.confirm',true,{transaction_id:id}).catch(function(e){var n=$('notice');if(n)n.textContent=e.message;});
 });
 document.addEventListener('click',function(ev){
  var b=ev.target.closest('[data-ovpn-mode]');
