@@ -1,5 +1,8 @@
 # وضعیت توسعه PW Agent v1.4
 
+> **آلفا ۴:** ساخت/حذف Ruleهای PBR، فعال/غیرفعال‌کردن پروفایل OpenVPN، MAC Block محدود LAN→WAN، تنظیم Queueهای SQM، تغییر کانال Wi-Fi، محافظ LAN→WAN و DNS پورت ۵۳ و کنترل RGBهای استاندارد sysfs با Rollback محلی اضافه شده‌اند. ابزار CLI ارتقای امضاشده Backend نیز موجود است. Kill Switch کامل، محدودیت سرعت هر کلاینت، SMS/Cell Lock اختصاصی و آزمون سخت‌افزاری هنوز انجام نشده‌اند.
+
+
 > **آلفا ۳ (افزوده‌ها):** نصب کوتاه در ۶ خط با دکمه کپی مجزا، Safe Apply تغییر SSID با Rollback محلی ۹۰ ثانیه‌ای و بازیابی بعد از Reboot، کنترل محدود سرویس‌های DNS/DHCP/NTP، مدیریت هشدارها و زمان‌بندی‌ها و سازگاری apk/opkg.
 
 > **قابلیت‌های Alpha 2:** کنترل روشنایی LEDهای دستی، مدیریت سرویس OpenVPN (اتصال/قطع/ری‌استارت)، ترمینال SSH تحت وب با مجوز و نمایش جدول‌بندی‌شده گزارش‌ها اضافه شده‌اند. **Ruleهای OpenVPN فقط پیش‌نمایش‌اند** و شبکه‌های حساس بدون Rollback تغییر نمی‌کنند.
@@ -8,7 +11,7 @@
 
 ![کنترل OpenVPN و چراغ‌ها ـ تصویر نمونه](../assets/previews/openvpn-led-v140-controls.svg)
 
-> این مستند وضعیت شاخه `feature/v1.4-secure-browser-control` را نشان می‌دهد. نسخه **v1.4.0-alpha.3 برای GitHub Latest منتشر می‌شود، اما همچنان آزمایشی و نامناسب برای Production بدون تست و بکاپ است**. عنوان Latest به معنی تکمیل ۱۴ قابلیت یا تأیید همه سخت‌افزارها نیست.
+> این مستند وضعیت شاخه `feature/v1.4-secure-browser-control` را نشان می‌دهد. نسخه **v1.4.0-alpha.4 برای GitHub Latest منتشر می‌شود، اما همچنان آزمایشی و نامناسب برای Production بدون تست و بکاپ است**. عنوان Latest به معنی تکمیل ۱۴ قابلیت یا تأیید همه سخت‌افزارها نیست.
 
 [English implementation status](../en/V1_4_EXECUTION.md) | [Pull Request #8](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/pull/8)
 
