@@ -27,7 +27,7 @@ function dash_v130_safe_params(string $action,array $params,bool $confirmed): ar
     }
     if(in_array($action,['pbr.policy.add','pbr.policy.delete','openvpn.profile.toggle',
                           'clients.internet.block','sqm.queue.set','wifi.channel.safe_apply',
-                          'firewall.wan_guard.set','config.safe.confirm'],true)){
+                          'firewall.wan_guard.set','firewall.dns53_guard.set','config.safe.confirm'],true)){
         if(!$confirmed)throw new RuntimeException('Configuration mutation requires explicit confirmation');
         $idPattern='/^[A-Za-z][A-Za-z0-9_]{0,47}$/D';
         if($action==='config.safe.confirm'){
@@ -81,7 +81,7 @@ function dash_v130_safe_params(string $action,array $params,bool $confirmed): ar
                 throw new RuntimeException('Invalid radio/channel');
             return ['radio'=>$radio,'channel'=>$channel];
         }
-        if($action==='firewall.wan_guard.set'){
+        if($action==='firewall.wan_guard.set'||$action==='firewall.dns53_guard.set'){
             if(!is_bool($params['enabled']??null))throw new RuntimeException('Invalid WAN guard state');
             return ['enabled'=>$params['enabled']];
         }
