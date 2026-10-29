@@ -185,9 +185,9 @@ function pw_setup_router_steps(string $base,string $token): array {
         'export PW_SERVER_BASE='.$quote($base),
         'export PW_PROVISION_TOKEN='.$quote($token),
         'export PW_AGENT_VERSION='.$quote('v'.pw_setup_version()),
-        'wget -O /tmp/pw.sh "$PW_SERVER_BASE/install/remote.sh"',
-        'test -s /tmp/pw.sh && sh -n /tmp/pw.sh && sh /tmp/pw.sh',
-        'unset PW_PROVISION_TOKEN',
+        'tmp=$(mktemp -d /tmp/pw.XXXXXX) && wget -O "$tmp/pw.sh" "$PW_SERVER_BASE/install/remote.sh"',
+        'test -s "$tmp/pw.sh" && sh -n "$tmp/pw.sh" && sh "$tmp/pw.sh"',
+        'unset PW_PROVISION_TOKEN; test -n "$tmp" && rm -f "$tmp/pw.sh" && rmdir "$tmp"',
     ];
 }
 function pw_setup_router_command(string $base,string $token): string {
