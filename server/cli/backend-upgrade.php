@@ -141,4 +141,13 @@ function upgrade_main(array $argv): void {
       }
     }finally{flock($lock,LOCK_UN);fclose($lock);}
 }
+// Pure guardrail regression test; safe for CI without installed config.php.
+if(in_array('--self-test',$argv,true)){
+    foreach(['../config.php','/etc/passwd','config.php','releases/old','sub/../danger','sub\\evil','.runtime/secrets','cli/../../bad'] as $bad)
+        if(upgrade_path_is_safe($bad))upgrade_fail('Unsafe upgrade path allowed: '.$bad);
+    foreach(['lib.php','control/index.php','cli/backend-upgrade.php','assets/control-v14.css','.htaccess'] as $good)
+        if(!upgrade_path_is_safe($good))upgrade_fail('Safe upgrade path denied: '.$good);
+    echo "Signed backend updater path checks OK\n";
+    exit(0);
+}
 try{upgrade_main($argv);}catch(Throwable $e){fwrite(STDERR,"UPGRADE ERROR: ".$e->getMessage()."\n");exit(1);}
