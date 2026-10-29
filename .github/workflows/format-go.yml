@@ -46,3 +46,5 @@ jobs:
 # Format DNS guard and managed firewall safety checks.
 
 # Format alpha.4 capability matrix tests.
+
+# Apply gofmt to the LuCI capability inventory and network-safe UCI controls.
