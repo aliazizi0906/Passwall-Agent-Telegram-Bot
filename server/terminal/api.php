@@ -4,8 +4,19 @@ require dirname(__DIR__) . '/lib.php';
 header('Cache-Control: no-store');
 if(!(cfg()['telegram']['terminal_enabled'] ?? true))response_json(['ok'=>false,'error'=>'Terminal is disabled'],null,403);
 $in=json_decode_assoc(raw_body());$init=(string)($in['init_data']??'');
-$user=tg_validate_webapp_init_data($init);
-$uid=(int)($user['id']??0);if($uid<=0)response_json(['ok'=>false,'error'=>'Telegram user validation failed'],null,403);
+if($init!==''){
+    try{$user=tg_validate_webapp_init_data($init);}catch(Throwable $e){response_json(['ok'=>false,'error'=>'Telegram verification failed'],null,403);}
+    $uid=(int)($user['id']??0);
+}else{
+    // Browser sessions are permission-scoped and use the exact same CSRF
+    // validation as the other PW Control APIs. No anonymous shell access.
+    require_once dirname(__DIR__).'/web_auth.php';
+    $uid=pw_web_auth_user()??0;
+    $csrf=(string)($_SERVER['HTTP_X_PW_CSRF']??'');
+    if($uid<=0||!pw_web_auth_csrf_ok($csrf))
+        response_json(['ok'=>false,'error'=>'Web login required or CSRF mismatch'],null,403);
+}
+if($uid<=0)response_json(['ok'=>false,'error'=>'Terminal authentication required'],null,403);
 ensure_v060_schema();if(!v060_user_allowed($uid)||!v060_has_permission($uid,'terminal.execute'))response_json(['ok'=>false,'error'=>'Terminal permission denied'],null,403);
 $username=trim((string)($in['username']??''));$password=(string)($in['password']??'');$command=(string)($in['command']??'');$cwd=(string)($in['cwd']??'/root');
 if(!preg_match('/^[A-Za-z0-9._-]{1,32}$/',$username))response_json(['ok'=>false,'error'=>'Invalid username']);
