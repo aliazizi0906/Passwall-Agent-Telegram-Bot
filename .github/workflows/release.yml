@@ -76,6 +76,7 @@ jobs:
         run: |
           find server -name '*.php' -print0 | xargs -0 -n1 php -l
           php server/tests/setup_core_test.php
+          php server/cli/backend-upgrade.php --self-test
           php server/tests/v130_command_validation_test.php
           php server/tests/web_auth_test.php
           php server/tests/release_signature_test.php
