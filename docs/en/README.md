@@ -6,6 +6,7 @@
 
 ## Public v1.4 Alpha (Latest, not Stable)
 - [Alpha.3 release notes: short installer, Wi-Fi rollback, automation and limitations](RELEASE_NOTES_V1_4_ALPHA_3.md)
+- [Wi-Fi Safe Apply static workflow illustration](../assets/previews/wifi-safe-apply-v140.svg)
 - [Alpha.2 release notes, warnings and actionable modules](RELEASE_NOTES_V1_4_ALPHA_2.md)
 - [New operational dashboard SVG preview](../assets/previews/control-center-v140-operations.svg)
 - [OpenVPN and LED control SVG preview](../assets/previews/openvpn-led-v140-controls.svg)
