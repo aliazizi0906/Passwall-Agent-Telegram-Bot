@@ -2,9 +2,9 @@
 
 All notable PW Agent changes are documented here. GitHub may classify an RC-tagged build as a regular Release for discoverability; this is not a claim of feature-complete, production-certified support.
 
-## [1.4.0-alpha.1] — Unreleased development branch
+## [1.4.0-alpha.1] — GitHub Latest public Alpha (29 October 2026)
 
-**Status:** Work in progress in Pull Request #8. Not deployed, not production-certified, and not a published GitHub Release.
+**Status:** Public alpha published as GitHub Latest by maintainer request, from the open v1.4 development branch. **Not** deployed or production-certified; not a stable / GA release.
 
 ### Added
 - Independent cPanel-installed browser username/password login, Argon2id/bcrypt hashing, secure cookie sessions, CSRF and rate-limit lockout; authorized Telegram Owner resets.
@@ -56,4 +56,4 @@ All notable PW Agent changes are documented here. GitHub may classify an RC-tagg
 - Public installation, one-time router provisioning and signed multi-architecture release bundles.
 - Idempotent command handling, encrypted queued secrets, monitoring and update reliability hardening.
 
-[Latest public pre-release](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.3.0-rc.2) · [Latest stable release](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0)
+[Latest public Alpha](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.4.0-alpha.1) · [Latest stable release](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0)
