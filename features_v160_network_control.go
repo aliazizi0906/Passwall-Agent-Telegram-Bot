@@ -36,7 +36,7 @@ type configTransactionV16 struct {
 func configSafeDirV16(root string) string { return filepath.Join(root, "config-pending") }
 func configPackageSupportedV16(pkg string) bool {
 	switch pkg {
-	case "pbr", "firewall", "sqm", "wireless", "openvpn":
+	case "pbr", "firewall", "sqm", "wireless", "openvpn", "system", "dhcp":
 		return true
 	}
 	return false
@@ -53,6 +53,10 @@ func configServiceV16(pkg string) string {
 		return "wifi"
 	case "openvpn":
 		return "openvpn"
+	case "system":
+		return "system"
+	case "dhcp":
+		return "dnsmasq"
 	}
 	return ""
 }
