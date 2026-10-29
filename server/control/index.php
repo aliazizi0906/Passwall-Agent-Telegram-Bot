@@ -321,7 +321,7 @@ function showLED(){
   ['system.leds','چراغ‌های sysfs','Read sysfs LEDs','system.read'],
   ['led.status','وضعیت GoogleWifiLED','GoogleWifiLED status','system.read'],
   ['agent.capabilities','شناسایی سخت‌افزار','Hardware capabilities','system.read']
- ],say('RGB، الگوها و زمان‌بندی هنوز نیازمند درایور تأییدشده‌اند؛ روشنایی دستی از لیست LEDها قابل تغییر است.','RGB, patterns and scheduling still need hardware adapters; manual sysfs brightness is configurable from LED inventory.'));
+ ],say('برای LEDهای sysfs دارای سه کانال RGB و Trigger دستی، تغییر رنگ فعال است. الگوها و زمان‌بندی اختصاصی سخت‌افزار هنوز نیازمند Adapter هستند.','Native sysfs RGB LEDs with three channels support color adjustment. Vendor-specific patterns and scheduling still require drivers.'));
 }
 function showCellular(){
  readPanel(say('مودم و سیم‌کارت','Cellular modem'),say('کشف مودم‌های جانبی با ModemManager یا uqmi و نمایش فقط شدت سیگنال؛ شناسه سیم‌کارت، IMSI و IMEI ارسال نمی‌شوند.','Read-only ModemManager/uqmi discovery and whitelisted signal metrics. No subscriber identifiers are sent.'),[
@@ -374,7 +374,7 @@ function renderCommandOutput(actionName,result){
     var control=valid&&manual&&has('system.modify')?
      '<div class="led-adjust"><label>'+say('روشنایی','Brightness')+' <input type="number" min="0" max="'+max+'" step="1" value="'+Number(item.brightness||0)+'" data-led-level="'+esc(name)+'"></label><button type="button" class="action primary" data-led-apply="'+esc(name)+'">'+say('اعمال','Apply')+'</button><button type="button" class="action" data-led-identify="'+esc(name)+'">'+say('شناسایی','Identify')+'</button></div>':
      '<span class="pill">'+say('کنترل دستی موجود نیست','Manual control unavailable')+'</span>';
-    return '<div class="device-row"><div><strong>'+esc(name)+'</strong><small>'+say('شدت فعلی: ','Current brightness: ')+esc(item.brightness||0)+' / '+max+'</small></div>'+control+'</div>';
+    return '<div class="device-row"><div><strong>'+esc(name)+'</strong><small>'+say('شدت فعلی: ','Current brightness: ')+esc(item.brightness||0)+' / '+max+'</small></div>'+control+(item.rgb_control&&has('system.modify')?'<div class="led-adjust"><label>'+say('رنگ RGB','RGB color')+' <input type="color" data-led-rgb-color="'+esc(name)+'" value="#ffffff"></label><button type="button" class="action primary" data-led-rgb-apply="'+esc(name)+'">'+say('اعمال رنگ','Apply color')+'</button></div>':'')+'</div>';
   }).join('')||'<div class="empty">'+say('چراغی پیدا نشد','No LEDs detected')+'</div>');
  }
  if(actionName==='system.services'&&safe&&Array.isArray(safe.services)){
@@ -664,6 +664,15 @@ document.addEventListener('click',function(ev){
  var btn=ev.target.closest('[data-config-confirm]');if(!btn||!has('network.modify'))return;
  var id=String(btn.dataset.configConfirm||'');if(!/^[a-f0-9]{32}$/.test(id))return;
  command('config.safe.confirm',true,{transaction_id:id}).catch(function(e){var n=$('notice');if(n)n.textContent=e.message;});
+});
+document.addEventListener('click',function(ev){
+ var btn=ev.target.closest('[data-led-rgb-apply]');if(!btn||!has('system.modify'))return;
+ var name=String(btn.dataset.ledRgbApply||'');
+ if(!/^[A-Za-z0-9:_+.-]{1,96}$/.test(name)||name==='.'||name==='..')return;
+ var scope=btn.closest('.device-row'),picker=scope&&scope.querySelector('[data-led-rgb-color]');
+ var hex=picker?String(picker.value):'';
+ if(!/^#[0-9a-fA-F]{6}$/.test(hex))return;
+ command('led.rgb.set',true,{name:name,red:parseInt(hex.slice(1,3),16),green:parseInt(hex.slice(3,5),16),blue:parseInt(hex.slice(5,7),16)});
 });
 document.addEventListener('click',function(ev){
  var b=ev.target.closest('[data-ovpn-mode]');
