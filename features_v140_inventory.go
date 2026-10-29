@@ -181,6 +181,7 @@ func ledInventoryV14() (map[string]interface{}, error) {
 			"name":           name,
 			"brightness":     boundPositiveV14(readSmallFileV13(filepath.Join(folder, "brightness")), 65535),
 			"max_brightness": boundPositiveV14(readSmallFileV13(filepath.Join(folder, "max_brightness")), 65535),
+			"manual_control": strings.Contains(readSmallFileV13(filepath.Join(folder, "trigger")), "[none]"),
 		})
 	}
 	result["leds"] = list
