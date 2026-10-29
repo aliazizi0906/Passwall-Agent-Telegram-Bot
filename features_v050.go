@@ -52,7 +52,8 @@ func isMutationActionV5(action string) bool {
 		"wifi.ssid.safe_apply", "wifi.ssid.safe_confirm",
 		"openvpn.profile.toggle", "pbr.policy.add", "pbr.policy.delete",
 		"clients.internet.block", "sqm.queue.set", "wifi.channel.safe_apply",
-		"firewall.wan_guard.set", "firewall.dns53_guard.set", "config.safe.confirm":
+		"firewall.wan_guard.set", "firewall.dns53_guard.set", "config.safe.confirm",
+		"luci.system.hostname.set", "luci.dhcp.static.add", "luci.dhcp.static.delete", "luci.wifi.iface.toggle":
 		return true
 	default:
 		return false
