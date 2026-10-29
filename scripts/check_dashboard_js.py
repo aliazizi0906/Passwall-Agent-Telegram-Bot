@@ -9,6 +9,7 @@ targets = [
     ROOT / "server" / "dashboard" / "index.php",
     ROOT / "server" / "control" / "index.php",
     ROOT / "server" / "setup.php",
+    ROOT / "server" / "terminal" / "index.php",
 ]
 failed = False
 
