@@ -6,6 +6,7 @@
 
 ## نسخه عمومی Alpha v1.4 (Latest، نه Stable)
 - [یادداشت نسخه آلفا ۳: نصب کوتاه، بازگشت امن Wi-Fi و محدودیت‌ها](RELEASE_NOTES_V1_4_ALPHA_3.md)
+- [تصویر نمونه Safe Apply وای‌فای](../assets/previews/wifi-safe-apply-v140.svg)
 - [یادداشت انتشار ۱.۴ آلفا ۲ و محدودیت‌های عملیاتی](../en/RELEASE_NOTES_V1_4_ALPHA_2.md)
 - [تصویر جدید داشبورد](../assets/previews/control-center-v140-operations.svg)
 - [پیش‌نمایش OpenVPN و LED](../assets/previews/openvpn-led-v140-controls.svg)
