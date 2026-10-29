@@ -242,3 +242,55 @@ footer{margin-top:36px;opacity:.85}
 #feedback.result-region .result-value{white-space:pre-wrap}
 #feedback.result-region .result-pair{box-shadow:none}
 @media(max-width:600px){#feedback.result-region{padding:11px}}
+
+
+/* LuCI parity layout foundation: no unbounded inline SVG, no overflowing forms */
+#appShell .section-title{display:flex;align-items:center;justify-content:flex-start;gap:11px;min-width:0;flex-wrap:wrap;line-height:1.55;overflow-wrap:anywhere}
+#appShell .section-title>svg,#appShell .section-icon>svg,#appShell .section-title .section-icon{display:inline-flex!important;flex:0 0 21px!important;width:21px!important;height:21px!important;max-width:21px!important;max-height:21px!important;min-width:21px!important;min-height:21px!important;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
+#appShell .section-title svg *{vector-effect:non-scaling-stroke}
+#appShell .nav-symbol svg{display:block;width:19px!important;height:19px!important;max-width:19px!important;max-height:19px!important;flex-shrink:0;overflow:visible}
+#appShell .nav-btn{min-width:0;line-height:1.5;word-break:normal;align-items:center;white-space:normal}
+#appShell .nav-btn .nav-label{min-width:0;display:block;overflow-wrap:anywhere}
+#appShell .card,#appShell .stack,#appShell .grid,#appShell .device-row,#appShell .actions,#appShell .result-region{min-width:0;max-width:100%}
+#appShell .actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+#appShell .actions .action,#appShell .actions button{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.5;min-height:42px}
+#appShell .device-row>div{min-width:0;max-width:100%}
+#appShell .device-row .actions{margin-inline-start:auto}
+#appShell .operational-form{width:100%;min-width:0;border:1px solid var(--border);background:var(--soft);border-radius:14px;padding:16px}
+#appShell .operational-form label,#appShell form.stack label{min-width:0;max-width:100%;overflow-wrap:anywhere;line-height:1.5}
+#appShell .operational-form input,#appShell .operational-form select,#appShell form.stack input,#appShell form.stack select{display:block;width:100%;min-width:0;min-height:44px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--panel);color:var(--ink);font-size:13px}
+#appShell .operational-form input:focus,#appShell .operational-form select:focus{border-color:var(--accent)}
+#appShell .result-pair dd{min-width:0;overflow-wrap:anywhere}
+#appShell .terminal-panel{padding:19px;min-width:0;overflow:hidden}
+#appShell .terminal-panel .section-title{margin:0}
+#appShell .terminal-header{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:15px}
+#appShell .terminal-frame{display:block;width:100%;max-width:100%;height:690px;min-height:490px;margin:0;border:0;border-radius:0;background:var(--panel)}
+#appShell .terminal-frame-shell{min-width:0;border:1px solid var(--border);border-radius:15px;overflow:hidden;margin-top:16px}
+#appShell .luci-catalog{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+#appShell .luci-item{display:flex;flex-direction:column;align-items:stretch;gap:10px;min-width:0;border:1px solid var(--border);background:var(--panel);border-radius:14px;padding:17px}
+#appShell .luci-item-heading{display:flex;align-items:center;gap:10px;min-width:0}
+#appShell .luci-item-heading svg{flex:0 0 21px;width:21px;height:21px;fill:none;stroke:var(--accent);stroke-width:1.7}
+#appShell .luci-item h3{margin:0;font-size:15px;line-height:1.4;overflow-wrap:anywhere}
+#appShell .luci-item p{font-size:12px;line-height:1.85;color:var(--muted);margin:0;overflow-wrap:anywhere}
+#appShell .luci-item .actions{margin-top:auto}
+#appShell .luci-filter{display:flex;align-items:center;gap:10px;margin-bottom:17px;flex-wrap:wrap}
+#appShell .luci-filter input{width:min(380px,100%);min-height:42px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--panel);color:var(--ink)}
+#appShell .luci-filter select{min-width:160px}
+#appShell .luci-item .pill{align-self:flex-start}
+#appShell .luci-item[hidden]{display:none!important}
+:root[dir=ltr] #appShell .terminal-header{direction:ltr}
+@media(max-width:850px){
+ #appShell .terminal-frame{height:76vh;min-height:440px}
+ #appShell .luci-catalog{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #appShell .terminal-panel{padding:15px}
+}
+@media(max-width:620px){
+ #appShell .luci-catalog{grid-template-columns:1fr}
+ #appShell .luci-filter input,#appShell .luci-filter select{width:100%}
+ #appShell .device-row{align-items:stretch}
+ #appShell .device-row .actions{width:100%;margin-inline-start:0}
+ #appShell .device-row .actions .action{flex:1 1 140px}
+ #appShell .terminal-frame{height:75vh;min-height:470px}
+ #appShell .operational-form{padding:12px}
+ #appShell .topbar{position:relative}
+}
