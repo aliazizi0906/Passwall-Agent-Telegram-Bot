@@ -1,5 +1,6 @@
 name: Release
 # Explicit maintainer-approved v1.4.0-alpha.5 publication as non-GA GitHub Latest.
+# Release signed Agent and PHP control-center archives only after the mandatory integration checks.
 # Publish only after strict Go/PHP/JS tests, key validation, multiarch build and cPanel signing.
 # Alpha.3 includes private short-line provisioning, Wi-Fi safe rollback and live controls.
 
