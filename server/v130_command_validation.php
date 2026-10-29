@@ -3,6 +3,32 @@ declare(strict_types=1);
 
 // Pure input validation: safe to use in PHPUnit/CLI without loading runtime secrets.
 function dash_v130_safe_params(string $action,array $params,bool $confirmed): array {
+    if($action==='led.brightness.set'){
+        if(!$confirmed)throw new RuntimeException('LED brightness change requires confirmation');
+        $name=(string)($params['name']??'');
+        $level=$params['brightness']??null;
+        if(!preg_match('/^[A-Za-z0-9:_+.-]{1,96}$/D',$name)||$name==='.'||$name==='..')
+            throw new RuntimeException('Invalid LED name');
+        if(!is_int($level)||$level<0||$level>65535)throw new RuntimeException('Invalid LED brightness');
+        return ['name'=>$name,'brightness'=>$level];
+    }
+    if($action==='openvpn.service.control'){
+        if(!$confirmed)throw new RuntimeException('OpenVPN service mutation requires confirmation');
+        $mode=(string)($params['mode']??'');
+        if(!in_array($mode,['start','stop','restart'],true))throw new RuntimeException('Unsupported OpenVPN service operation');
+        return ['mode'=>$mode];
+    }
+    if($action==='openvpn.route.plan'){
+        $profile=(string)($params['profile']??'');
+        $mode=(string)($params['mode']??'');
+        $cidr=(string)($params['cidr']??'');
+        $cidrParts=explode('/',$cidr);
+        if(!preg_match('/^[A-Za-z0-9_-]{1,64}$/D',$profile)||!in_array($mode,['through_vpn','bypass_vpn'],true)
+           ||strlen($cidr)>64||count($cidrParts)!==2||filter_var($cidrParts[0],FILTER_VALIDATE_IP)===false
+           ||filter_var($cidrParts[1],FILTER_VALIDATE_INT,['options'=>['min_range'=>0,'max_range'=>128]])===false)
+            throw new RuntimeException('Invalid OpenVPN route preview');
+        return ['profile'=>$profile,'mode'=>$mode,'cidr'=>$cidr];
+    }
     if($action==='led.identify'){
         if(!$confirmed)throw new RuntimeException('LED identification requires explicit confirmation');
         $name=(string)($params['name']??'');
