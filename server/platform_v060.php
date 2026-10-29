@@ -313,7 +313,11 @@ function v060_can_device(int $uid,string $deviceId): bool {
 }
 function v060_action_permission(string $action): string {
     if($action==='terminal.exec')return 'terminal.execute';
-    if($action==='openvpn.service.control')return 'network.modify';
+    if($action==='openvpn.service.control'||$action==='openvpn.profile.toggle')return 'network.modify';
+    if(str_starts_with($action,'pbr.policy.'))return $action==='pbr.policy.list'?'network.read':'network.modify';
+    if($action==='sqm.queue.set')return 'network.modify';
+    if($action==='clients.internet.block')return 'firewall.modify';
+    if($action==='config.safe.confirm')return 'network.modify';
     if($action==='openvpn.status'||$action==='openvpn.route.plan')return 'network.read';
     if($action==='system.backup.create')return 'backup.create';
     if($action==='system.backup.restore')return 'backup.restore';
@@ -329,7 +333,7 @@ function v060_action_permission(string $action): string {
 function isMutationActionPHPV6(string $a): bool {
     $read=[
       'system.status','system.interfaces','system.clients','clients.policy_plan','wifi.list','wifi.plan_ssid','passwall2.status','passwall2.log',
-      'agent.capabilities','network.doctor','network.speed_probe','network.policy_status','network.services','cellular.status','system.leds','led.status','openvpn.status','openvpn.route.plan',
+      'agent.capabilities','network.doctor','network.speed_probe','network.policy_status','network.services','cellular.status','system.leds','led.status','openvpn.status','openvpn.route.plan','pbr.policy.list',
       'passwall2.nodes.list','passwall2.node.test','passwall2.nodes.test_all','passwall2.shunt.list',
       'passwall2.shunt.options','system.time','system.log','system.klog','system.processes','system.services',
       'system.packages','system.package_updates','cellular.status','system.leds','network.wan','network.internet_test','network.speed_probe','network.policy_status','network.services','network.routes','network.dns',
@@ -557,7 +561,7 @@ function v060_add_alert(int $uid,string $deviceId,string $metric,string $op,floa
 
 function v060_dashboard_command_allowed(string $action): bool {
     return in_array($action,[
-      'system.status','agent.diagnose','agent.capabilities','network.doctor','network.path_audit','led.status','led.identify','led.brightness.set','openvpn.status','openvpn.service.control','openvpn.route.plan','system.clients','wifi.list','wifi.plan_ssid','wifi.ssid.safe_apply','wifi.ssid.safe_confirm','wifi.radios','wifi.stations',
+      'system.status','agent.diagnose','agent.capabilities','network.doctor','network.path_audit','led.status','led.identify','led.brightness.set','openvpn.status','openvpn.service.control','openvpn.route.plan','openvpn.profile.toggle','pbr.policy.list','pbr.policy.add','pbr.policy.delete','clients.internet.block','sqm.queue.set','wifi.channel.safe_apply','firewall.wan_guard.set','config.safe.confirm','system.clients','wifi.list','wifi.plan_ssid','wifi.ssid.safe_apply','wifi.ssid.safe_confirm','wifi.radios','wifi.stations',
       'network.wan','network.dns','network.routes','network.dhcp_leases','network.wireguard','network.services','network.internet_test','network.speed_probe','network.path_audit','network.policy_status','cellular.status','system.leds','system.interfaces','system.services','system.service.restart','system.packages','system.package_updates','clients.policy_plan',
       'passwall2.status','passwall2.nodes.list','passwall2.nodes.relay_ranking',
       'passwall2.failover.list','passwall2.failover.run','passwall2.restart','passwall2.enable','passwall2.disable',
