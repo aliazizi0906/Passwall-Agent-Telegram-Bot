@@ -116,3 +116,7 @@ expectFailure('LuCI multicast delete rejected','luci.dhcp.static.delete',['mac'=
 expectOkay('LuCI Wi-Fi interface toggle','luci.wifi.iface.toggle',['section'=>'default_radio0','enabled'=>false],true,['section'=>'default_radio0','enabled'=>false]);
 expectFailure('LuCI Wi-Fi toggle requires confirmation','luci.wifi.iface.toggle',['section'=>'default_radio0','enabled'=>true],false);
 expectFailure('LuCI Wi-Fi section injection','luci.wifi.iface.toggle',['section'=>'radio0;reboot','enabled'=>false],true);
+
+
+expectOkay('LuCI anonymous wifi-iface','luci.wifi.iface.toggle',['section'=>'@wifi-iface[0]','enabled'=>false],true,['section'=>'@wifi-iface[0]','enabled'=>false]);
+expectFailure('LuCI anonymous wifi-injection denied','luci.wifi.iface.toggle',['section'=>'@wifi-iface[0];reboot','enabled'=>true],true);
