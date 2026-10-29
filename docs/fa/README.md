@@ -1,10 +1,13 @@
 # مستندات PW Agent — فارسی
 
-> **Latest GitHub Release: v1.4.0-alpha.1.** این نسخه بنا به درخواست مالک به‌عنوان Latest منتشر می‌شود، اما **Alpha و غیرپایدار** است؛ تضمین عملکرد روی تمام روترها ندارد. [یادداشت انتشار](../en/RELEASE_NOTES_V1_4_ALPHA_LATEST.md) و [ماتریس ۱۴ قابلیت](V1_4_EXECUTION.md) را بخوانید. نسخه ۱.۳ RC قدیمی‌تر است و v0.6 خط مبنای پایدار قبلی است.
+> **Latest GitHub Release: v1.4.0-alpha.2.** این نسخه بنا به درخواست مالک به‌عنوان Latest منتشر می‌شود، اما **Alpha و غیرپایدار** است؛ تضمین عملکرد روی تمام روترها ندارد. [یادداشت انتشار](../en/RELEASE_NOTES_V1_4_ALPHA_LATEST.md) و [ماتریس ۱۴ قابلیت](V1_4_EXECUTION.md) را بخوانید. نسخه ۱.۳ RC قدیمی‌تر است و v0.6 خط مبنای پایدار قبلی است.
 
 [← صفحه اصلی پروژه](../../README.md) · [English](../en/README.md)
 
 ## نسخه عمومی Alpha v1.4 (Latest، نه Stable)
+- [یادداشت انتشار ۱.۴ آلفا ۲ و محدودیت‌های عملیاتی](../en/RELEASE_NOTES_V1_4_ALPHA_2.md)
+- [تصویر جدید داشبورد](../assets/previews/control-center-v140-operations.svg)
+- [پیش‌نمایش OpenVPN و LED](../assets/previews/openvpn-led-v140-controls.svg)
 - [وضعیت و مراحل اجرایی تمام ۱۴ قابلیت](V1_4_EXECUTION.md)
 
 ## منو
