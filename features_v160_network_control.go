@@ -93,17 +93,22 @@ func configPendingV16(root string) (configTransactionV16, error) {
 	return t, nil
 }
 func restoreConfigV16(root string, reload func(string) error) error {
+	return restoreConfigAtV16(root, "/etc/config", reload)
+}
+func restoreConfigAtV16(root, configRoot string, reload func(string) error) error {
 	t, e := configPendingV16(root)
 	if e != nil {
 		return e
 	}
-	target := "/etc/config/" + t.Package
+	target := filepath.Join(configRoot,t.Package)
 	backup, e := os.ReadFile(filepath.Join(configSafeDirV16(root), "original"))
 	if e != nil || len(backup) < 1 || len(backup) > 2<<20 {
 		return errors.New("missing original UCI file; manual recovery needed")
 	}
-	if uci := commandPath("uci"); uci != "" {
+	if configRoot == "/etc/config" {
+		if uci := commandPath("uci"); uci != "" {
 		_, _ = runOutput(8*time.Second, uci, "revert", t.Package)
+		}
 	}
 	tmp := target + ".pw-restore"
 	if e = os.WriteFile(tmp, backup, 0600); e != nil {
