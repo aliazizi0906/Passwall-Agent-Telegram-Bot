@@ -268,6 +268,14 @@ func (a *Agent) execute(c *Command) (interface{}, error) {
 		return ledStatusV13()
 	case "led.identify":
 		return identifyLEDV14(params)
+	case "led.brightness.set":
+		return setLEDBrightnessV14(params)
+	case "openvpn.status":
+		return openvpnStatusV15()
+	case "openvpn.service.control":
+		return openvpnServiceControlV15(params)
+	case "openvpn.route.plan":
+		return openvpnRoutePlanV15(params)
 	case "network.doctor":
 		return networkDoctorV13()
 	case "network.path_audit":
