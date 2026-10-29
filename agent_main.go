@@ -92,6 +92,7 @@ var safeID = regexp.MustCompile(`^[A-Za-z0-9_\-]+$`)
 var linkScheme = regexp.MustCompile(`(?i)^(vless|vmess|trojan|ss|ssr|socks|socks5|hysteria2|hy2|tuic|naive|http|https)://`)
 
 func main() {
+	if configSafeCLIIfRequestedV16() { return }
 	if safeApplyCLIIfRequestedV15() {
 		return
 	}
@@ -279,6 +280,24 @@ func (a *Agent) execute(c *Command) (interface{}, error) {
 		return openvpnServiceControlV15(params)
 	case "openvpn.route.plan":
 		return openvpnRoutePlanV15(params)
+	case "openvpn.profile.toggle":
+		return openvpnProfileToggleV16(params)
+	case "pbr.policy.list":
+		return pbrPolicyListV16()
+	case "pbr.policy.add":
+		return pbrPolicyAddV16(params)
+	case "pbr.policy.delete":
+		return pbrPolicyDeleteV16(params)
+	case "clients.internet.block":
+		return clientInternetBlockV16(params)
+	case "sqm.queue.set":
+		return sqmQueueSetV16(params)
+	case "wifi.channel.safe_apply":
+		return wifiChannelSafeV16(params)
+	case "firewall.wan_guard.set":
+		return vpnWANGuardV16(params)
+	case "config.safe.confirm":
+		return configSafeConfirmV16(params)
 	case "network.doctor":
 		return networkDoctorV13()
 	case "network.path_audit":
