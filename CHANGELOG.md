@@ -2,6 +2,23 @@
 
 All notable PW Agent changes are documented here. GitHub may classify an RC-tagged build as a regular Release for discoverability; this is not a claim of feature-complete, production-certified support.
 
+## [1.4.0-alpha.2] — Experimental GitHub Latest (29 October 2026)
+
+**Status:** Public Alpha / Latest, **not** production-certified or stable. Hardware-specific and network-critical controls remain restricted.
+
+### Added or fixed
+- Permission-scoped browser SSH terminal embedded inside the PW Control interface, using web-session CSRF validation and encrypted per-command Dropbear credentials.
+- Confirmed, hardware-guarded brightness writes for manually controlled sysfs LEDs; refuses active kernel triggers and validates the brightness range.
+- OpenVPN profile inventory, user-confirmed start/stop/restart service operations, and strict CIDR rule **dry-run** (not an installed route).
+- Structured, escaped, expandable result tables replacing generic raw JSON and fixing loss of the result after one command.
+- Responsive operational control cards, SVG navigation icons and labelled static illustrative screenshots for OpenVPN, LED and reports.
+- Signed multi-architecture cPanel/OpenWrt release publishing, new unit/API validation.
+
+### Not complete
+- Real OpenVPN split-route/firewall policy installation; safe Wi-Fi/WAN changes; automatic rollback after connectivity loss; general client block/limits; hardware RGB/LED patterns, modem management and all-device certification.
+
+**Upgrade caution:** Do not rerun cPanel setup or overwrite an existing `config.php`. Follow the tested upgrade/migration path and back up the database/router first.
+
 ## [1.4.0-alpha.1] — GitHub Latest public Alpha (29 October 2026)
 
 **Status:** Public alpha published as GitHub Latest by maintainer request, from the open v1.4 development branch. **Not** deployed or production-certified; not a stable / GA release.
@@ -56,4 +73,4 @@ All notable PW Agent changes are documented here. GitHub may classify an RC-tagg
 - Public installation, one-time router provisioning and signed multi-architecture release bundles.
 - Idempotent command handling, encrypted queued secrets, monitoring and update reliability hardening.
 
-[Latest public Alpha](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.4.0-alpha.1) · [Latest stable release](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0)
+[Latest public Alpha](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v1.4.0-alpha.2) · [Latest stable release](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0)
