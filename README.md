@@ -2,11 +2,20 @@
 
 **OpenWrt + Passwall2 · Telegram Mini App · Local LuCI · cPanel PHP/MySQL**
 
-[GitHub Latest: v1.4.0-alpha.3 (NOT stable)](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/latest) · [Previous production baseline: v0.6.0](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0) · [فارسی](#فارسی) · [Install v1.3 RC](docs/en/INSTALL_V1_3.md) · [Upgrade from v0.6](docs/en/UPGRADE_V1_3.md) · [Implementation status](docs/en/CONTROL_CENTER_PROGRESS.md) · [Changelog](CHANGELOG.md)
+[GitHub Latest: v1.4.0-alpha.4 (NOT stable)](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/latest) · [Previous production baseline: v0.6.0](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/releases/tag/v0.6.0) · [فارسی](#فارسی) · [Install v1.3 RC](docs/en/INSTALL_V1_3.md) · [Upgrade from v0.6](docs/en/UPGRADE_V1_3.md) · [Implementation status](docs/en/CONTROL_CENTER_PROGRESS.md) · [Changelog](CHANGELOG.md)
 
-> **Public release status:** `v1.4.0-alpha.3` is deliberately published as **GitHub Latest**, but its `alpha.3` label means it is **NOT Stable/GA or production-certified**. Do not deploy it on essential routers without an isolated staging setup, verified backups, and a tested recovery path. The `v0.6.0` release remains the previous stable baseline; `v1.3.0-rc.2` is an older release candidate.
+> **Public release status:** `v1.4.0-alpha.4` is the experimental GitHub Latest, but its `alpha.3` label means it is **NOT Stable/GA or production-certified**. Do not deploy it on essential routers without an isolated staging setup, verified backups, and a tested recovery path. The `v0.6.0` release remains the previous stable baseline; `v1.3.0-rc.2` is an older release candidate.
 
-## v1.4.0-alpha.3 — public Alpha (GitHub Latest)
+## v1.4.0-alpha.4 — scoped operational controls (GitHub Latest, NOT Stable)
+
+**New working actions:** named PBR UCI rule create/delete, OpenVPN profile enable/disable, MAC-based LAN→WAN block/unblock, SQM queue rate changes, Wi-Fi channel safe apply, limited LAN→WAN and classic DNS port-53 guards, and Linux native RGB LED color controls. Mutations require permissions, confirmation and independent router-local timed rollback where network settings are changed. The backend also includes a CLI-only signed ZIP updater with rollback; browser one-click backend updates remain disabled.
+
+**Limitations:** none of the guards is a comprehensive IPv4/IPv6/DoH kill switch, client rate limits are not implemented, guest/password provisioning is not safely enabled, and modem-specific SMS/band/cell locks or vendor-specific RGB scheduling require real hardware integration and acceptance tests. Do not run on a router without an independent recovery route.
+
+[Alpha.4 English release notes](docs/en/RELEASE_NOTES_V1_4_ALPHA_4.md) · [یادداشت انتشار فارسی](docs/fa/RELEASE_NOTES_V1_4_ALPHA_4.md)
+
+## v1.4.0-alpha.3 — previous Alpha
+
 
 **What changed in alpha.3:** OpenWrt Setup/Provision now gives six individually copyable, short SSH commands instead of one truncated long command. The router Agent adds a local 90-second SSID safe-apply/rollback workflow, including recovery at boot. Added allowlisted DNS service restart actions, alert/schedule CRUD, limited live status refresh and apk/opkg inventory compatibility. [English release notes](docs/en/RELEASE_NOTES_V1_4_ALPHA_3.md) · [فارسی](docs/fa/RELEASE_NOTES_V1_4_ALPHA_3.md).
 
