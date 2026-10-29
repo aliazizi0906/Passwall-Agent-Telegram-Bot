@@ -36,3 +36,5 @@ jobs:
 # Normalize the finalized safe Wi-Fi worker before alpha.3 release.
 
 # gofmt for extended safe network control actions.
+
+# Format final safe configuration lock guard.
