@@ -1,5 +1,6 @@
 name: Release
 # Explicit maintainer-approved v1.4.0-alpha.3 publication as non-GA GitHub Latest.
+# Alpha.3 includes private short-line provisioning, Wi-Fi safe rollback and live controls.
 
 on:
   push:
