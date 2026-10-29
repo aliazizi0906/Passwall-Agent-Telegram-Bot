@@ -69,7 +69,7 @@ function showInstallSteps(raw){
  const header=document.createElement('h2');header.textContent='Install on OpenWrt — copy one line at a time';
  const tip=document.createElement('p');tip.textContent='Press Enter after EACH line. Provision tokens expire after 30 minutes and are single-use. Do not share these commands.';
  panel.append(header,tip);
- String(raw).split('\\n').filter(x=>x.trim()).forEach((command,i)=>{
+ String(raw).split('\n').filter(x=>x.trim()).forEach((command,i)=>{
   const row=document.createElement('div');row.style.cssText='display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:10px 0';
   const pre=document.createElement('code');pre.textContent=String(i+1)+'. '+command;
   pre.style.cssText='flex:1;min-width:200px;overflow-wrap:anywhere;padding:10px;background:#0b1220;border-radius:8px;direction:ltr;text-align:left';
