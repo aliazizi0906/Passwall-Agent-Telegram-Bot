@@ -115,6 +115,12 @@ jobs:
       - name: Dashboard JavaScript
         run: python3 scripts/check_dashboard_js.py
 
+      - name: Browser login JavaScript
+        run: node --check server/assets/login-v14.js
+
+      - name: Browser and bundled font asset contracts
+        run: python3 scripts/check_control_assets.py
+
       - name: LuCI Control Center JavaScript
         run: node --check openwrt/luci/www/luci-static/resources/view/pw-agent/control.js
 
