@@ -221,7 +221,9 @@ func launchWifiWatchdogV15(id string) error {
 	cmd.Stdin = null
 	cmd.Stdout = null
 	cmd.Stderr = null
-	if err := cmd.Start(); err != nil { return err }
+	if err := cmd.Start(); err != nil {
+		return err
+	}
 	// Reap the detached watchdog without waiting for it to finish here.
 	go func() { _ = cmd.Wait() }()
 	return nil
