@@ -1,6 +1,12 @@
 # وضعیت توسعه PW Agent v1.4
 
-> این مستند وضعیت شاخه `feature/v1.4-secure-browser-control` را نشان می‌دهد. نسخه **v1.4.0-alpha.1 برای GitHub Latest انتخاب شده، اما همچنان آزمایشی و نامناسب برای Production بدون تست و بکاپ است**. عنوان Latest به معنی تکمیل ۱۴ قابلیت یا تأیید همه سخت‌افزارها نیست.
+> **آلفا ۲:** کنترل روشنایی LEDهای دستی، مدیریت سرویس OpenVPN (اتصال/قطع/ری‌استارت)، ترمینال SSH تحت وب با مجوز و نمایش جدول‌بندی‌شده گزارش‌ها اضافه شده‌اند. **Ruleهای OpenVPN فقط پیش‌نمایش‌اند** و شبکه‌های حساس بدون Rollback تغییر نمی‌کنند.
+
+![داشبورد نمونه](../assets/previews/control-center-v140-operations.svg)
+
+![کنترل OpenVPN و چراغ‌ها ـ تصویر نمونه](../assets/previews/openvpn-led-v140-controls.svg)
+
+> این مستند وضعیت شاخه `feature/v1.4-secure-browser-control` را نشان می‌دهد. نسخه **v1.4.0-alpha.2 برای GitHub Latest انتخاب شده، اما همچنان آزمایشی و نامناسب برای Production بدون تست و بکاپ است**. عنوان Latest به معنی تکمیل ۱۴ قابلیت یا تأیید همه سخت‌افزارها نیست.
 
 [English implementation status](../en/V1_4_EXECUTION.md) | [Pull Request #8](https://github.com/aliazizi0906/Passwall-Agent-Telegram-Bot/pull/8)
 
