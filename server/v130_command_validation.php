@@ -86,6 +86,35 @@ function dash_v130_safe_params(string $action,array $params,bool $confirmed): ar
             return ['enabled'=>$params['enabled']];
         }
     }
+    if($action==='luci.system.hostname.set'){
+        if(!$confirmed)throw new RuntimeException('Hostname change requires confirmation');
+        $value=(string)($params['hostname']??'');
+        if(!preg_match('/^[A-Za-z][A-Za-z0-9-]{0,62}$/D',$value)||str_ends_with($value,'-'))
+            throw new RuntimeException('Hostname must be a single valid DNS label');
+        return ['hostname'=>$value];
+    }
+    if($action==='luci.dhcp.static.add'||$action==='luci.dhcp.static.delete'){
+        if(!$confirmed)throw new RuntimeException('Static DHCP changes require confirmation');
+        $mac=strtolower((string)($params['mac']??''));
+        if(!preg_match('/^(?:[a-f0-9]{2}:){5}[a-f0-9]{2}$/D',$mac)
+            ||(hexdec(substr($mac,0,2))&1)===1||$mac==='00:00:00:00:00:00')
+            throw new RuntimeException('Invalid unicast MAC');
+        if($action==='luci.dhcp.static.delete')return ['mac'=>$mac];
+        $ip=(string)($params['ip']??'');
+        $name=(string)($params['name']??'');
+        if(filter_var($ip,FILTER_VALIDATE_IP,FILTER_FLAG_IPV4)===false)
+            throw new RuntimeException('Invalid static IPv4');
+        if(!preg_match('/^[A-Za-z][A-Za-z0-9-]{0,62}$/D',$name)||str_ends_with($name,'-'))
+            throw new RuntimeException('Invalid lease hostname');
+        return ['mac'=>$mac,'ip'=>$ip,'name'=>$name];
+    }
+    if($action==='luci.wifi.iface.toggle'){
+        if(!$confirmed)throw new RuntimeException('Wi-Fi interface change requires confirmation');
+        $section=(string)($params['section']??'');
+        if(!preg_match('/^[A-Za-z][A-Za-z0-9_]{0,47}$/D',$section)||!is_bool($params['enabled']??null))
+            throw new RuntimeException('Invalid Wi-Fi interface');
+        return ['section'=>$section,'enabled'=>$params['enabled']];
+    }
     if($action==='led.rgb.set'){
         if(!$confirmed)throw new RuntimeException('RGB change requires explicit confirmation');
         $name=(string)($params['name']??'');
