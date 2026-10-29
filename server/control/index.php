@@ -125,6 +125,8 @@ var menu=[
  ['home','01','خانه','Home','وضعیت لحظه‌ای شبکه و روتر','Router and network status'],
  ['internet','02','اینترنت','Internet','کیفیت WAN، DNS و اتصال','WAN, DNS and connectivity'],
  ['proxy','03','فیلترشکن','Proxy','Passwall2 و عملیات مجاز','Passwall2 and supported operations'],
+ ['openvpn','13','OpenVPN','OpenVPN','اتصال، سرویس و قوانین مسیر','VPN and route policy tools'],
+ ['terminal','14','ترمینال وب','Web Terminal','کنسول SSH با دسترسی کنترل‌شده','Permission-scoped SSH console'],
  ['routers','04','روترها','Fleet','مدیریت روترهای ثبت‌شده','Manage registered routers'],
  ['clients','05','دستگاه‌ها','Clients','موبایل‌ها و تجهیزات LAN','LAN clients and their policies'],
  ['wifi','06','وای‌فای','Wi-Fi','رادیوها، رمز و شبکه مهمان','Radios, password and guest network'],
@@ -149,6 +151,8 @@ var navArt={
  home:'<path d="m3 10 9-7 9 7v11H3z"/><path d="M9 21v-8h6v8"/>',
  internet:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c5 5 5 13 0 18M12 3c-5 5-5 13 0 18"/>',
  proxy:'<path d="M12 2 20 6v6c0 5-3 8-8 10-5-2-8-5-8-10V6z"/><path d="m9 12 2 2 4-4"/>',
+ openvpn:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M9 16h6"/>',
+ terminal:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m6 9 4 3-4 3M12 16h5"/>',
  routers:'<rect x="3" y="7" width="18" height="11" rx="2"/><path d="M7 12h.01M11 12h.01M7 18v3M17 18v3"/>',
  clients:'<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
  wifi:'<path d="M2 9a16 16 0 0 1 20 0M5 12a11 11 0 0 1 14 0M8 15a6 6 0 0 1 8 0"/><circle cx="12" cy="19" r="1"/>',
@@ -204,7 +208,7 @@ function home(){
  '<div style="margin-top:15px">'+chartHtml('cpu-chart',say('تاریخچه CPU','CPU sample history'))+'</div><div style="margin-top:15px">'+resultBox()+'</div>';
  drawChart('cpu-chart','cpu_percent');
 }
-function resultBox(){return '<section class="card"><div class="section-title">'+say('نتیجه دستور','Command result')+'</div><pre id="feedback">'+say('یک عملیات مجاز انتخاب کنید.','Select an allowed operation.')+'</pre></section>';}
+function resultBox(){return '<section class="card"><div class="section-title">'+say('نتیجه دستور','Command result')+'</div><div id="feedback" class="result-region" role="status">'+say('یک عملیات مجاز انتخاب کنید.','Select an allowed operation.')+'</div></section>';}
 function internet(){
  var m=latest(),h=state.detail&&state.detail.overview&&state.detail.overview['24h']||{};
  $('page').innerHTML='<div class="summary">'+statCard('WAN',status(metric(m,'wan_up'))[0],esc(m.wan_ip||'—'))+
@@ -433,7 +437,7 @@ function render(){
  nav();
  if(!state.fleet){$('page').innerHTML='<div class="empty">'+say('برای ورود از حساب وب یا مینی‌اپ تلگرام استفاده کن.','Sign in with your web account or Telegram Mini App.')+'</div>';return;}
  if(!state.active){$('page').innerHTML='<div class="empty">'+say('هیچ روتر فعالی وجود ندارد.','No active router.')+'</div>';return;}
- if(state.page==='home')home();else if(state.page==='internet')internet();else if(state.page==='proxy')proxy();else if(state.page==='routers')routers();else if(state.page==='clients')showClients();else if(state.page==='wifi')showWifi();else if(state.page==='dns')showDNS();else if(state.page==='gaming')showGaming();else if(state.page==='led')showLED();else if(state.page==='cellular')showCellular();else if(state.page==='system')system();else if(state.page==='automation'){automation();}else{
+ if(state.page==='home')home();else if(state.page==='internet')internet();else if(state.page==='proxy')proxy();else if(state.page==='openvpn')showOpenVPN();else if(state.page==='terminal')showTerminal();else if(state.page==='routers')routers();else if(state.page==='clients')showClients();else if(state.page==='wifi')showWifi();else if(state.page==='dns')showDNS();else if(state.page==='gaming')showGaming();else if(state.page==='led')showLED();else if(state.page==='cellular')showCellular();else if(state.page==='system')system();else if(state.page==='automation'){automation();}else{
  var plans={
   clients:[say('مدیریت دستگاه‌های شبکه','LAN client management'),say('فهرست کلاینت‌ها، محدودیت سرعت، مسدودسازی، زمان‌بندی و اولویت‌بندی پس از توسعه API مجاز نمایش داده می‌شود.','Live client list, rate limits, blocking, schedules and priorities require an authorized agent API.'),['DHCP / ARP','MAC identity','Live RX/TX','Rate limit','Block / unblock','Parental schedules']],
   wifi:[say('مدیریت Wi-Fi','Wi-Fi management'),say('مدیریت SSID، رمز، ۲٫۴/۵ گیگاهرتز، شبکه مهمان، QR و انتخاب کانال ایمن همراه با Rollback.','SSID, password, 2.4/5 GHz, guest Wi-Fi, QR, safe channel selection and rollback.'),['SSID & WPA2/WPA3','Guest isolation','Channel scan','QR codes','Safe rollback']],
