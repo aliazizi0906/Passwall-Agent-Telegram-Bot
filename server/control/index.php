@@ -383,8 +383,21 @@ function renderCommandOutput(actionName,result){
    safe.checks.map(function(v){return '<div class="device-row"><div><strong>'+esc(v.id||'—')+'</strong><small>'+esc(v.detail||'')+'</small></div><span class="pill '+(v.status==='pass'?'ok':v.status==='fail'?'bad':'')+'">'+esc(v.status||'—')+' · '+esc(v.latency_ms||0)+'ms</span></div>';}).join('');
  }
  if(actionName==='agent.capabilities'&&safe&&safe.capabilities){
-  return '<div class="section-title">'+say('قابلیت‌های شناسایی‌شده','Discovered capabilities')+'</div><p class="muted">'+esc(safe.hardware&&safe.hardware.model||'—')+' · OpenWrt '+esc(safe.openwrt_version||'—')+'</p>'+
-  Object.entries(safe.capabilities).map(function(entry){return '<div class="status-row"><span>'+esc(entry[0])+'</span><span>'+esc(Array.isArray(entry[1])?entry[1].join(', ')||'—':entry[1]?'✓':'—')+'</span></div>';}).join('');
+  var supported=safe.feature_support&&typeof safe.feature_support==='object'?Object.entries(safe.feature_support):[];
+  var statusLabels={available:say('قابل استفاده','Available'),read_only:say('فقط مشاهده','Read-only'),planned:say('در حال توسعه','Planned'),not_available:say('غیرفعال یا ناموجود','Unavailable')};
+  var statusStyles={available:'ok',read_only:'',planned:'',not_available:'bad'};
+  var header='<div class="section-title">'+say('سازگاری سخت‌افزاری روتر','Router hardware compatibility')+'</div>'+
+   '<p class="muted">'+esc(safe.hardware&&safe.hardware.model||'—')+' · OpenWrt '+esc(safe.openwrt_version||'—')+'</p>'+
+   '<p class="warn-note" style="margin:14px 0">'+say('قابلیت‌های غیرفعال روی این روتر اجرا نمی‌شوند. کشف یک پکیج به معنی امکان تغییر ایمن تنظیمات نیست.','Unavailable features do not run. Detecting a package does not prove a safe configuration write.')+'</p>';
+  if(supported.length){
+   return header+supported.map(function(entry){
+    var name=entry[0],data=entry[1]||{},stateName=String(data.status||'not_available');
+    return '<div class="device-row"><div><strong>'+esc(name.replace(/_/g,' '))+'</strong><small>'+esc(data.detail||'')+'</small></div><span class="pill '+(statusStyles[stateName]||'')+'">'+esc(statusLabels[stateName]||stateName)+'</span></div>';
+   }).join('');
+  }
+  return header+Object.entries(safe.capabilities).map(function(entry){
+   return '<div class="status-row"><span>'+esc(entry[0])+'</span><span>'+esc(Array.isArray(entry[1])?entry[1].join(', ')||'—':entry[1]?'✓':'—')+'</span></div>';
+  }).join('');
  }
  return '<pre id="feedback">'+esc(JSON.stringify(safe,null,2).slice(0,24000))+'</pre>';
 }
