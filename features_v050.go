@@ -48,7 +48,8 @@ func isMutationActionV5(action string) bool {
 		"passwall2.nodes.prune_dead", "passwall2.nodes.delete_many", "passwall2.nodes.delete_all",
 		"system.service.restart", "network.wan.reconnect", "firewall.redirect.toggle",
 		"agent.update.apply", "terminal.exec", "config.rollback_snapshot",
-		"led.brightness.set", "openvpn.service.control":
+		"led.brightness.set", "openvpn.service.control",
+		"wifi.ssid.safe_apply", "wifi.ssid.safe_confirm":
 		return true
 	default:
 		return false
