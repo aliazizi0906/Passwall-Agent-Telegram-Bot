@@ -558,7 +558,7 @@ function v060_add_alert(int $uid,string $deviceId,string $metric,string $op,floa
 function v060_dashboard_command_allowed(string $action): bool {
     return in_array($action,[
       'system.status','agent.diagnose','agent.capabilities','network.doctor','network.path_audit','led.status','led.identify','led.brightness.set','openvpn.status','openvpn.service.control','openvpn.route.plan','system.clients','wifi.list','wifi.plan_ssid','wifi.ssid.safe_apply','wifi.ssid.safe_confirm','wifi.radios','wifi.stations',
-      'network.wan','network.dns','network.routes','network.internet_test','network.speed_probe','network.path_audit','network.policy_status','cellular.status','system.leds','system.interfaces',
+      'network.wan','network.dns','network.routes','network.dhcp_leases','network.wireguard','network.services','network.internet_test','network.speed_probe','network.path_audit','network.policy_status','cellular.status','system.leds','system.interfaces','system.services','system.packages','system.package_updates','clients.policy_plan',
       'passwall2.status','passwall2.nodes.list','passwall2.nodes.relay_ranking',
       'passwall2.failover.list','passwall2.failover.run','passwall2.restart','passwall2.enable','passwall2.disable',
       'passwall2.subscriptions.list','passwall2.shunt.list','passwall2.log',
